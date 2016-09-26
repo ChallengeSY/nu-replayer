@@ -278,7 +278,7 @@ sub printGfx(Plot as string, TLX as uinteger, TLY as uinteger, Size as ubyte, Co
 						(TLX+(Size*1)+Pint,TLY+(Size*2)-1),Coloring
 
 					line(TLX+(Size*2),TLY+(Size*2)+Pint)-_
-						(TLX+(Size*2.5)-1-Pint,TLY+(Size*2)+Pint),Coloring
+						(TLX+(Size*2.5)-Pint,TLY+(Size*2)+Pint),Coloring
 						
 					line(TLX+(Size*1)+Pint,TLY+(Size*3))-_
 						(TLX+(Size*1)+Pint,TLY+(Size*3.5)-1-Pint),Coloring
@@ -290,7 +290,7 @@ sub printGfx(Plot as string, TLX as uinteger, TLY as uinteger, Size as ubyte, Co
 						(TLX+(Size*1)+Pint,TLY+(Size*2)-1),Coloring
 
 					line(TLX+(Size*2),TLY+(Size*2)+Pint)-_
-						(TLX+(Size*1.5)+Pint,TLY+(Size*2)+Pint),Coloring
+						(TLX+(Size*1.5)+1+Pint,TLY+(Size*2)+Pint),Coloring
 						
 					line(TLX+(Size*1)+Pint,TLY+(Size*3))-_
 						(TLX+(Size*1)+Pint,TLY+(Size*2.5)+Pint),Coloring
