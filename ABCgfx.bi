@@ -266,6 +266,8 @@ sub printGfx(Plot as string, TLX as uinteger, TLY as uinteger, Size as ubyte, Co
 				end if
 			next
 		case "x"
+			dim as short DistCenter
+			
 			line(TLX+(Size*0),TLY+(Size*0))-(TLX+(Size*1)-1,TLY+(Size*2)-1),Coloring,bf
 			line(TLX+(Size*2),TLY+(Size*0))-(TLX+(Size*3)-1,TLY+(Size*2)-1),Coloring,bf
 			line(TLX+(Size*1),TLY+(Size*2))-(TLX+(Size*2)-1,TLY+(Size*3)-1),Coloring,bf
@@ -273,31 +275,19 @@ sub printGfx(Plot as string, TLX as uinteger, TLY as uinteger, Size as ubyte, Co
 			line(TLX+(Size*2),TLY+(Size*3))-(TLX+(Size*3)-1,TLY+(Size*5)-1),Coloring,bf
 			
 			for Pint as ubyte = 0 to Size - 1
-				if Pint < Size/2 then
-					line(TLX+(Size*1)+Pint,TLY+(Size*1.5)-0.5+Pint)-_
-						(TLX+(Size*1)+Pint,TLY+(Size*2)-1),Coloring
+				DistCenter = int(abs(Size/2 - Pint - 0.5)) - 1
+				
+				line(TLX+(Size*1)+Pint,TLY+int((Size*1.5))-DistCenter)-_
+					(TLX+(Size*1)+Pint,TLY+(Size*2)-1),Coloring
 
-					line(TLX+(Size*2),TLY+(Size*2)+Pint)-_
-						(TLX+(Size*2.5)-Pint,TLY+(Size*2)+Pint),Coloring
-						
-					line(TLX+(Size*1)+Pint,TLY+(Size*3))-_
-						(TLX+(Size*1)+Pint,TLY+(Size*3.5)-1-Pint),Coloring
+				line(TLX+(Size*2),TLY+(Size*2)+Pint)-_
+					(TLX+int(Size*2.5-0.5)+DistCenter,TLY+(Size*2)+Pint),Coloring
 
-					line(TLX+(Size*0.5)-0.5+Pint,TLY+(Size*2)+Pint)-_
-						(TLX+(Size*1)-1,TLY+(Size*2)+Pint),Coloring
-				else
-					line(TLX+(Size*1)+Pint,TLY+(Size*2.5)-1.5-Pint)-_
-						(TLX+(Size*1)+Pint,TLY+(Size*2)-1),Coloring
-
-					line(TLX+(Size*2),TLY+(Size*2)+Pint)-_
-						(TLX+(Size*1.5)+1+Pint,TLY+(Size*2)+Pint),Coloring
-						
-					line(TLX+(Size*1)+Pint,TLY+(Size*3))-_
-						(TLX+(Size*1)+Pint,TLY+(Size*2.5)+Pint),Coloring
-
-					line(TLX+(Size*1.5)-1.5-Pint,TLY+(Size*2)+Pint)-_
-						(TLX+(Size*1)-1,TLY+(Size*2)+Pint),Coloring
-				end if
+				line(TLX+(Size*1)+Pint,TLY+(Size*3))-_
+					(TLX+(Size*1)+Pint,TLY+int((Size*3.5)-1+0.5)+DistCenter),Coloring
+					
+				line(TLX+int(Size*0.5)-DistCenter,TLY+(Size*2)+Pint)-_
+					(TLX+(Size*1)-1,TLY+(Size*2)+Pint),Coloring
 			next
 		case "y"
 			line(TLX+(Size*0),TLY+(Size*0))-(TLX+(Size*1)-1,TLY+(Size*2)-1),Coloring,bf
