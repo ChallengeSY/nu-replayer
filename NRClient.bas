@@ -421,7 +421,7 @@ sub renderClient
 						end with
 						
 						ShipsCounted += 1
-						gfxstring("("+str(SID)+") "+.ShipName,768,245+ShipsCounted*15,2,2,1,PaintColor(1))
+						gfxstring(" "+str(SID)+". "+.ShipName,768,245+ShipsCounted*15,2,2,1,PaintColor(1))
 					end if
 				end if
 			end with
@@ -870,7 +870,7 @@ sub renderClient
 							end with
 							
 							ShipsCounted += 1
-							gfxstring("("+str(SID)+") "+.ShipName,768,245+ShipsCounted*15,2,2,1,PaintColor(1))
+							gfxstring("<"+str(SID)+"> "+.ShipName,768,245+ShipsCounted*15,2,2,1,PaintColor(1))
 						end if
 					else
 						if .ShipType > 0 AND .XLoc >= MinXPos AND .YLoc >= MinYPos AND _
