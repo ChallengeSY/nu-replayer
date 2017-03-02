@@ -649,8 +649,14 @@ sub createMeter(Filling as double = LastFill, ProgressStr as string = LastProgre
 end sub
 
 sub loadTurnUI(Players as ubyte)
-	dim as byte Detected = max(ViewGame.PlayerCount,GameParser.PlayerCount)
+	dim as byte Detected
 	dim as string ProgressMeter
+	
+	if GameParser.PlayerCount > 0 then
+		Detected = GameParser.PlayerCount
+	else
+		Detected = ViewGame.PlayerCount
+	end if
 	
 	ProgressMeter = str(Players)+" / "+str(Detected)+" players done"
 	createMeter(Players/Detected,ProgressMeter,0)
@@ -661,7 +667,7 @@ end sub
 sub loadTurnKB(KBCount as integer, Players as ubyte)
 	dim as integer FileSize, XPos
 	dim as string FileProgress
-	if timer > KBUpdate + 0.5 then
+	if timer > KBUpdate + 0.125 then
 		for PlotIndeter as short = 0 to 22
 			XPos = (PlotIndeter-1)*50 + remainder(int(KBCount/2),50)
 			put(XPos,748),Indeterminate,pset
