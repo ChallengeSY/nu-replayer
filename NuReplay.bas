@@ -79,7 +79,7 @@ if FileExists("Login.csv") AND FileExists("Settings.csv") = 0 then name("Login.c
 
 Username = "guest"
 APIKey = ""
-PreferType = "Academy"
+PreferType = "Championship"
 SimpleView = 0
 
 if FileExists("Settings.csv") then
@@ -98,7 +98,12 @@ if FileExists("Settings.csv") then
 		end select
 	loop until eof(1)
 	close #1
-	if APIKey = "" then Username = "guest"
+	if APIKey = "" then
+		Username = "guest"
+		if PreferType = "Personal" then
+			PreferType = "Championship"
+		end if
+	end if
 end if
 
 'Utilizes double-buffering to prevent sheering
@@ -133,6 +138,9 @@ end if
 #ENDIF
 
 updateGameList
+if APIkey <> "" then
+	recordPersonalGames
+end if
 
 'In case some people don't like the music, a command option has been provided
 #IFDEF __NR_AUDIO__

@@ -72,24 +72,7 @@ sub updateGameList(DownloadList as byte = 0)
 		cls
 		print "Converting game list...";
 		screencopy
-		if listGames = 0 then
-			if FileExists("games/Custom List.csv") then
-				cls
-				print "Applying custom games..."
-				screencopy
-	
-				open "games/Custom List.csv" for input as #6
-				open "games/List.csv" for append as #7
-				input #6, NullStr,NullStr,NullStr,NullStr 'Prevents crashing under GNU/Linux
-				while eof(6) = 0
-					with GameObj(0)
-						input #6, .ID,.Namee,.GameDesc,.LastTurn
-						print #7, .ID;",";.Namee;",";.GameDesc;",";.LastTurn
-					end with
-				wend
-				close #6, #7
-			end if
-		else
+		if listGames then
 			print " Failure! Could not load game list.";
 			dim as integer ErrorNum = kill("raw/listgames.txt")
 			if ErrorNum then
@@ -421,4 +404,85 @@ sub loadGame(ByRef LoadID as uinteger)
 	end if
 
 	ReplayerMode = MODE_CLIENT_NORMAL
+end sub
+
+sub recordPersonalGames
+	dim SendBuffer as string
+	dim RecvBuffer as zstring * RECVBUFFLEN+1
+	dim Bytes as integer
+	dim LinesReceived as ushort
+	
+	dim as string URLName, InStream
+	dim as integer GamesRegistered
+	cls
+	print "Loading personal games..."
+	screencopy
+
+	for Char as short = 1 to len(Username)
+		if mid(Username,Char,1) = space(1) then
+			URLName += "%20"
+		else
+			URLName += mid(Username,Char,1)
+		end if
+	next Char
+	
+	for PersonalSlot as byte = 1 to 8
+		PersonalIDs(PersonalSlot) = 0
+	next PersonalSlot
+
+	#IFDEF __USE_ZLIB__
+	#ELSE
+	SendBuffer = loadAddress("games/list?compress=false&scope=0&status=3&type=2,3,4,6,7&username="+URLName)
+	NuSocket = SDLNet_TCP_Open( @NuIP )
+	if( NuSocket = 0 ) then
+		ErrorMsg = "Nu Replayer did not successfully open a socket to Planets Nu's servers."
+	else
+		if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
+			ErrorMsg = "Nu Replayer did not successfully sent its request to Planets Nu's servers."
+		else
+			mkdir "raw"
+			open "raw/PersonalGames.txt" for output as #7
+
+			do
+				Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBuffer ), RECVBUFFLEN )
+				if( Bytes <= 0 ) then
+					exit do
+				end if
+
+				'' add the null-terminator
+				RecvBuffer[Bytes] = 0
+
+				'' print it as string
+				print #7, RecvBuffer;
+				LinesReceived += 1
+			loop
+			close #7
+		end if
+	end if
+	SDLNet_TCP_Close( NuSocket )
+	#ENDIF
+	
+	open "raw/PersonalGames.txt" for input as #8
+	do
+		if eof(8) then
+			close #8
+			exit sub
+		end if
+		line input #8, InStream
+	loop until left(InStream,2) = "[{" OR left(InStream,2) = "{"
+	close #8
+	
+	for DID as integer = 1 to len(InStream)
+		if mid(InStream,DID,15) = quote("success")+":false" then
+			exit sub
+		end if
+		if mid(InStream,DID,4) = quote("id") then
+			GamesRegistered += 1
+			if GamesRegistered <= 8 then
+				PersonalIDs(GamesRegistered) = valint(mid(InStream,DID+5,7))
+			else
+				rotatePersonalGames(valint(mid(InStream,DID+5,7)))
+			end if
+		end if
+	next DID
 end sub

@@ -324,6 +324,8 @@ close #4
 
 GameTitle.Red = 255
 declare sub updateGameList(DownloadList as byte = 0)
+declare sub recordPersonalGames
+declare function isPersonalGame(SearchID as integer) as integer
 #IFDEF __DOWNLOAD_TURNS__
 declare sub downloadGame(GameName as string, GameID as integer)
 #ENDIF
@@ -430,60 +432,94 @@ sub clearData
 	next Obj
 end sub
 
+sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as integer, Filename as string = "List.csv")
+	dim as integer IgnoreLine, ChampionCount
+	dim as byte MatchSucessful
+	dim as string WorkingFile, ScoreFile, AuxFile, RawFile
+	
+	IgnoreLine = 1
+	if FileExists("games/"+Filename) AND Internal < 1e6 then
+		open "games/"+Filename for input as #7
+		do
+			with GameObj(0)
+				input #7, .ID, .Namee, .GameDesc, .LastTurn
+				.Namee = findReplace(.Namee,"&",",")
+			end with
+			if IgnoreLine then
+				IgnoreLine = 0
+			else
+				with GameObj(0)
+					if (ApplyFilter = "" OR left(lcase(.Namee),len(ApplyFilter)) = ApplyFilter) AND _
+						((PreferType = "Academy" AND .GameDesc = "Academy Test") OR (PreferType = "Championship" AND .GameDesc = "Championship Match") OR _
+						(PreferType = "Personal" AND isPersonalGame(.ID)) OR OnlyFeatured = 0) then
+						MatchSucessful = 1
+						GameObj(Internal).ID = .ID
+						GameObj(Internal).Namee = .Namee
+						GameObj(Internal).GameDesc = .GameDesc
+						GameObj(Internal).LastTurn = .LastTurn
+					else
+						MatchSucessful = 0
+					end if
+				end with
+				
+				if MatchSucessful then
+					with GameObj(Internal)
+						WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
+						ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
+						AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Starbases.csv"
+						RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
+					
+						if FileExists(WorkingFile) then
+							if Now - FileDateTime(WorkingFile) > 1/24 then
+								'Assume conversions that take more than an hour have failed, and delete the working flag
+								kill(WorkingFile)
+							end if
+							.GameState = 9
+						elseif FileExists(ScoreFile) then
+							if FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
+								if FileExists(RawFile) then
+									.GameState = 8
+								else
+									.GameState = 7
+								end if
+							else
+								.GameState = 2
+							end if
+						elseif FileExists(RawFile) then
+							.GameState = 1
+						else
+							.GameState = 0
+						end if
+					end with
+					
+					Internal += 1
+				end if
+			end if
+			
+			if eof(7) OR Internal >= 1e6 then
+				exit do
+			end if
+		loop
+		close #7
+	end if
+end sub
+
 'Loads the game list using the filter provided (if any)
 sub loadGameList(ApplyFilter as string = "", OnlyFeatured as byte = 0)
-	dim as integer Index, ChampionCount
-	dim as string WorkingFile, ScoreFile, AuxFile, RawFile
-	'Load the game list
+	dim as integer Index = 1
+	'Verifies that the official game list exists
 	if FileExists("games/List.csv") = 0 then
 		TotalGamesLoaded = 0
 		exit sub
 	end if
 	
-	open "games/List.csv" for input as #7
-	do
-		with GameObj(Index)
-			input #7, .ID, .Namee, .GameDesc, .LastTurn
-			.Namee = findReplace(.Namee,"&",",")
-			if (ApplyFilter = "" OR Index = 0 OR left(lcase(.Namee),len(ApplyFilter)) = ApplyFilter) AND _
-				((PreferType = "Academy" AND .GameDesc = "Academy Test") OR (PreferType = "Championship" AND .GameDesc = "Championship Match") OR OnlyFeatured = 0) then
-				Index += 1
-			end if
-			
-			WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
-			ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
-			AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Starbases.csv"
-			RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
-		
-			if FileExists(WorkingFile) then
-				if Now - FileDateTime(WorkingFile) > 1/24 then
-					'Assume conversions that take more than an hour have failed, and delete the working flag
-					kill(WorkingFile)
-				end if
-				.GameState = 9
-			elseif FileExists(ScoreFile) then
-				if FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
-					if FileExists(RawFile) then
-						.GameState = 8
-					else
-						.GameState = 7
-					end if
-				else
-					.GameState = 2
-				end if
-			elseif FileExists(RawFile) then
-				.GameState = 1
-			else
-				.GameState = 0
-			end if
-		end with
-		
-		if eof(7) OR Index >= 1e6 then
-			TotalGamesLoaded = Index - 1
-			exit do
-		end if
-	loop 
-	close #7
+	'Loads the official game list first
+	readListFile(ApplyFilter,OnlyFeatured,Index)
+	
+	'Custom games are loaded next, if there is room in the internal memory for them
+	readListFile(ApplyFilter,OnlyFeatured,Index,"Custom List.csv")
+	
+	TotalGamesLoaded = Index - 1
 	SelectedIndex = 1
 end sub
 
@@ -518,23 +554,23 @@ sub menu
 
 	if ReplayerMode = MODE_QUICK then
 		gfxstring("Quick Watch",10,100,5,4,3,rgb(255,255,0))
-		for FeaturedGame as byte = 0 to min(TotalGamesLoaded,7)
+		for FeaturedGame as byte = 1 to min(TotalGamesLoaded,8)
 			with GameObj(FeaturedGame)
 				if .ID > 0 then
 					if .GameState = 2 then
-						gfxstring(.Namee,410,50*(FeaturedGame+2)-5,3,3,2,rgb(255,255,255))
-						gfxstring("Turn "+str(.LastTurn),430,50*(FeaturedGame+2)+15,3,3,2,rgb(255,255,255))
+						gfxstring(.Namee,410,50*(FeaturedGame+1)-5,3,3,2,rgb(255,255,255))
+						gfxstring("Turn "+str(.LastTurn),430,50*(FeaturedGame+1)+15,3,3,2,rgb(255,255,255))
 
-						if MouseY > = 90 + 50*FeaturedGame AND MouseY < 135 + 50*FeaturedGame AND MouseX >= 400 then
-							drawBox(400,90 + 50*FeaturedGame,799,134 + 50*FeaturedGame)
+						if MouseY > = 40 + 50*FeaturedGame AND MouseY < 85 + 50*FeaturedGame AND MouseX >= 400 then
+							drawBox(400,40 + 50*FeaturedGame,799,85 + 50*FeaturedGame)
 							if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 								SelectedIndex = FeaturedGame
 								GameID = .ID
 							end if
 						end if
 					else
-						gfxstring(.Namee,410,50*(FeaturedGame+2)-5,3,3,2,rgb(128,128,128))
-						gfxstring("Turn "+str(.LastTurn),430,50*(FeaturedGame+2)+15,3,3,2,rgb(128,128,128))
+						gfxstring(.Namee,410,50*(FeaturedGame+1)-5,3,3,2,rgb(128,128,128))
+						gfxstring("Turn "+str(.LastTurn),430,50*(FeaturedGame+1)+15,3,3,2,rgb(128,128,128))
 					end if
 				end if
 				
@@ -569,6 +605,8 @@ sub menu
 					if apiLogin = 0 OR APIKey = "" then
 						Username = "guest"
 						APIKey = ""
+					else
+						recordPersonalGames
 					end if
 				end if
 			end if
@@ -580,6 +618,9 @@ sub menu
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					Username = "guest"
 					APIKey = ""
+					if PreferType = "Personal" then
+						PreferType = "Championship"
+					end if
 				end if
 			end if
 		end if
@@ -642,16 +683,18 @@ sub menu
 	if ReplayerMode = MODE_SETTINGS then
 		gfxstring("Engine Options",10,450,5,4,3,rgb(255,255,0))
 
-		gfxstring("Preferred game type:",410,95,3,3,2,rgb(255,255,255))
+		gfxstring("Preferred quick list:",410,95,3,3,2,rgb(255,255,255))
 		gfxstring(PreferType,430,115,3,3,2,rgb(255,255,255))
 
 		if MouseY > = 90 AND MouseY < 135 AND MouseX >= 400 then
 			drawBox(400,90,799,134)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				if PreferType = "Academy" then
-					PreferType = "Championship"
-				else
+				if PreferType = "Championship" then
 					PreferType = "Academy"
+				elseif PreferType = "Academy" AND APIkey <> "" then
+					PreferType = "Personal"
+				else
+					PreferType = "Championship"
 				end if
 				while inkey < > "":wend
 			end if

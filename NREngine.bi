@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.27 (Alpha 18)"
+const BROWSER_LONG = "Nu Replayer 0.28-dev (Alpha 19)"
 
 #IFNDEF __FORCE_OFFLINE__
 /'
@@ -16,6 +16,7 @@ dim shared as TCPSocket NuSocket
 
 dim shared as string SendBuffer
 dim shared as double LastFill
+dim shared as integer PersonalIDs(8)
 
 sub updateStatistics
 	dim as string ScoreFile, ResourceFile, RelationsFile
@@ -485,7 +486,7 @@ end function
 		cls
 		ErrorMsg = ""
 		print word_wrap("Privacy: Your credidentials are used to allow NU REPLAYER to interact with the PLANETS NU server, and they will also be saved to the disk. "+_
-			"Supplying NU REPLAYER your information will allow it to download turns bound to open slots in completed games.",100)
+			"Supplying NU REPLAYER your information will allow it to download turns bound to open slots in completed games, and allow easier access to your most recent finihsed games.",100)
 		print
 		line input "Enter your Planets Nu username: ",Username
 		print "Enter your password: ";
@@ -685,3 +686,23 @@ sub loadTurnKB(KBCount as integer, Players as ubyte)
 		screencopy
 	end if
 end sub
+
+sub rotatePersonalGames(NewID as integer)
+	for PersonalSlot as byte = 1 to 7
+		PersonalIDs(PersonalSlot) = PersonalIDs(PersonalSlot+1)
+	next PersonalSlot
+	
+	PersonalIDs(8) = NewID
+end sub
+
+function isPersonalGame(SearchID as integer) as integer
+	dim as integer GameFound = 0
+	
+	for PersonalSlot as byte = 1 to 8
+		if PersonalIDs(PersonalSlot) = SearchID then
+			GameFound = 1
+		end if
+	next PersonalSlot
+	
+	return GameFound
+end function
