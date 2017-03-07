@@ -653,10 +653,10 @@ sub loadTurnUI(Players as ubyte)
 	dim as byte Detected
 	dim as string ProgressMeter
 	
-	if GameParser.PlayerCount > 0 then
-		Detected = GameParser.PlayerCount
-	else
+	if ViewGame.PlayerCount > 0 then
 		Detected = ViewGame.PlayerCount
+	else
+		Detected = GameParser.PlayerCount
 	end if
 	
 	ProgressMeter = str(Players)+" / "+str(Detected)+" players done"

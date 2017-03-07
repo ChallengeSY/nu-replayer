@@ -433,7 +433,7 @@ sub clearData
 end sub
 
 sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as integer, Filename as string = "List.csv")
-	dim as integer IgnoreLine, ChampionCount
+	dim as integer IgnoreLine
 	dim as byte MatchSucessful
 	dim as string WorkingFile, ScoreFile, AuxFile, RawFile
 	

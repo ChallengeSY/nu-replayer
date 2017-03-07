@@ -48,31 +48,33 @@ sub cycleMusic cdecl ()
 end sub
 
 sub playSong
-    ' This begins playing the music
-    Mix_PlayMusic(music, 0)
+	' This begins playing the music
+	Mix_PlayMusic(music, 0)
 
 	/'
-     ' We want to know when our music has stopped playing so we
-     ' can cycle it.
-     '/
-    Mix_HookMusicFinished(@cycleMusic)
+	 ' We want to know when our music has stopped playing so we
+	 ' can cycle it.
+	 '/
+	Mix_HookMusicFinished(@cycleMusic)
 end sub
 
 sub loadMusic(MusicFile as string)
-    if (music) then
-        ' Stop the music from playing
-        Mix_HaltMusic
+	if (music) then
+		' Stop the music from playing
+		Mix_HaltMusic
+		
+		/'
+		 ' Unload the music from memory, since we don't need it
+		 ' anymore
+		 '/
+		Mix_FreeMusic(music)
+		
+		music = NULL
+	end if
 
-        ' Unload the music from memory, since we don't need it
-        ' anymore
-        Mix_FreeMusic(music)
-
-        music = NULL
-    end if
-
-	' Actually loads up the music, if file exists
+	' Loads up the music, if file exists
 	if FileExists(MusicFile + ".ogg") then
-	    music = Mix_LoadMUS(MusicFile + ".ogg")
+		music = Mix_LoadMUS(MusicFile + ".ogg")
 		playSong
-    end if
+	end if
 end sub
