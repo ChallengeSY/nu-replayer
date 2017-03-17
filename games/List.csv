@@ -1819,6 +1819,7 @@
 104999,"Mi-Glowdonia Sector 0043","Beginners",55
 105186,"Epsilon Indi Sector 0043","Mentors and Midshipmen",132
 105194,"Tesla Sector 0043","Classic",70
+105229,"DIE HARD 12","Custom Game",196
 105318,"Blauvehr Sector 0043","Giant Campaign Melee",74
 105386,"Beta Auriga Sector 0043","Beginners",79
 105442,"Gamma Ti Sid Sector 0043","Teams of 3",53
@@ -1827,6 +1828,7 @@
 105584,"Kthistlmup Sector 0043","Senior Officers",170
 105733,"Regula Sector 0043","Classic",99
 105823,"Sarol Sector 0043","Campaign",119
+105826,"Kamikachiadonia Sector 0043","Classic Slow",219
 106124,"Timbucktoo Sector 0043","Beginners",59
 106767,"Twin Planet Sector 0043","Beginners",83
 106790,"Rappaport Sector 0043","Giant Campaign Melee",85
@@ -1865,6 +1867,7 @@
 110919,"Scoptor Sector 0044","Campaign",67
 111042,"Vevalgoz Sector 0044","Beginners",54
 111062,"Tesmond Sector 0044","Classic",53
+111132,"New Sinewnew Sector 0044","Classic Slow",268
 111321,"The Leo War","Championship Match",251
 111329,"Sif Sector 0044","Classic",237
 111385,"Yoggoth Sector 0044","Beginners",56
@@ -1902,6 +1905,7 @@
 113500,"Fresno Sector 0045","Beginners",77
 113831,"Taulus Sector 0045","Giant Campaign Melee",119
 113849,"Virgo Ceti 5 Sector 0045","Beginners",85
+113853,"Bernices Sector 0045","Teams of 2",325
 113855,"Sheegupt Sector 0045","Classic",97
 114001,"Melpedous Sector 0045","Classic",107
 114006,"Rock Sector 0045","Campaign",90
@@ -2026,6 +2030,7 @@
 122939,"Pearl Sector 0048","Giant Campaign Melee",98
 122946,"Gathonia Sector 0048","Standard Beginners",84
 122947,"Kapteyn's Planet Sector 0048","Campaign",225
+123021,"Euro Disney World Sector 0048","Standard Slow",172
 123041,"Hablemos","Custom Game",102
 123085,"Challenger 5 Sector 0048","Mentor vs Midshipmen",66
 123122,"Roll Sector 0048","Standard Beginners",76
@@ -2152,6 +2157,7 @@
 130728,"Teris-Ceti 9 Sector 0050","Mentor vs Midshipmen",80
 130923,"Rator Sector 0050","Mentor vs Midshipmen",69
 130960,"Vevalgoz Sector 0050","Giant Campaign Melee - Sphere",100
+131002,"free game","Custom Game",172
 131016,"Alienation Sector 0050","Standard Beginners",78
 131024,"New Cappone Sector 0050","Mentor vs Midshipmen",78
 131124,"Chrome Sector 0050","Mentor vs Midshipmen",80
@@ -2185,6 +2191,7 @@
 132585,"The Borg are Here! ","Custom Game",78
 132636,"Darth Veridious's Reign of Supremacy","Custom Game",25
 132652,"Murphrid 432 Sector 0050","Mentor vs Midshipmen",80
+132664,"R leonis 7 Sector 0050","Teams of 3",203
 132796,"Bendotex Sector 0050","Mentor vs Midshipmen",42
 132824,"Portsmouth Sector 0050","Mentor vs Midshipmen",44
 132852,"Delta Pegasi Sector 0050","Standard Beginners",56
@@ -2252,11 +2259,13 @@
 135578,"Alcatraz Sector 0051","Mentor vs Midshipmen",38
 135672,"Adebron Sector 0051","Mentor vs Midshipmen",80
 135720,"Alcor Sector 0051","Classic",64
+135734,"Blondonia Sector 0051","Standard Beginners",234
 135831,"Bubble World Sector 0051","Standard Beginners",105
 135855,"New Los Banos Sector 0051","Mentor vs Midshipmen",79
 135984,"Kahless Sector 0051","Mentor vs Midshipmen",60
 136049,"Alienation Sector 0051","Standard Beginners",66
 136073,"Innsmouth Sector 0051","Mentor vs Midshipmen",80
+136077,"Mao 5 Sector 0051","Standard Slow",139
 136095,"Amascusin Sector 0051","Classic",115
 136146,"Alpha Beta Sector 0051","Mentor vs Midshipmen",80
 136245,"Black Beard Sector 0052","Giant Campaign Melee - Sphere",100
@@ -2305,6 +2314,7 @@
 138187,"Big World Sector 0052","Mentor vs Midshipmen",77
 138191,"Blitz 11 Player max 4 Allies #1 by crazysportz.de","Custom Game",82
 138192,"Tut Sector 0052","Classic",154
+138269,"The Gemini War","Championship Match",207
 138322,"START HARD | Round 1 | Sector 1","Custom Game",150
 138370,"Antilia Ophi Sector 0052","Mentor vs Midshipmen",80
 138487,"Cygnet Sector 0052","Standard Beginners",81
@@ -2316,6 +2326,7 @@
 138813,"Arkham Sector 0052","Mentor vs Midshipmen",73
 138835,"Small World Sector 0052","Standard",97
 138918,"Bortex Sector 0052","Standard Beginners",114
+139023,"Fussbar Sector 0052","Classic",209
 139141,"Rambo 3 Sector 0052","Mentor vs Midshipmen",80
 139144,"Disney World Sector 0052","Standard Beginners",73
 139191,"Mileb Sector 0052","Mentor vs Midshipmen",45
@@ -2346,10 +2357,12 @@
 140516,"Tarsus Sector 0053","Mentor vs Midshipmen",70
 140590,"sevy's beginner Game","Custom Game",138
 140664,"Delta Sector 0053","Mentor vs Midshipmen",80
+140709,"Standard Game - Not-so-beginner","Custom Game",183
 140749,"Caeladium Sector 0053","Standard",146
 140752,"Innes Sector 0053","Standard Beginners",131
 140773,"Under World Sector 0053","Classic",75
 140786,"Azores Sector 0053","Mentor vs Midshipmen",80
+140879,"Blackstone Sector 0053","Teams of 2",166
 140946,"Ikaal Sector 0053","Mentor vs Midshipmen",80
 141059,"Cue Ball Sector 0053","Mentor vs Midshipmen",80
 141074,"Cutimurium Sector 0053","Standard Beginners",84
@@ -2374,6 +2387,7 @@
 141927,"Camelot Sector 0053","Mentor vs Midshipmen",58
 142020,"Thorak Sector 0053","Standard Slow",64
 142124,"Caelum Sector 0053","Classic",118
+142157,"VCS#1 - Veterans Campaign Supremacy #1","Custom Game",159
 142158,"Football Sector 0053","Standard Beginners",56
 142242,"DIE HARD XV","Custom Game",104
 142258,"Romulus Sector 0053","Mentor vs Midshipmen",73
@@ -2389,6 +2403,7 @@
 142908,"Beginner Team II","Custom Game",74
 142982,"Cheeseball Sector 0054","Giant Campaign Melee - Sphere",181
 143148,"B.D. -12 4523 Sector 0054","Mentor vs Midshipmen",67
+143150,"Gathonia Sector 0054","Standard",226
 143182,"Yoggoth Sector 0054","Giant Campaign Melee - Sphere",76
 143236,"Australis Sector 0054","Classic",104
 143295,"New Chicago Sector 0054","Standard Beginners",50
@@ -2411,6 +2426,7 @@
 144533,"Thi Alpha Chi Sector 0054","Mentor vs Midshipmen",67
 144542,"Carillon Sector 0054","Classic",76
 144547,"Ohular Sector 0054","Standard Beginners",50
+144553,"PLS-70 (2015)","Custom Game",175
 144790,"Ross Sector 0054","Mentor vs Midshipmen",80
 144898,"Cimtar Sector 0054","Classic",67
 144949,"Adobee Sector 0054","Standard Beginners",81
@@ -2469,6 +2485,7 @@
 148054,"Gamma Hydra Sector 0055","Mentor vs Midshipmen",80
 148175,"Vevalgoz Sector 0055","Mentor vs Midshipmen",80
 148199,"Toltek 12 Sector 0055","Classic",88
+148283,"Ross Sector 0055","Standard",252
 148299,"Time Planet Sector 0055","Mentor vs Midshipmen",80
 148343,"Delphidia Sector 0055","Teams of 2",96
 148496,"Beta Auriga Sector 0055","Standard Beginners",68
@@ -2501,6 +2518,7 @@
 150267,"Baseball Sector 0056","Mentor vs Midshipmen",78
 150333,"Nothing Planet Sector 0056","Mentor vs Midshipmen",80
 150411,"Nimbus 7 Sector 0056","Teams of 2",130
+150480,"Arkto Sector 0056","Standard",196
 150541,"Tesmond Sector 0056","Mentor vs Midshipmen",80
 150581,"Maares 3 Sector 0056","Standard Beginners",98
 150632,"Worlds War one ","Custom Game",39
@@ -2513,9 +2531,12 @@
 151059,"Delphi Sector 0056","Mentor vs Midshipmen",65
 151170,"Zippi Sector 0056","Classic",46
 151177,"Mob World Sector 0056","Mentor vs Midshipmen",54
+151383,"Lalande 21185 Sector 0056","Standard Slow",121
 151485,"Memory Alpha Sector 0056","Standard",116
 151609,"Rappaport Sector 0056","Standard Beginners",83
 151659,"Alexandria Sector 0056","Mentor vs Midshipmen",80
+151661,"Gumball Sector 0056","Teams of 3",138
+151738,"The Right Planet Sector 0056","Classic",162
 151812,"Dunwich Sector 0056","Mentor vs Midshipmen",80
 151830,"Chirpsithra Sector 0056","Classic",104
 151974,"Vendor Sector 0056","Campaign",60
@@ -2548,8 +2569,9 @@
 153185,"Big World Sector 0057","Giant Campaign Melee - Sphere",110
 153234,"Bimbo Sector 0057","Standard Slow",71
 153334,"Capricornus Sector 0057","Mentor vs Midshipmen",80
+153379,"Merah-5 Sector 0057","Standard",163
 153474,"Phorax Sector 0057","Mentor vs Midshipmen",80
-153486,"Battle for the Alpha Quadrant","Custom Game",83
+153486,"Alpha Quadrant Saga: Battle for the Alpha Quadrant","Custom Game",83
 153631,"Rambo 3 Sector 0057","Mentor vs Midshipmen",80
 153638,"Bootes Sector 0057","Classic",97
 153740,"Cornrelius Sector 0057","Mentor vs Midshipmen",63
@@ -2587,11 +2609,13 @@
 156286,"Krypton Sector 0058","Teams of 3",47
 156290,"Cestus 3 Sector 0058","Mentor vs Midshipmen",80
 156551,"Ent World Sector 0058","Classic",50
+156552,"Corona Sector 0058","Standard Senior Officers",82
 156553,"Omicron Sector 0058","Mentor vs Midshipmen",80
 156621,"NuAdhesive Sector -PED- Battle of the Teams","Custom Game",66
 156713,"Regula Sector 0058","Mentor vs Midshipmen",80
 156717,"Vevalgoz Sector 0058","Standard Beginners",70
 156750,"Sussex Sector 0058","Standard",91
+156801,"Zimphfir Sector 0058","Standard Slow",143
 156822,"Mills Sector 0058","Classic",78
 156929,"Minhabotia Sector 0058","Mentor vs Midshipmen",64
 156944,"Mirak Sector 0058","Giant Campaign Melee - Sphere",74
@@ -2599,41 +2623,57 @@
 157046,"Confederate Planet Sector 0058","Teams of 2",47
 157186,"Fornax Sector 0058","Mentor vs Midshipmen",76
 157222,"Kruger 60 A Sector 0058","Classic",104
+157358,"DIE HARD 16","Custom Game",125
 157359,"Sigma 1212 Sector 0058","Standard",79
 157395,"Helms Deep Sector 0058","Mentor vs Midshipmen",52
+157490,"Ravenhurst Sector 0058","Standard Beginners",197
+157499,"Amazonia Sector 0058","Classic",132
 157609,"Eranda Sector 0058","Mentor vs Midshipmen",75
+157763,"Kobol Sector 0058","Stealth",88
+157794,"Green Planet Sector 0058","Classic",128
 157858,"Beginner Game - Good Resouces","Custom Game",56
 157872,"Vol Sector 0058","Standard",97
 157942,"Wood's Planet Sector 0058","Mentor vs Midshipmen",61
+157947,"Stealth Teams of 2","Custom Game",121
 157971,"Twin Planet Sector 0058","Standard Beginners",82
 158015,"New Moscow Sector 0058","Mentor vs Midshipmen",80
+158042,"YouTwo Sector 0058","Campaign",167
+158163,"Ka'Hat Sector 0058","Classic",164
 158188,"Elvis Sector 0058","Giant Campaign Melee - Sphere",85
 158247,"Sirius B Sector 0058","Academy Test",109
 158316,"Koruim Sector 0058","Standard",104
 158403,"Gorath Sector 0058","Mentor vs Midshipmen",80
+158434,"Spica Sector 0058","Classic",193
 158590,"Cave World Sector 0058","Standard Beginners",78
 158625,"Arcturus Sector 0058","Mentor vs Midshipmen",80
 158628,"Campaign  features anyone? #1","Custom Game",53
 158674,"Nuniverse's Cup 2015","Custom Game",74
 158808,"Cevius Sector 0058","Standard",99
 158817,"Alycyone Sector 0058","Mentor vs Midshipmen",80
+158879,"Sol 3 Sector 0058","Standard Beginners",151
 158969,"Casablanca Sector 0058","Classic",96
 159004,"Vae Victis Area 2","Custom Game",102
 159018,"Beta Ti Chi 6 Sector 0058","Mentor vs Midshipmen",47
 159112,"Orion Sector 0058","Academy Test",53
 159233,"New Albania Sector 0058","Mentor vs Midshipmen",80
+159247,"Serpens Caput 759 Sector 0058","Classic",132
 159372,"Gamma Ti Sid Sector 0058","Mentor vs Midshipmen",80
+159443,"Mao 4 Sector 0058","Giant Campaign Melee - Sphere",148
+159445,"Colony 10 Sector 0058","Standard",128
 159446,"Kchipreesee Sector 0058","Mentor vs Midshipmen",80
 159467,"Rator Sector 0058","Standard Beginners",96
 159595,"Draco Sector 0059","Classic",97
 159605,"Gamma Hydra Sector 0059","Mentor vs Midshipmen",51
+159678,"New Endeaver Sector 0059","Standard Slow",74
 159811,"Lottl Sector 0059","Classic",55
 159823,"Ophiuchi Sector 0059","Standard Beginners",92
 159835,"Frost Sector 0059","Mentor vs Midshipmen",80
 159880,"Small World Sector 0059","Academy Test",30
 159945,"URSA Beta Sector 0059","Mentor vs Midshipmen",80
+159960,"Praesepe 5 Sector 0059","Standard",136
 160157,"Chanda M Sector 0059","Mentor vs Midshipmen",80
 160229,"Bootie Sector 0059","Classic",70
+160278,"Tholia Sector 0059","Teams of 3",114
 160279,"Serada 9 Sector 0059","Mentor vs Midshipmen",80
 160319,"Stealth& campaign& teams of 3","Custom Game",69
 160478,"Hercules Sector 0059","Standard Beginners",81
@@ -2642,18 +2682,25 @@
 160639,"Tarsus Sector 0059","Mentor vs Midshipmen",80
 160652,"Corboda Vh 243 Sector 0059","Classic",96
 160681,"Bortex Sector 0059","Standard",78
+160827,"Into the bad lands","Custom Game",81
 160874,"Packlidia Sector 0059","Standard Beginners",86
 160916,"Sanstrisious Sector 0059","Mentor vs Midshipmen",68
+160987,"Chort Sector 0059","Classic",166
 161214,"Leshy Sector 0059","Mentor vs Midshipmen",80
 161283,"Sirius A Sector 0059","Classic",74
+161329,"Ceros Sector 0059","Standard Beginners",123
 161406,"Cue Ball Sector 0059","Mentor vs Midshipmen",79
 161412,"More than a beginner","Custom Game",49
+161416,"Stealth Intermediate Standard Game","Custom Game",69
 161420,"New Bohemia Sector 0059","Classic",61
+161505,"Colony 6 Sector 0059","Standard",136
 161596,"Mao 6 Sector 0059","Mentor vs Midshipmen",75
 161788,"Blackstone Sector 0059","Mentor vs Midshipmen",80
+161829,"Tesla Sector 0059","Campaign",108
 161890,"Vol Sector 0059","Classic",57
 161968,"Dunleb Sector 0059","Mentor vs Midshipmen",64
 161969,"Yoggoth Sector 0059","Standard Beginners",64
+161970,"Endor Sector 0059","Standard",160
 162094,"Grus Sector 0059","Giant Campaign Melee - Sphere",85
 162098,"Rocky 12 Sector 0059","Mentor vs Midshipmen",65
 162123,"Perot's World Sector 0059","Academy Test",43
@@ -2661,76 +2708,109 @@
 162287,"Murphrid 432 Sector 0059","Mentor vs Midshipmen",72
 162445,"Indy Sector 0059","Standard Beginners",72
 162531,"New Boston Sector 0060","Mentor vs Midshipmen",80
+162549,"Shwarts Sector 0060","Teams of 2",128
 162598,"Centouria Sector 0060","Mentor vs Midshipmen",80
 162642,"Innsmouth Sector 0060","Classic",100
 162651,"Tniacth Sector 0060","Mentor vs Midshipmen",80
+162677,"Intermediate Sector 0060","Custom Game",100
 162687,"Rock Sector 0060","Giant Campaign Melee - Sphere",94
 162726,"Outer World Sector 0060","Standard Beginners",67
 162782,"Adviel Sector 0060","Mentor vs Midshipmen",80
 162821,"Dagaba Sector 0060","Standard",90
+162844,"Kamikachiadonia Sector 0060","Classic",131
 163036,"Anto Sector 0060","Mentor vs Midshipmen",80
+163044,"Scoptor Sector 0060","Classic",118
 163216,"Bloodbath","Custom Game",99
 163223,"Chrome Sector 0060","Mentor vs Midshipmen",62
 163378,"Timbucktoo Sector 0060","Academy Test",43
+163388,"RomII Sector 0060","Teams of 3",101
+163394,"Maares 3 Sector 0060","Standard",105
 163499,"Sarol Sector 0060","Classic",98
+163581,"Hypoguria Sector 0060","Giant Campaign Melee - Sphere",134
 163656,"PED 3","Custom Game",70
 163719,"Mao 1 Sector 0060","Mentor vs Midshipmen",75
 163807,"Edna Sector 0060","Standard",82
 163943,"Jaws 3D Sector 0060","Mentor vs Midshipmen",80
+164089,"Fornax Sector 0060","Classic",111
 164101,"Nekkar 9 Sector 0060","Standard Beginners",57
 164103,"Wrong Planet Sector 0060","Mentor vs Midshipmen",76
 164626,"Cuhia Sector 0060","Giant Campaign Melee - Sphere",87
 164672,"Yukindo Sector 0060","Classic",56
+164693,"The Aquarius War","Championship Match",160
 164728,"Zimphfir Sector 0060","Standard Beginners",44
 164742,"Kapteyn's Planet Sector 0060","Standard",55
+164806,"Pyxis Sector 0060","Classic",102
 165085,"Moth Ball Sector 0060","Mentor vs Midshipmen",80
 165160,"Heiffer Sector 0060","Academy Test",29
 165173,"Izar Sector 0060","Classic",73
 165195,"Embassy Planet Sector 0060","Campaign",88
 165204,"Chirpsithra Sector 0060","Mentor vs Midshipmen",74
+165249,"New New York Sector 0060","Standard",95
 165333,"Anditius Sector 0060","Mentor vs Midshipmen",80
+165410,"Delta Pegasi Sector 0060","Standard Beginners",114
 165427,"Holstein Sector 0060","Classic",78
 165462,"Beginner Plus","Custom Game",98
 165539,"Fantasia Sector 0060","Mentor vs Midshipmen",80
 165630,"Lola 23a Sector 0060","Standard Beginners",73
+165634,"Taulus Sector 0060","Standard",138
+165715,"Alienation Sector 0060","Giant Campaign Melee - Sphere",120
 165742,"Noobie Sector 1.1","Custom Game",66
 165748,"Amascusin Sector 0060","Mentor vs Midshipmen",62
 165768,"Tunisia Sector 0060","Academy Test",38
 165804,"Bonzi Sector 0061","Classic",91
+165882,"The Daily Campaign Game","Custom Game",240
 165958,"Alkes Sector 0061","Academy Test",86
 166125,"Vulcan Sector 0061","Mentor vs Midshipmen",80
+166152,"Kura Sector 0061","Classic",154
+166157,"Gorn Sector 0061","Standard",93
 166190,"Sticker Me PED Campaign Game","Custom Game",94
 166326,"Down World Sector 0061","Standard Beginners",62
 166398,"Eden Sector 0061","Mentor vs Midshipmen",80
+166448,"Crab Sector 0061","Classic",96
 166484,"Under World Sector 0061","Mentor vs Midshipmen",52
 166531,"Limball Sector 0061","Standard Beginners",90
 166551,"New Sinewnew Sector 0061","Giant Campaign Melee - Sphere",100
+166575,"Bellmont Sector 0061","Campaign",89
 166592,"Scorpius Sector 0061","Mentor vs Midshipmen",64
+166602,"Bernices Sector 0061","Classic",108
 166770,"Hiperborealia Sector 0061","Classic",77
+166809,"Nixon Sector 0061","Standard",92
 166842,"Laseria Sector 0061","Standard Beginners",72
 166907,"Pacifica Sector 0061","Classic",88
 166973,"Antilia Ophi Sector 0061","Mentor vs Midshipmen",80
 167005,"Milon Sector 0061","Standard Beginners",58
+167083,"Antonia Sector 0061","Classic",102
 167085,"Mini Campaign","Custom Game",67
 167111,"Zippi Sector 0061","Mentor vs Midshipmen",80
 167177,"Innes Sector 0061","Mentor vs Midshipmen",80
+167217,"Beginners only","Custom Game",80
+167238,"Jernsey Sector 0061","Standard",177
 167254,"Kaye's World Sector 0061","Standard Beginners",93
 167275,"Thi Alpha Chi Sector 0061","Academy Test",37
 167336,"Kiloteria Sector 0061","Mentor vs Midshipmen",62
+167344,"Organia 3 Sector 0061","Classic",150
 167509,"Hiperborealia Sector 0061","Standard Beginners",49
 167554,"Corboda Vh 243 Sector 0061","Mentor vs Midshipmen",73
+167576,"Texiconia Sector 0061","Classic",164
 167581,"Corona Sector 0061","Giant Campaign Melee - Sphere",92
+167677,"Telalia Sector 0061","Standard",116
 167712,"Euro Disney World Sector 0061","Mentor vs Midshipmen",55
 167805,"Smith's World Sector 0061","Mentor vs Midshipmen",58
+167875,"Aranumia Sector 0061","Classic",99
 167935,"Sif Sector 0061","Mentor vs Midshipmen",80
 168025,"Mann Sector 0061","Mentor vs Midshipmen",74
 168029,"World of Wonder Sector 0061","Standard Beginners",75
+168073,"Captaincy Prerequisites - Classic with Fog","Custom Game",114
+168119,"Difficulty 1.0 + Campaign","Custom Game",100
 168229,"Delta Delta Delta Sector 0061","Classic",56
 168243,"Milab Sector 0061","Standard",79
+168297,"Talos Sector 0061","Stealth",108
 168602,"Alkalurops 459 Sector 0061","Mentor vs Midshipmen",80
 168668,"Black Beard Sector 0061","Academy Test",28
 168694,"Gamma Hydra Sector 0061","Standard Beginners",61
 168772,"Blauvehr Sector 0061","Mentor vs Midshipmen",53
+168829,"Dagaba Sector 0061","Classic",102
+168851,"Lone Wolf I","Custom Game",96
 168938,"Columbo Sector 0061","Classic",79
 168955,"Castor Sector 0061","Mentor vs Midshipmen",80
 169004,"Another World Sector 0061","Mentor vs Midshipmen",76
@@ -2738,93 +2818,465 @@
 169117,"The Right Planet Sector 0061","Mentor vs Midshipmen",80
 169270,"Achernar Sector 0061","Standard Beginners",55
 169323,"Vela Sector 0061","Mentor vs Midshipmen",80
+169416,"Carillon Sector 0062","Classic",113
+169417,"Mekbuda Sector 0062","Standard Senior Officers",169
+169422,"Play Every Day (PED) HIGHLANDER ","Custom Game",80
 169437,"Phoenix Sector 0062","Mentor vs Midshipmen",48
+169519,"Cleopatra Sector 0062","Standard Beginners",105
 169525,"Beginner ++","Custom Game",66
 169576,"Beginner ++ Good Resources","Custom Game",91
 169646,"Taurus Sector 0062","Standard",72
+169663,"Gothos Sector 0062","Classic",107
+169683,"Googelplex Sector 0062","Campaign",128
+169710,"Erecka Sector 0062","Giant Campaign Melee - Sphere",163
+169773,"Ceti Alpha one Sector 0062","Captains Campaign",112
 169805,"Arkham Sector 0062","Standard Beginners",63
 169885,"Beta Xela Sector 0062","Mentor vs Midshipmen",71
+169982,"Melpedous Sector 0062","Classic",84
 170145,"Zol Sector 0062","Mentor vs Midshipmen",75
 170147,"Virgo Ceti 5 Sector 0062","Standard Beginners",72
 170209,"Atari 1000 Sector 0062","Academy",29
+170227,"Muracha Sector 0062","Classic",116
 170236,"Helios Sector 0062","Standard",61
 170272,"Krypton Sector 0062","Mentor vs Midshipmen",45
 170345,"Chanda M Sector 0062","Standard Beginners",63
 170411,"Barnard's Sector 0062","Mentor vs Midshipmen",78
+170495,"Niopedia Sector 0062","Classic",100
 170498,"Zarop-Opar Sector 0062","Mentor vs Midshipmen",54
+170508,"Cumo Sector 0062","Standard Intermediate",89
 170516,"Kahless Sector 0062","Standard Beginners",52
+170564,"Epsilon Indi Sector 0062","Captains Campaign",95
+170636,"Caelum Sector 0062","Classic",89
 170655,"Remit Sector 0062","Standard",68
+170789,"Isolation Agenda","Custom Game",171
+170815,"Camelopardus 345 Sector 0062","Standard Senior Officers",130
 170855,"Hide and Seek","Custom Game",87
+170901,"Klamuth Sector 0062","Giant Campaign Melee - Sphere",118
 170953,"Cassiopeia Sector 0062","Mentor vs Midshipmen",72
+171029,"Bubble World Sector 0062","Standard Beginners",93
+171046,"Tyre Sector 0062","Standard",149
 171054,"Cani Ceti 1 Sector 0062","Academy",40
 171126,"Casablanca Sector 0062","Mentor vs Midshipmen",80
+171146,"Nyphidonia Sector 0062","Classic",85
+171215,"Orion Sector 0062","Standard Beginners",92
 171227,"Dark World Sector 0062","Academy",43
+171294,"Van Maanan's Planet Sector 0062","Giant Campaign Melee - Sphere",111
 171330,"Exxonia Sector 0062","Mentor vs Midshipmen",46
+171367,"New Sinewnew Sector 0062","Standard",144
+171463,"Colony 6 Sector 0062","Classic",81
 171482,"Alpha's Star Sector 0062","Mentor vs Midshipmen",58
+171507,"Basketball Sector 0062","Standard Beginners",79
+171607,"Campaign Features","Custom Game",75
 171671,"Memory Alpha Sector 0062","Standard Beginners",68
+171751,"Corvus Sector 0062","Giant Campaign Melee - Sphere",172
 171758,"Minhabotia Sector 0062","Academy",40
+171761,"Cevius Sector 0062","Teams of 2",75
+171793,"The Daily Planet Sector 0062","Classic",70
+171876,"Disney World Sector 0062","Classic",107
+171888,"Sirius A Sector 0062","Standard",124
+172017,"Rigel Sector 0062","Classic",105
+172049,"Tataween Sector 0062","Standard Beginners",89
 172055,"New Albania Sector 0062","Mentor vs Midshipmen",49
 172184,"Adobee Sector 0063","Mentor vs Midshipmen",27
+172206,"Krell Sector 0063","Classic",95
 172324,"Kennedy Center Sector 0063","Academy",45
+172364,"Ve'vla Vegus Sector 0063","Giant Campaign Melee - Sphere",102
+172372,"Outer World Sector 0063","Standard Beginners",90
 172421,"Arkto Sector 0063","Mentor vs Midshipmen",35
+172467,"Albireo Sector 0063","Classic",76
 172556,"Flatland Sector 0063","Academy",30
 172642,"Venturia Sector 0063","Mentor vs Midshipmen",36
+172645,"Farpoint Sector 0063","Standard",110
+172735,"Forbidden Planet Sector 0063","Standard Beginners",71
 172751,"Alcatraz Sector 0063","Academy",42
+172796,"B.D. -12 4523 Sector 0063","Classic",159
+172811,"Orionis II Sector 0063","Campaign",95
 172873,"terangui Sector 0063","Mentor vs Midshipmen",59
+172898,"1st Thrane Sector& Open Captains Table& Daily","Custom Game",160
+172908,"Pearl Sector 0063","Captains Campaign",82
+172971,"Alpha Quadrant Saga: The Klingon Civil War","Custom Game",80
+172991,"Nekkar Sector 0063","Classic",82
+173093,"New Alaska Sector 0063","Mentor vs Midshipmen",78
+173095,"Vogon Sector 0063","Giant Campaign Melee - Sphere",124
 173261,"Brook's World Sector 0063","Mentor vs Midshipmen",42
 173262,"Morning Star Sector 0063","Academy",53
+173366,"Alexandria Sector 0063","Teams of 2",82
+173382,"Crete Sector 0063","Standard Beginners",78
 173383,"Mileb Sector 0063","Mentor vs Midshipmen",42
+173398,"Wally World Sector 0063","Classic",113
+173434,"Tarekoc Sector 0063","Standard",63
 173564,"Cleandria Sector 0063","Mentor vs Midshipmen",45
+173571,"Kugo Sector 0063","Classic",98
+173579,"Shaw Sector 0063","Standard Beginners",99
+173676,"Estes Sector 0063","Classic",109
 173701,"Regenal Sector 0063","Mentor vs Midshipmen",77
+173896,"Isolation Agenda III","Custom Game",152
 173911,"Kchipreesee Sector 0063","Mentor vs Midshipmen",55
 173997,"Bellatrix Sector 0063","Academy",44
 174047,"Centouria Sector 0063","Mentor vs Midshipmen",45
+174050,"Roll Sector 0063","Standard Beginners",86
+174198,"Kzoz Sector 0063","Giant Campaign Melee - Sphere",107
 174200,"Heiffer Sector 0063","Mentor vs Midshipmen",66
+174242,"Nervondonia Sector 0063","Classic",60
+174354,"Cestus 3 Sector 0063","Standard",105
 174434,"Eridani Sector 0063","Mentor vs Midshipmen",62
+174456,"Red Planet Sector 0063","Classic",89
 174479,"Washington Sector 0063","Academy",55
+174586,"Challenger 5 Sector 0063","Standard Beginners",92
+174602,"Carnage ","Custom Game",102
 174638,"Canes Ceti Sector 0063","Mentor vs Midshipmen",32
+174647,"Lost Planet Sector 0063","Teams of 3",59
 174761,"Er Rakis Sector 0063","Mentor vs Midshipmen",53
 174883,"Lynx Ceti Sector 0063","Academy",61
+174928,"Planets 209 \","Custom Game",84
+174933,"Arigo Sector 0063","Standard Beginners",73
 175016,"Colony 7 Sector 0063","Mentor vs Midshipmen",36
+175049,"Bodonia Sector 0063","Classic",58
+175078,"Mi-Glowdonia Sector 0063","Standard",95
 175275,"Atlantia 2 Sector 0063","Mentor vs Midshipmen",51
+175360,"Fornax Sector 0064","Standard Intermediate",82
+175418,"Alpha Beta Sector 0064","Standard Beginners",82
 175475,"Fresno Sector 0064","Mentor vs Midshipmen",57
 175489,"Center Sector 0064","Academy",60
+175498,"Scoptor Sector 0064","Classic",106
+175626,"Gorbie World Sector 0064","Standard",104
+175670,"Delta Sector 0064","Standard Beginners",81
 175788,"Cave World Sector 0064","Mentor vs Midshipmen",68
+175872,"Alycyone Sector 0064","Giant Campaign Melee - Sphere",81
+175874,"Pisro Sector 0064","Standard",71
+175974,"First Hosted Game","Custom Game",82
 176020,"Turning World Sector 0064","Mentor vs Midshipmen",53
 176056,"Fussbar Sector 0064","Academy",28
+176069,"Tanascuis Sector 0064","Standard Beginners",67
 176121,"Honda Sector 0064","Mentor vs Midshipmen",69
+176140,"Green Planet Sector 0064","Classic",88
+176264,"Bendotex Sector 0064","Standard Beginners",86
 176305,"Koruim Sector 0064","Mentor vs Midshipmen",41
+176448,"The Daily Planet Sector 0064","Campaign",97
+176483,"Gorn Sector 0064","Standard Beginners",81
 176538,"Googelplex Sector 0064","Academy",45
+176615,"Hypoguria Sector 0064","Classic",74
 176647,"Ravenhurst Sector 0064","Mentor vs Midshipmen",43
+176719,"Jernsey Sector 0064","Giant Campaign Melee - Sphere",121
+176794,"Rappaport Sector 0064","Standard Beginners",65
 176836,"Portsmouth Sector 0064","Mentor vs Midshipmen",44
+176905,"Gathonia Sector 0064","Mentor vs Midshipmen",72
+177037,"Kazh Sector 0064","Mentor vs Midshipmen",64
+177046,"Star Curcuit Sector 0064","Standard Beginners",75
+177062,"New Los Banos Sector 0064","Classic",125
 177220,"NGC 2403-A Sector 0064","Academy",63
 177221,"Cylon Sector 0064","Mentor vs Midshipmen",43
+177332,"Betelgeuse Sector 0064","Teams of 3",111
 177417,"Vogon Sector 0064","Mentor vs Midshipmen",53
+177482,"New Mars Sector 0064","Standard Beginners",76
+177524,"Sif Sector 0064","Mentor vs Midshipmen",80
+177535,"Pyxis Sector 0064","Classic",102
+177592,"Rocky 12 Sector 0064","Standard",119
 177728,"Cladious Sector 0064","Mentor vs Midshipmen",50
+177782,"Lyra Sector 0064","Standard Beginners",130
+177882,"Wrigley Sector 0064","Classic",68
+177888,"Eranda Sector 0064","Mentor vs Midshipmen",80
+177962,"Tesla Sector 0064","Mentor vs Midshipmen",80
 178003,"Leshy Sector 0064","Standard Beginners",38
 178018,"Cutimurium Sector 0064","Academy",39
+178071,"New New Jersy Sector 0064","Mentor vs Midshipmen",63
+178146,"Thi Alpha Chi Sector 0064","Standard Beginners",87
 178274,"Vehrnoch Sector 0064","Mentor vs Midshipmen",46
 178294,"Mirak Sector 0064","Academy",32
+178491,"Fred Sector 0064","Standard",76
 178495,"Chrome Sector 0064","Mentor vs Midshipmen",49
+178507,"Ali Zef Sector 0064","Standard Beginners",50
+178527,"Tholia Sector 0064","Classic",95
 178594,"Football Sector 0064","Mentor vs Midshipmen",47
 178715,"Regula Sector 0064","Academy",47
 178726,"Caelum Sector 0064","Mentor vs Midshipmen",36
+178901,"Ophiuchi Sector 0064","Standard Beginners",84
+178919,"Grus Sector 0064","Mentor vs Midshipmen",51
+179099,"Gamma Delphi Sector 0065","Classic",134
 179176,"Dagaba Sector 0065","Mentor vs Midshipmen",37
+179310,"Beta Auriga Sector 0065","Standard Beginners",50
+179324,"New Moscow Sector 0065","Captains Campaign",110
 179334,"Garfield Sector 0065","Mentor vs Midshipmen",63
+179497,"Kapteyn's Planet Sector 0065","Classic",140
 179511,"Tesmond Sector 0065","Academy",56
 179515,"Sigma 2398 A Sector 0065","Mentor vs Midshipmen",38
+179524,"Lacerta Sector 0065","Standard Beginners",63
 179771,"Mileb Sector 0065","Academy",38
+179817,"Launa Planet Sector 0065","Teams of 2",82
 179984,"Lynx Ceti Sector 0065","Mentor vs Midshipmen",51
+180013,"Hallone Sector 0065","Standard Beginners",76
+180092,"Tanascuis Sector 0065","Classic",71
+180118,"Kumar Sector 0065","Standard",101
+180122,"Indy Sector 0065","Campaign",111
+180124,"Uri Sector 0065","Giant Campaign Melee - Sphere",76
+180177,"Zephyr sector 2","Custom Game",106
 180195,"Alexandria Sector 0065","Mentor vs Midshipmen",49
 180210,"Gamma 400 Sector 0065","Academy",70
+180285,"New Jupiter Sector 0065","Mentor vs Midshipmen",71
+180292,"Lorah-2 Sector 0065","Standard Beginners",91
+180389,"Gamma Sector 0065","Mentor vs Midshipmen",80
+180483,"Time Planet Sector 0065","Classic",87
 180549,"Teris-Ceti 9 Sector 0065","Academy",33
 180606,"Anditius Sector 0065","Mentor vs Midshipmen",51
+180762,"Azores Sector 0065","Standard Senior Officers",81
+180789,"Alioth Sector 0065","Standard Beginners",72
 180831,"Euro Disney World Sector 0065","Academy",61
 180854,"Lacedodia Sector 0065","Mentor vs Midshipmen",38
 181017,"Timbucktoo Sector 0065","Academy",45
+181097,"Gotti's Hideout Sector 0065","Mentor vs Midshipmen",65
+181116,"Vendor Sector 0065","Standard Beginners",82
+181263,"Potatoe Sector 0065","Mentor vs Midshipmen",49
+181285,"Lynch Sector 0065","Standard Beginners",45
+181333,"Galibor's World Sector 0065","Classic",96
 181478,"Orionis I Sector 0065","Academy",53
+181483,"Mao 2 Sector 0065","Giant Campaign Melee - Sphere",85
+181505,"Lalande 21185 Sector 0065","Teams of 3",93
+181528,"Karelia Sector 0065","Standard",77
+181583,"Rocky 12 Sector 0065","Classic",108
+181636,"Pedmont Sector 0065","Mentor vs Midshipmen",51
+181731,"Rator Sector 0065","Standard Beginners",67
+181736,"Kumar Sector 0065","Academy",90
+181813,"Ent World Sector 0065","Mentor vs Midshipmen",60
+181832,"Procyon 9 Sector 0065","Academy",92
+181977,"Helms Deep Sector 0065","Mentor vs Midshipmen",55
+182020,"YouTwo Sector 0065","Standard",78
+182031,"New New Mexico Sector 0065","Standard Beginners",75
 182136,"Feringilitai Sector 0066","Academy",45
+182140,"Columbo Sector 0066","Classic",91
+182158,"Itarius Sector 0066","Mentor vs Midshipmen",58
+182368,"Pacifica Sector 0066","Mentor vs Midshipmen",80
 182389,"Organia Sector 0066","Academy",48
+182454,"New Wisconsin Sector 0066","Standard Beginners",73
+182478,"Twin Planet Sector 0066","Standard",75
+182520,"New Moscow Sector 0066","Mentor vs Midshipmen",43
+182564,"Fornax Sector 0066","Giant Campaign Melee - Sphere",106
+182684,"New Morocco Sector 0066","Mentor vs Midshipmen",52
+182707,"Kzin Sector 0066","Standard Beginners",120
 182730,"Carsonio Sector 0066","Academy",52
+182759,"Holloween Sector 0066","Classic",92
+182784,"Captain's Toy Box","Custom Game",69
 182962,"Ceti helios Sector 0066","Academy",47
+182972,"Cor Caroli Sector 0066","Mentor vs Midshipmen",45
+183048,"Alienation Sector 0066","Campaign",99
+183177,"Tniacth Sector 0066","Standard Beginners",88
+183245,"Nekkar Sector 0066","Mentor vs Midshipmen",58
+183370,"Centrum Sector 0066","Classic",80
 183450,"Delphidia Sector 0066","Academy",36
+183471,"Ikaal Sector 0066","Mentor vs Midshipmen",49
+183476,"Cattlian Sector 0066","Standard Beginners",67
+183497,"New Boston Sector 0066","Standard",85
+183562,"Baby Melee (Mega Blitz?)","Custom Game",80
+183588,"Another World Sector 0066","Standard Intermediate",74
+183637,"Part Ofyour World Sector 0066","Mentor vs Midshipmen",59
+183666,"Hudrak-12 Sector 0066","Academy",36
+183710,"Cimtar Sector 0066","Classic",103
+183831,"Bundy Sector 0066","Giant Campaign Melee - Sphere",64
+183862,"Texiconia Sector 0066","Mentor vs Midshipmen",58
+184063,"Bubble World Sector 0066","Mentor vs Midshipmen",49
+184126,"Wooky World Sector 0066","Classic",72
+184162,"DH 17 - The Faithful Hound","Custom Game",48
+184204,"Tarekoc Sector 0066","Standard Beginners",75
+184322,"Bellmont Sector 0066","Mentor vs Midshipmen",80
+184565,"Baseball Sector 0066","Academy",52
+184576,"Wrong Planet Sector 0066","Standard Beginners",80
+184589,"Bortex Sector 0066","Mentor vs Midshipmen",80
+184630,"Forel Sector 0066","Classic",73
+184792,"Ceros Sector 0066","Mentor vs Midshipmen",40
+184854,"Ka'Hat Sector 0066","Academy",52
+184935,"Ice Planet Sector 0067","Mentor vs Midshipmen",77
+184950,"Cue Ball Sector 0067","Academy",43
+185016,"The Man's Mineral Bash","Custom Game",61
+185018,"Madonna Sector 0067","Classic",80
+185035,"Saiph Sector 0067","Academy",77
+185049,"Chort Sector 0067","Standard Beginners",97
+185147,"New Alaska Sector 0067","Mentor vs Midshipmen",41
+185206,"Pearl Sector 0067","Academy",75
+185246,"Sarol Sector 0067","Standard Beginners",73
+185317,"Great White Planet Sector 0067","Classic",65
+185319,"Serpens Caput 759 Sector 0067","Mentor vs Midshipmen",56
+185474,"Big Dave's Planet Sector 0067","Mentor vs Midshipmen",58
+185485,"Sol 3 Sector 0067","Standard Beginners",57
+185531,"Colony 5 Sector 0067","Standard",115
+185553,"Heavy World Sector 0067","Classic",83
+185620,"Kthistlmup Sector 0067","Mentor vs Midshipmen",35
+185657,"Delta Sector 0067","Standard Beginners",92
+185805,"Bodonia Sector 0067","Horwasp Alpha Campaign Melee",78
+185940,"Horwasp Attack!!","Custom Game",72
+186064,"Mao 3 Sector 0067","Mentor vs Midshipmen",53
+186074,"New Chicago Sector 0067","Horwasp Alpha Campaign Melee",81
+186088,"INVASION","Custom Game",52
+186090,"Dark World Sector 0067","Academy",48
+186106,"Virgo Pegasi Sector 0067","Standard Beginners",86
+186350,"Edna Sector 0067","Academy",48
+186370,"Forel Sector 0067","Classic",111
+186430,"Deep 1 Sector 0067","Mentor vs Midshipmen",80
+186470,"Nothing Planet Sector 0067","Standard",69
+186682,"Delta Delta Delta Sector 0067","Standard Beginners",89
+186774,"Gorbie World Sector 0067","Classic",53
+186805,"Ordaz Sector 0067","Horwasp Alpha Campaign Melee",61
+186867,"Sumit Sector 0067","Standard Beginners",105
+186958,"Mann Sector 0067","Mentor vs Midshipmen",58
+187115,"Ve'vla Vegus Sector 0067","Academy",44
+187211,"Alcor Sector 0067","Academy",60
+187216,"terangui Sector 0067","Standard",107
+187234,"Fantasia Sector 0067","Mentor vs Midshipmen",31
+187237,"Oakhurst Sector 0067","Standard Beginners",112
+187279,"Carnage II","Custom Game",36
+187477,"Geo Sigma Sector 0067","Standard",77
+187492,"Capricornus Sector 0067","Mentor vs Midshipmen",64
+187494,"Gathonia Sector 0067","Standard Beginners",57
+187569,"Alpha Quadrant Saga: The Orion Problem","Custom Game",80
+187601,"R leonis 7 Sector 0067","Academy",52
+187625,"New Georgia Sector 0067","Teams of 3",90
+187685,"Libra Sector 0067","Standard Beginners",56
+187735,"Banshee's Planet Sector 0067","Mentor vs Midshipmen",51
+187750,"Innes Sector 0067","Classic",71
+187839,"Sirius A Sector 0067","Academy",39
+187884,"Zimphfir Sector 0067","Classic",39
+187967,"Memphis Sector 0067","Mentor vs Midshipmen",67
+188024,"Jaws 3D Sector 0067","Academy",59
+188052,"Launa Planet Sector 0067","Standard Beginners",45
+188086,"Gorath Sector 0067","Classic",55
+188147,"AC 71 Sector 0067","Standard",106
+188160,"Vega Sector 0067","Mentor vs Midshipmen",80
+188165,"New Sinewnew Sector 0067","Classic",70
+188184,"Packlidia Sector 0067","Standard Beginners",61
+188216,"Milon Sector 0067","Horwasp Alpha Campaign Melee",112
+188306,"Selah Sector 0068","Standard",41
+188375,"Colony 10 Sector 0068","Mentor vs Midshipmen",75
+188597,"Cassiopeia Sector 0068","Standard Beginners",51
+188629,"New Philli Sector 0068","Mentor vs Midshipmen",80
+188789,"Cleopatra Sector 0068","Standard",62
+188832,"Kojak City Sector 0068","Mentor vs Midshipmen",80
+188872,"Memory Alpha Sector 0068","Standard Beginners",71
+189038,"Spaceball Sector 0068","Stealth",58
+189105,"Up World Sector 0068","Academy",47
+189177,"Mob World Sector 0068","Mentor vs Midshipmen",80
+189240,"Delta Pegasi Sector 0068","Classic",92
+189257,"Alioth Sector 0068","Horwasp Alpha Campaign Melee",96
+189277,"Owen 1717 Sector 0068","Standard Beginners",76
+189342,"Cygnet Sector 0068","Mentor vs Midshipmen",41
+189478,"Moriak Sector 0068","Academy",51
+189532,"Barnard's Sector 0068","Mentor vs Midshipmen",50
+189539,"Pearl Sector 0068","Academy",48
+189627,"Smith's World Sector 0068","Mentor vs Midshipmen",36
+189766,"Chispix Sector 0068","Academy",46
+189803,"Murphrid 432 Sector 0068","Mentor vs Midshipmen",80
+189860,"Washington Sector 0068","Standard",55
+189864,"Virgo Ceti 5 Sector 0068","Standard Beginners",86
+189865,"Sinatra's Keep Sector 0068","Horwasp Alpha Campaign Melee",71
+190001,"Sheegupt Sector 0068","Academy",37
+190015,"Hiperborealia Sector 0068","Mentor vs Midshipmen",72
+190150,"Sigma 1212 Sector 0068","Classic",62
+190160,"Mills Sector 0068","Academy",44
+190228,"Gamma Sector 0068","Mentor vs Midshipmen",53
+190493,"Sussex Sector 0068","Mentor vs Midshipmen",44
+190591,"Remit Sector 0068","Academy",38
+190641,"Moriak Sector 0068","Classic",84
+191078,"Alkalurops 459 Sector 0068","Standard Beginners",73
+191106,"Cuhia Sector 0069","Mentor vs Midshipmen",62
+191347,"Kruger 60 A Sector 0069","Mentor vs Midshipmen",80
+191477,"Arkham Sector 0069","Standard Beginners",80
+191524,"Rambo 3 Sector 0069","Academy",47
+191638,"Kattia Sector 0069","Academy",72
+191649,"Galibor's World Sector 0069","Mentor vs Midshipmen",80
+191735,"Thorak Sector 0069","Standard Beginners",73
+191839,"YouTwo Sector 0069","Mentor vs Midshipmen",61
+192071,"Sanstrisious Sector 0069","Mentor vs Midshipmen",62
+192247,"Mao 2 Sector 0069","Academy",51
+192262,"Milab Sector 0069","Mentor vs Midshipmen",34
+192321,"Welcome to Debris World","Custom Game",65
+192366,"New Ireland Sector 0069","Standard Beginners",63
+192553,"Upikarium Sector 0069","Mentor vs Midshipmen",52
+192595,"New Wisconsin Sector 0069","Standard Beginners",63
+192746,"Hercules Sector 0069","Academy",49
+192807,"Helios Sector 0069","Mentor vs Midshipmen",38
+193074,"Planet Gordan Sector 0069","Mentor vs Midshipmen",75
+193149,"Star Curcuit Sector 0069","Standard Beginners",83
+193175,"Colony 10 Sector 0069","Academy",52
+193201,"RomII Sector 0069","Standard",80
+193294,"Albireo Sector 0069","Classic",69
+193393,"Bimbo Sector 0069","Mentor vs Midshipmen",80
+193427,"2016 PED CHAPIONSHIP","Custom Game",115
+193428,"Mao 6 Sector 0069","Classic",80
+193548,"Helms Deep Sector 0069","Standard Beginners",62
+193555,"Innes Sector 0069","Standard",64
+193620,"Kattia Sector 0069","Mentor vs Midshipmen",57
+193919,"Scorpius Sector 0069","Standard Beginners",62
+193942,"Holstein Sector 0069","Mentor vs Midshipmen",55
+194131,"Lorthidonia Sector 0069","Mentor vs Midshipmen",60
+194304,"New Philli Sector 0070","Academy",65
+194386,"Yukindo Sector 0070","Mentor vs Midshipmen",49
+194438,"The Right Planet Sector 0070","Academy",73
+194643,"Gotti's Hideout Sector 0070","Mentor vs Midshipmen",80
+194740,"Tanascuis Sector 0070","Standard",60
+194905,"Dunwich Sector 0070","Mentor vs Midshipmen",54
+195147,"Gamma Sector 0070","Academy",45
+195242,"Cuhia Sector 0070","Mentor vs Midshipmen",80
+195275,"Omicron 2 Eridani Sector 0070","Stealth",55
+195285,"Gamma Sector 0070","Horwasp Alpha Campaign Melee",81
+195445,"Kobol Sector 0070","Mentor vs Midshipmen",58
+195606,"Fussbar Sector 0070","Standard Beginners",65
+195850,"Vogon Sector 0070","Mentor vs Midshipmen",77
+196033,"Heiffer Sector 0070","Standard Beginners",65
+196208,"Olive Sector 0070","Mentor vs Midshipmen",78
+196293,"Capricornus Sector 0070","Academy",73
+196328,"Gamma Ti Sid Sector 0070","Classic",65
+196627,"Omicron 2 Eridani Sector 0070","Academy",59
+196647,"Corboda Vh 243 Sector 0070","Mentor vs Midshipmen",64
+196882,"Strange World Sector 0070","Mentor vs Midshipmen",80
+197017,"Soccerball Sector 0070","Academy",54
+197247,"Mud Planet Sector 0070","Mentor vs Midshipmen",39
+197351,"Capricornus Sector 0070","Academy",54
+197637,"Innsmouth Sector 0070","Mentor vs Midshipmen",56
+197880,"Chirpsithra Sector 0071","Standard Beginners",52
+197922,"Omicron 2 Eridani Sector 0071","Mentor vs Midshipmen",80
+198015,"Canes Delta Sector 0071","Academy",37
+198391,"Cheeseball Sector 0071","Mentor vs Midshipmen",45
+199087,"Antilia Sector 0071","Academy",59
+199144,"Elvis Sector 0071","Mentor vs Midshipmen",40
+199513,"Cheeseball Sector 0071","Mentor vs Midshipmen",57
+200029,"Rocky 12 Sector 0071","Horwasp Alpha Campaign Melee",51
+200462,"Remus Sector 0071","Academy",58
+200639,"Kugo Sector 0071","Mentor vs Midshipmen",60
+201068,"Chispix Sector 0071","Standard",55
+201731,"Dunwich Sector 0071","Academy",43
+202151,"Doggle Sector 0071","Mentor vs Midshipmen",57
+202356,"Home Sector 0071","Mentor vs Midshipmen",40
+202367,"Beverly 90120 Sector 0071","Academy",58
+202942,"Alycyone Sector 0071","Mentor vs Midshipmen",53
+203650,"Galibor's World Sector 0071","Academy",55
+204066,"Holstein Sector 0072","Mentor vs Midshipmen",52
+204907,"Lalande 21185 Sector 0072","Mentor vs Midshipmen",46
+205435,"Antilia Sector 0072","Mentor vs Midshipmen",35
+205695,"Omicron 2 Eridani Sector 0072","Mentor vs Midshipmen",43
+205734,"Antilia Sector 0072","Academy",51
+205905,"Tarsus Sector 0072","Standard",41
+206004,"Omicron 2 Eridani Sector 0072","Mentor vs Midshipmen",50
+206249,"Kugo Sector 0072","Mentor vs Midshipmen",73
+206379,"Mobious Sector 0072","Academy",54
+206708,"Memphis Sector 0072","Mentor vs Midshipmen",54
+206948,"Colony 5 Sector 0072","Academy",38
+207202,"New Philli Sector 0072","Mentor vs Midshipmen",47
+207773,"Galibor's World Sector 0072","Mentor vs Midshipmen",53
+208042,"Adebron Sector 0072","Mentor vs Midshipmen",46
+208313,"Soccerball Sector 0072","Academy",36
+208495,"Amazonia Sector 0072","Academy",49
+208542,"King of 8 - Blitz of 8","Custom Game",53
+208739,"Big World Sector 0072","Academy",61
+208752,"Elvis Sector 0072","Mentor vs Midshipmen",70
+209364,"Strange World Sector 0073","Mentor vs Midshipmen",44
+209600,"Remus Sector 0073","Mentor vs Midshipmen",39
+209654,"The Right Planet Sector 0073","Academy",45
+209753,"Alkes Sector 0073","Academy",69
+210156,"Antilia Sector 0073","Mentor vs Midshipmen",64
+210308,"Var 3 Sector 0073","Mentor vs Midshipmen",45
+210375,"YouTwo Sector 0073","Academy",40
+210482,"Cheeseball Sector 0073","Mentor vs Midshipmen",44
+210842,"Holstein Sector 0073","Academy",45
+211419,"Phoenix Sector 0073","Academy",28
+212333,"Canes Delta Sector 0073","Academy",67
+212520,"New Sinewnew Sector 0074","Academy",72
+212764,"Cheeseball Sector 0074","Academy",47
+212865,"Galaxtia Sector 0074","Academy",45
+213136,"URSA Beta Sector 0074","Mentor vs Midshipmen",62

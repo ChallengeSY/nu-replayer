@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.28-dev (Alpha 19)"
+const BROWSER_LONG = "Nu Replayer 0.28 (Alpha 19)"
 
 #IFNDEF __FORCE_OFFLINE__
 /'

@@ -1,0 +1,40 @@
+"Category","ID","Tech","Hull","kT","mc","Du","Tr","Mo"
+"Engine",1,1,"StarDrive 1",0,1,1,5,0
+"Engine",2,2,"StarDrive 2",0,2,2,5,1
+"Engine",3,3,"StarDrive 3",0,3,2,3,5
+"Engine",4,4,"SuperStarDrive 4",0,10,3,3,7
+"Engine",5,5,"Nova Drive 5",0,25,3,3,7
+"Engine",6,6,"HeavyNova Drive 6",0,53,3,3,15
+"Engine",7,7,"Quantum Drive 7",0,170,3,3,15
+"Engine",8,9,"Hyper Drive 8",0,200,13,3,25
+"Engine",9,10,"Transwarp Drive",0,300,16,3,35
+"Beam",1,1,"Laser",1,1,0,1,0
+"Beam",2,1,"X-Ray Laser",1,2,0,1,0
+"Beam",3,2,"Plasma Bolt",2,5,2,1,0
+"Beam",4,3,"Blaster",4,10,12,1,1
+"Beam",5,4,"Positron Beam",3,12,12,1,5
+"Beam",6,5,"Disruptor",4,13,12,1,1
+"Beam",7,6,"Heavy Blaster",7,31,12,1,14
+"Beam",8,7,"Phaser",5,35,12,1,30
+"Beam",9,8,"Heavy Disruptor",7,36,17,1,37
+"Beam",10,10,"Heavy Phaser",6,54,12,1,55
+"Tube",1,1,"Mark 1 Photon",2,1,1,1,0
+"Tube",2,2,"Proton torp",2,4,0,1,0
+"Tube",3,3,"Mark 2 Photon",2,4,4,1,0
+"Tube",4,3,"Gamma Bomb",4,6,3,1,1
+"Tube",5,4,"Mark 3 Photon",2,5,1,1,5
+"Tube",6,5,"Mark 4 Photon",2,20,4,1,1
+"Tube",7,6,"Mark 5 Photon",3,57,7,1,14
+"Tube",8,7,"Mark 6 Photon",2,100,2,1,7
+"Tube",9,8,"Mark 7 Photon",3,120,3,1,8
+"Tube",10,10,"Mark 8 Photon",3,190,1,1,9
+"Torp",1,1,"Mark 1 Photon",1,1,1,1,1
+"Torp",2,2,"Proton torp",1,2,1,1,1
+"Torp",3,3,"Mark 2 Photon",1,5,1,1,1
+"Torp",4,3,"Gamma Bomb",1,10,1,1,1
+"Torp",5,4,"Mark 3 Photon",1,12,1,1,1
+"Torp",6,5,"Mark 4 Photon",1,13,1,1,1
+"Torp",7,6,"Mark 5 Photon",1,31,1,1,1
+"Torp",8,7,"Mark 6 Photon",1,35,1,1,1
+"Torp",9,8,"Mark 7 Photon",1,36,1,1,1
+"Torp",10,10,"Mark 8 Photon",1,54,1,1,1

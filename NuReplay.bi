@@ -432,6 +432,18 @@ sub clearData
 	next Obj
 end sub
 
+sub cycleQuickList
+	for GameSlot as byte = 1 to 8
+		with GameObj(GameSlot+1)
+			GameObj(GameSlot).ID = .ID
+			GameObj(GameSlot).Namee = .Namee
+			GameObj(GameSlot).GameDesc = .GameDesc
+			GameObj(GameSlot).LastTurn = .LastTurn
+			GameObj(GameSlot).GameState = .GameState
+		end with
+	next GameSlot
+end sub
+
 sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as integer, Filename as string = "List.csv")
 	dim as integer IgnoreLine
 	dim as byte MatchSucessful
@@ -450,7 +462,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 			else
 				with GameObj(0)
 					if (ApplyFilter = "" OR left(lcase(.Namee),len(ApplyFilter)) = ApplyFilter) AND _
-						((PreferType = "Academy" AND .GameDesc = "Academy Test") OR (PreferType = "Championship" AND .GameDesc = "Championship Match") OR _
+						((PreferType = "Academy" AND .GameDesc = "Academy") OR (PreferType = "Championship" AND .GameDesc = "Championship Match") OR _
 						(PreferType = "Personal" AND isPersonalGame(.ID)) OR OnlyFeatured = 0) then
 						MatchSucessful = 1
 						GameObj(Internal).ID = .ID
@@ -492,7 +504,11 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 						end if
 					end with
 					
-					Internal += 1
+					if Internal < 9 OR OnlyFeatured = 0 then
+						Internal += 1
+					else
+						cycleQuickList
+					end if
 				end if
 			end if
 			
