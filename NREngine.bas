@@ -40,7 +40,7 @@ sub updateGameList(DownloadList as byte = 0)
 			ErrorMsg = "Nu Replayer did not successfully open a socket to Planets Nu's servers."
 		else
 			if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
-				ErrorMsg = "Nu Replayer did not successfully sent its request to Planets Nu's servers."
+				ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 			else
 				mkdir "raw"
 				open "raw/listgames.txt" for output as #7
@@ -66,9 +66,7 @@ sub updateGameList(DownloadList as byte = 0)
 	end if
 	#ENDIF
 
-	if (FileDateTime("raw/listgames.txt") > FileDateTime("games/List.csv") OR _
-		FileDateTime("games/Custom List.csv") > FileDateTime("games/List.csv")) AND _
-		FileExists("raw/listgames.txt") then
+	if FileDateTime("raw/listgames.txt") > FileDateTime("games/List.csv") then
 		cls
 		print "Converting game list...";
 		screencopy
@@ -438,7 +436,7 @@ sub recordPersonalGames
 		ErrorMsg = "Nu Replayer did not successfully open a socket to Planets Nu's servers."
 	else
 		if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
-			ErrorMsg = "Nu Replayer did not successfully sent its request to Planets Nu's servers."
+			ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 		else
 			mkdir "raw"
 			open "raw/PersonalGames.txt" for output as #7
