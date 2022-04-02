@@ -523,6 +523,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 									.RaceType = "Rebel"
 								case 11
 									.RaceType = "Colonial"
+								case 12
+									.RaceType = "Horwasp"
 								case else
 									.RaceType = "Unassigned"
 							end select
@@ -615,7 +617,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 								.NatHappy = valint(mid(InStream,DID+20,3))
 							end if
 							if strMatch(InStream,DID,quote("nativetype")) then
-								.NativeType = valint(mid(InStream,DID+13,1))
+								.NativeType = valint(mid(InStream,DID+13,2))
 							end if
 							if strMatch(InStream,DID,quote("nativegovernment")) then
 								.NativeGov = valint(mid(InStream,DID+19,1))

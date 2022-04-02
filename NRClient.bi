@@ -1,10 +1,7 @@
-const NormalPerPage = 91
-const BasesPerPage = 51
-dim shared as integer Midpoint
-
 sub planetList
-	dim as string NativeRaces(1 to 9) => {"Humanoid", "Bovinoid", "Reptilian", _
-	"Avian", "Amorphous", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid"}
+	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
+	"Avian", "Amorphous", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
+	"", "Botanical"}
 
 	SelectedIndex = 1
 
@@ -25,16 +22,16 @@ sub planetList
 		color rgb(192,192,255)
 		select case ViewMode
 			case 0
-				Midpoint = ceil(NormalPerPage/2) 
+				Midpoint = NormalObjsPerPage/2 
 				
 				print "Planet List for ";GameName;" (turn "& TurnNum;")"
 				print "ID    Planet Name                 Temp   Colonists    Minerals                    Natives"
 				for Index as uinteger = 1 to LimitObjs
 					with Planets(Index)
-						if (abs(Index-SelectedIndex) < Midpoint OR _
-							((Index < = NormalPerPage AND SelectedIndex < Midpoint) OR _
-							(abs(Index-MaxObjs) < NormalPerPage AND _
-							SelectedIndex > MaxObjs - Midpoint))) AND .ObjName <> "" then
+						if (Index-SelectedIndex < ceil(MidPoint) OR _
+							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
+							((Index < = NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
 							else
@@ -122,16 +119,16 @@ sub planetList
 					end with
 				next Index
 			case 1
-				Midpoint = ceil(BasesPerPage/2) 
+				Midpoint = BasesPerPage/2
 
 				print "Starbase List for ";GameName;" (turn "& TurnNum;")"
 				print "ID    Planet Name                 Ownership                            Defense   Fighters   Damage   Tech (HEBT)"
 				for Index as uinteger = 1 to LimitObjs
 					with Planets(Index)
-						if (abs(Index-SelectedIndex) < Midpoint OR _
-							((Index < = BasesPerPage AND SelectedIndex < Midpoint) OR _
-							(abs(Index-MaxObjs) < BasesPerPage AND _
-							SelectedIndex > MaxObjs - Midpoint))) AND .ObjName <> "" then
+						if (Index-SelectedIndex < ceil(MidPoint) OR _
+							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
+							((Index < = BasesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							(abs(Index-MaxObjs) < BasesPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
 							else
@@ -150,7 +147,7 @@ sub planetList
 								end with
 							end if
 							
-							'                        ID    Planet Name                 Ownership
+							'            ID    Planet Name                 Ownership
 							print using "###   \                       \   \                                \   ";_
 								Index;.ObjName;PlanetOwner;
 							
@@ -232,7 +229,7 @@ sub planetList
 					print "--- Planet "& Planets(SelectedIndex).ObjName;" does not have a starbase ---"
 				end if
 		end select
-		locate 3+NormalPerPage,1
+		locate 3+NormalObjsPerPage,1
 		color rgb(255,255,255),rgb(0,0,0)
 		print "Press TAB to cycle lists. Press ESC to return to the starmap"
 		screencopy
@@ -331,7 +328,7 @@ sub shipList
 	'First, consolidate the list (to allow the list to display correctly even with holes in the ship numbers)
 	MaxObjs = searchShips
 	SelectedIndex = 1
-	Midpoint = ceil(NormalPerPage/2) 
+	Midpoint = NormalObjsPerPage/2 
 
 	do
 		color rgb(255,255,255),rgb(0,0,0)
@@ -345,10 +342,10 @@ sub shipList
 				print "ID   Ship Name                        Location      Ship Class                     Ownership                          Dmg   XP"
 				for Index as uinteger = 1 to LimitObjs
 					with ShipListIndex(Index)
-						if (abs(Index-SelectedIndex) < Midpoint OR _
-							((Index < = NormalPerPage AND SelectedIndex < Midpoint) OR _
-							(abs(Index-MaxObjs) < NormalPerPage AND _
-							SelectedIndex > MaxObjs - Midpoint))) AND .ShipType > 0 then
+						if (Index-SelectedIndex < ceil(MidPoint) OR _
+							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
+							((Index < = NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ShipType > 0 then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
 							else
@@ -393,10 +390,10 @@ sub shipList
 				print "ID   Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass"
 				for Index as uinteger = 1 to LimitObjs
 					with ShipListIndex(Index)
-						if (abs(Index-SelectedIndex) < Midpoint OR _
-							((Index < = NormalPerPage AND SelectedIndex < Midpoint) OR _
-							(abs(Index-MaxObjs) < NormalPerPage AND _
-							SelectedIndex > MaxObjs - Midpoint))) AND .ShipType > 0 then
+						if (Index-SelectedIndex < ceil(MidPoint) OR _
+							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
+							((Index < = NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ShipType > 0 then
 							
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
@@ -428,7 +425,7 @@ sub shipList
 				next Index
 		end select
 		color rgb(255,255,255),rgb(0,0,0)
-		locate 3+NormalPerPage,1
+		locate 3+NormalObjsPerPage,1
 		print "Press TAB to cycle lists. Press ESC to return to the starmap. Type in letters to narrow ship list by class"
 		color rgb(255,192,192)
 		print ""& MaxObjs;" ships found. Current class filter: "+ClassFilter+"*"
@@ -443,12 +440,12 @@ sub shipList
 		elseif InType = DownArrow AND SelectedIndex < MaxObjs then
 			SelectedIndex += 1
 		elseif InType = PageUp then
-			if SelectedIndex > (NormalPerPage - 1) then SelectedIndex -= (NormalPerPage - 1) else SelectedIndex = 1
+			if SelectedIndex > (NormalObjsPerPage - 1) then SelectedIndex -= (NormalObjsPerPage - 1) else SelectedIndex = 1
 		elseif InType = PageDown then
-			if MaxObjs < (NormalPerPage - 1) then
+			if MaxObjs < (NormalObjsPerPage - 1) then
 				SelectedIndex = MaxObjs
-			elseif SelectedIndex < MaxObjs - (NormalPerPage - 1) then
-				SelectedIndex += (NormalPerPage - 1)
+			elseif SelectedIndex < MaxObjs - (NormalObjsPerPage - 1) then
+				SelectedIndex += (NormalObjsPerPage - 1)
 			else
 				SelectedIndex = MaxObjs
 			end if
@@ -477,12 +474,8 @@ function playerCode(PlrId as byte) as string
 	end if
 end function
 
-sub playerList(WrapWidth as short)
+sub playerList
 	dim as byte ViewMode = 0
-	if SimpleView then
-		width 128,48
-	end if
-	
 	do
 		with GrandTotal
 			.PlanetCount = 0
@@ -537,7 +530,7 @@ sub playerList(WrapWidth as short)
 				end with
 				color rgb(192,255,192)
 				print
-				print word_wrap("Economic score is measured by the economic value of each planet, which is calculated using its unspent resources (excluding neutronium). This score is based on PTScore 1.4",WrapWidth)
+				print word_wrap("Economic score is measured by the economic value of each planet, which is calculated using its unspent resources (excluding neutronium). This score is based on PTScore 1.4")
 			case 1
 				print "Resource Breakdown by Player for ";GameName;" (turn "& TurnNum;")"
 				color rgb(255,255,255)
@@ -572,7 +565,7 @@ sub playerList(WrapWidth as short)
 					end with
 					color rgb(192,255,192)
 					print
-					print word_wrap("Only unspent resources are tallied in this list",WrapWidth)
+					print word_wrap("Only unspent resources are tallied in this list")
 				else
 					print "    Empire                            Neutronium   Duranium   Tritanium   Molybdenum   Megacredits    Supplies"
 					for PID as ubyte = 1 to ParticipatingPlayers
@@ -603,7 +596,7 @@ sub playerList(WrapWidth as short)
 					end with
 					color rgb(192,255,192)
 					print
-					print word_wrap("Only unspent resources on planets are tallied in this list",WrapWidth)
+					print word_wrap("Only unspent resources on planets are tallied in this list")
 				end if
 			case 2
 				print "Relationship Grid for ";GameName;" (turn "& TurnNum;")"
@@ -683,7 +676,7 @@ sub playerList(WrapWidth as short)
 					"planets are exchanged amongst the partners, and they share in the victory countdown together in Diplomatic Planets games\n"+_
 					_
 					"[B] The otherwise offering player blocks communuications from the other player in this "+quote("relationship")+", "+_
-					"and executes any ambassaders sent from that player. Ouch!",WrapWidth)
+					"and executes any ambassaders sent from that player. Ouch!")
 		end select
 		color rgb(255,255,255)
 		print
@@ -696,8 +689,4 @@ sub playerList(WrapWidth as short)
 			if ViewMode > 2 then ViewMode = 0
 		end if
 	loop until InType = chr(27)
-
-	if SimpleView then
-		width 128,96
-	end if
 end sub

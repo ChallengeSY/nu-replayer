@@ -58,8 +58,13 @@ const MaxPlayers = 35
 const ClimateDeathRate = 10
 const PopDividor = 500
 
-const CooldownList = 20/24
-const CooldownTurn = 6/24
+const CooldownList = 8/24
+const CooldownTurn = 5/60/24
+
+type ScreenSpecs
+	Wideth as integer
+	Height as integer
+end type
 
 type PlanObj
 	ObjName as string
@@ -80,14 +85,14 @@ type PlanObj
 	NativeGov as byte
 	
 	Temp as byte
-	Neu as short
-	Dur as short
-	Trit as short
-	Moly as short
-	GNeu as short
-	GDur as short
-	GTrit as short
-	GMoly as short
+	Neu as integer
+	Dur as integer
+	Trit as integer
+	Moly as integer
+	GNeu as integer
+	GDur as integer
+	GTrit as integer
+	GMoly as integer
 	DNeu as short
 	DDur as short
 	DTrit as short
@@ -136,10 +141,10 @@ type ShipObj
 	Experience as short
 	Cloaked as byte
 
-	Neu as short
-	Dur as short
-	Trit as short
-	Moly as short
+	Neu as integer
+	Dur as integer
+	Trit as integer
+	Moly as integer
 	Megacredits as integer
 	Supplies as integer
 	Colonists as short
@@ -168,8 +173,8 @@ type ShipSpecs
 	TechLevel as byte
 	HullName as string
 	Mass as short
-	Neu as short
-	Cargo as short
+	Neu as integer
+	Cargo as integer
 	Crew as short
 	Engines as short
 	Beams as short
@@ -252,13 +257,14 @@ dim shared as ListSpecs GameObj(1e6)
 dim shared as ShipSpecs ShiplistObj(5000)
 dim shared as StorageObj BaseStorage(MetaLimit)
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound
 dim shared as ModalView ReplayerMode = MODE_MENU
-dim shared as ushort ParticipatingPlayers, TurnNum, RecordID, Territory(767,767)
-dim shared as uinteger GameID, SWidth, SHeight, TotalGamesLoaded, SelectedIndex
+dim shared as ushort ParticipatingPlayers, TurnNum, RecordID, Territory(767,767), GamesPerPage, NormalObjsPerPage, BasesPerPage
+dim shared as uinteger GameID, TotalGamesLoaded, SelectedIndex
 dim shared as integer MouseX, MouseY, MouseError, ButtonCombo, ActualX, ActualY
 dim shared as short FadingSelect, NearestPlan, SelectedShip, BoxGlow
-dim shared as double LastPlanetUpdate, SerialRecord
+dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
+dim shared as ScreenSpecs BaseScreen, CanvasScreen
 dim shared as PlanObj Planets(LimitObjs)
 dim shared as ShipObj Starships(LimitObjs), ShipListIndex(LimitObjs)
 dim shared as SlotSpecs PlayerSlot(MaxPlayers), GrandTotal
@@ -356,6 +362,28 @@ sub drawBox(StartX as short,StartY as short,EndX as short,EndY as short)
 	next BID
 end sub
 
+sub prepCanvas(NewWidth as short, NewHeight as short, ExtraFlags as integer = 0)
+	dim as short CalcRows = int(NewHeight/16)
+	screenres NewWidth, NewHeight,24,2,GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES OR ExtraFlags
+	
+	'Sets a fixed character width
+	width int(NewWidth/8), int(NewHeight/16)
+	
+	'Sets up pagination for lists
+	NormalObjsPerPage = CalcRows - 5
+	GamesPerPage = NormalObjsPerPage - 7
+	BasesPerPage = NormalObjsPerPage - 30
+	
+	'Utilizes double-buffering to prevent sheering
+	screenset 0,1
+	
+	'Use this as the basis for related operations
+	with CanvasScreen
+		.Wideth = NewWidth
+		.Height = NewHeight
+	end with
+end sub
+
 sub debugout(NewString as string)
 	#IF __FB_DEBUG__
 	open "stdout.txt" for append as #25
@@ -377,18 +405,11 @@ function cmdLine(SearchStr as string) as byte
 end function
 
 sub prepClientScreen
-	if SWidth <= 1024 OR SHeight <= 768 then
-		screen 20,24,2,GFX_FULLSCREEN OR GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES
-	elseif SimpleView then
-		screen 20,24,2,GFX_ALPHA_PRIMITIVES
-	else
-		screenres SWidth,SHeight,24,2,GFX_FULLSCREEN OR GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES
-	end if
-	screenset 0,1
-	
-	if SWidth <= 1024 OR SHeight <= 768 OR SimpleView then
-		width 128,96
-	end if
+	with BaseScreen
+		if .Wideth > 1024 AND .Height > 768 AND SimpleView = 0 then
+			prepCanvas(.Wideth,.Height,GFX_FULLSCREEN OR (GFX_NO_FRAME AND sgn(BorderlessFS)))
+		end if
+	end with
 end sub
 
 sub clearData
@@ -433,7 +454,7 @@ sub clearData
 end sub
 
 sub cycleQuickList
-	for GameSlot as byte = 1 to 8
+	for GameSlot as byte = 1 to 12
 		with GameObj(GameSlot+1)
 			GameObj(GameSlot).ID = .ID
 			GameObj(GameSlot).Namee = .Namee
@@ -461,50 +482,55 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 				IgnoreLine = 0
 			else
 				with GameObj(0)
-					if (ApplyFilter = "" OR left(lcase(.Namee),len(ApplyFilter)) = ApplyFilter) AND _
-						((PreferType = "Academy" AND .GameDesc = "Academy") OR (PreferType = "Championship" AND .GameDesc = "Championship Match") OR _
-						(PreferType = "Personal" AND isPersonalGame(.ID)) OR OnlyFeatured = 0) then
+					WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
+					ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
+					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Starbases.csv"
+					RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
+				
+					if FileExists(WorkingFile) then
+						if Now - FileDateTime(WorkingFile) > 1/24 then
+							'Assume conversions that take more than an hour have failed, and delete the working flag
+							kill(WorkingFile)
+						end if
+						.GameState = 9
+					elseif FileExists(ScoreFile) then
+						if FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
+							if FileExists(RawFile) then
+								.GameState = 8
+							else
+								.GameState = 7
+							end if
+						else
+							.GameState = 2
+						end if
+					elseif FileExists(RawFile) then
+						.GameState = 1
+					else
+						.GameState = 0
+					end if
+					
+					if (ApplyFilter = "" OR left(lcase(.Namee),len(ApplyFilter)) = ApplyFilter OR left(lcase(.GameDesc),len(ApplyFilter)) = ApplyFilter) AND _
+						((right(.GameDesc,5) <> "Blitz" AND .GameDesc <> "League Dogfight") OR ExcludeBlitzes = 0) AND _
+						(.GameDesc <> "Mentor vs Midshipmen" OR ExcludeMvM = 0) AND _
+						(.GameState <> 0 OR ReplayerMode = MODE_HUB_DL OR ExcludeNodata = 0) AND _
+						((PreferType = "Zodiac Wars" AND .GameDesc = "Championship Match") OR _
+						(PreferType = "Seasonal Championship" AND (.GameDesc = "Emperor Match" OR .GameDesc = "Grand Marshall Match")) OR _
+						(PreferType = "Personal" AND isPersonalGame(.ID)) OR _
+						PreferType = "Recent" OR OnlyFeatured = 0) then
 						MatchSucessful = 1
+						
 						GameObj(Internal).ID = .ID
 						GameObj(Internal).Namee = .Namee
 						GameObj(Internal).GameDesc = .GameDesc
 						GameObj(Internal).LastTurn = .LastTurn
+						GameObj(Internal).GameState = .GameState
 					else
 						MatchSucessful = 0
 					end if
 				end with
 				
 				if MatchSucessful then
-					with GameObj(Internal)
-						WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
-						ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
-						AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Starbases.csv"
-						RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
-					
-						if FileExists(WorkingFile) then
-							if Now - FileDateTime(WorkingFile) > 1/24 then
-								'Assume conversions that take more than an hour have failed, and delete the working flag
-								kill(WorkingFile)
-							end if
-							.GameState = 9
-						elseif FileExists(ScoreFile) then
-							if FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
-								if FileExists(RawFile) then
-									.GameState = 8
-								else
-									.GameState = 7
-								end if
-							else
-								.GameState = 2
-							end if
-						elseif FileExists(RawFile) then
-							.GameState = 1
-						else
-							.GameState = 0
-						end if
-					end with
-					
-					if Internal < 9 OR OnlyFeatured = 0 then
+					if Internal < 13 OR OnlyFeatured = 0 then
 						Internal += 1
 					else
 						cycleQuickList
@@ -532,8 +558,10 @@ sub loadGameList(ApplyFilter as string = "", OnlyFeatured as byte = 0)
 	'Loads the official game list first
 	readListFile(ApplyFilter,OnlyFeatured,Index)
 	
-	'Custom games are loaded next, if there is room in the internal memory for them
-	readListFile(ApplyFilter,OnlyFeatured,Index,"Custom List.csv")
+	if OnlyFeatured = 0 OR PreferType <> "Recent" then
+		'Custom games are loaded next, if there is room in the internal memory for them
+		readListFile(ApplyFilter,OnlyFeatured,Index,"Custom List.csv")
+	end if
 	
 	TotalGamesLoaded = Index - 1
 	SelectedIndex = 1
@@ -544,7 +572,7 @@ declare function apiLogin as byte
 #ENDIF
 
 sub menu
-	dim as integer EventActive
+	dim as integer EventActive, MaxMenuEntries
 	dim as string NetworkStr, Greeting
 	windowtitle WindowStr
 	
@@ -552,7 +580,7 @@ sub menu
 	MouseError = getmouse(MouseX,MouseY,0,ButtonCombo)
 	gfxstring("Nu Replayer",10,10,10,9,5,rgb(128,255,255),rgb(0,255,255))
 
-	gfxstring("Copyright (C) 2012 - 2016 Paul Ruediger",0,585,3,3,2,rgb(255,255,255))
+	gfxstring("Copyright (C) 2012 - 2022 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
 	if OfflineMode = 0 then
 		NetworkStr = "Network okay"
 		Greeting = "Welcome, "+Username
@@ -560,33 +588,37 @@ sub menu
 		NetworkStr = "Network off"
 		Greeting = "Welcome, guest"
 	end if
-	gfxstring(NetworkStr,800-gfxlength(NetworkStr,3,3,2),585,3,3,2,rgb(255,255,0))
+	gfxstring(NetworkStr,CanvasScreen.Wideth-gfxlength(NetworkStr,3,3,2),CanvasScreen.Height-15,3,3,2,rgb(255,255,0))
 	#IFDEF __API_LOGIN__
-	gfxstring(Greeting,800-gfxlength(Greeting,4,3,2),0,4,3,2,rgb(255,255,255))
+	gfxstring(Greeting,CanvasScreen.Wideth-gfxlength(Greeting,4,3,2),0,4,3,2,rgb(255,255,255))
 	#ENDIF
 	
-
+	MaxMenuEntries = 8
+	if CanvasScreen.Height >= 768 then
+		MaxMenuEntries = 12
+	end if
+	
 	EventActive = screenevent(@e)
 
 	if ReplayerMode = MODE_QUICK then
 		gfxstring("Quick Watch",10,100,5,4,3,rgb(255,255,0))
-		for FeaturedGame as byte = 1 to min(TotalGamesLoaded,8)
+		for FeaturedGame as byte = 1 to min(TotalGamesLoaded,MaxMenuEntries)
 			with GameObj(FeaturedGame)
 				if .ID > 0 then
 					if .GameState = 2 then
-						gfxstring(.Namee,410,50*(FeaturedGame+1)-5,3,3,2,rgb(255,255,255))
-						gfxstring("Turn "+str(.LastTurn),430,50*(FeaturedGame+1)+15,3,3,2,rgb(255,255,255))
+						gfxstring(.Namee,CanvasScreen.Wideth/2+10,50*(FeaturedGame+(13-MaxMenuEntries))-5,3,3,2,rgb(255,255,255))
+						gfxstring(.GameDesc+" / Turn "+str(.LastTurn),CanvasScreen.Wideth/2+30,50*(FeaturedGame+(13-MaxMenuEntries))+15,3,3,2,rgb(255,255,255))
 
-						if MouseY > = 40 + 50*FeaturedGame AND MouseY < 85 + 50*FeaturedGame AND MouseX >= 400 then
-							drawBox(400,40 + 50*FeaturedGame,799,85 + 50*FeaturedGame)
+						if MouseY > = 40 + 50*(FeaturedGame+(12-MaxMenuEntries)) AND MouseY < 85 + 50*(FeaturedGame+(12-MaxMenuEntries)) AND MouseX >= CanvasScreen.Wideth/2 then
+							drawBox(CanvasScreen.Wideth/2,40 + 50*(FeaturedGame+(12-MaxMenuEntries)),CanvasScreen.Wideth-1,85 + 50*(FeaturedGame+(12-MaxMenuEntries)))
 							if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 								SelectedIndex = FeaturedGame
 								GameID = .ID
 							end if
 						end if
 					else
-						gfxstring(.Namee,410,50*(FeaturedGame+1)-5,3,3,2,rgb(128,128,128))
-						gfxstring("Turn "+str(.LastTurn),430,50*(FeaturedGame+1)+15,3,3,2,rgb(128,128,128))
+						gfxstring(.Namee,CanvasScreen.Wideth/2+10,50*(FeaturedGame+(13-MaxMenuEntries))-5,3,3,2,rgb(128,128,128))
+						gfxstring(.GameDesc+" / Turn "+str(.LastTurn),CanvasScreen.Wideth/2+30,50*(FeaturedGame+(13-MaxMenuEntries))+15,3,3,2,rgb(128,128,128))
 					end if
 				end if
 				
@@ -612,10 +644,10 @@ sub menu
 		
 		#IFDEF __API_LOGIN__
 		if APIKey = "" then
-			gfxstring("Log in to Planets Nu",410,100,5,4,3,rgb(255,255,255))
+			gfxstring("Log in to Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 90 AND MouseY < 135 AND MouseX >= 400 then
-				drawBox(400,90,799,134)
+			if MouseY > = 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					while inkey < > "":wend
 					if apiLogin = 0 OR APIKey = "" then
@@ -627,32 +659,33 @@ sub menu
 				end if
 			end if
 		else
-			gfxstring("Log out of Planets Nu",410,100,5,4,3,rgb(255,255,255))
+			gfxstring("Log out of Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 90 AND MouseY < 135 AND MouseX >= 400 then
-				drawBox(400,90,799,134)
+			if MouseY > = 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					Username = "guest"
 					APIKey = ""
 					if PreferType = "Personal" then
-						PreferType = "Championship"
+						PreferType = "Seasonal Championship"
 					end if
 				end if
 			end if
 		end if
 		#ELSE
-		gfxstring("Log in to Planets Nu",410,100,5,4,3,rgb(128,128,128))
+		gfxstring("Log in to Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(128,128,128))
 		#ENDIF
 		
 		#IFDEF __DOWNLOAD_LIST__
 		if GameListAge > CooldownList then
-			gfxstring("Download a list",410,150,5,4,3,rgb(255,255,255))
+			gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 140 AND MouseY < 185 AND MouseX >= 400 then
-				drawBox(400,140,799,184)
+			if MouseY > = 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					updateGameList(1) 
 					while inkey < > "":wend
+					while screenevent(@e):wend
 				end if
 			end if
 		else
@@ -662,18 +695,18 @@ sub menu
 			
 			dim as string MinutesStr = str(MinutesRem)
 			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
-			gfxstring("Download a list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",410,150,5,4,3,rgb(128,128,128))
+			gfxstring("Download a list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
 		end if
 		#ELSE
-		gfxstring("Download a list",410,150,5,4,3,rgb(128,128,128))
+		gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
 		#ENDIF
 		
 		#IFDEF __DOWNLOAD_TURNS__
 		if TurnDLAge > CooldownTurn then
-			gfxstring("Download turns",410,200,5,4,3,rgb(255,255,255))
+			gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 190 AND MouseY < 235 AND MouseX >= 400 then
-				drawBox(400,190,799,234)
+			if MouseY > = 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					ReplayerMode = MODE_HUB_DL
 				end if
@@ -685,11 +718,11 @@ sub menu
 			
 			dim as string MinutesStr = str(MinutesRem)
 			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
-			gfxstring("Download turns ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",410,200,5,4,3,rgb(128,128,128))
+			gfxstring("Download turns ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(128,128,128))
 		end if
 
 		#ELSE
-		gfxstring("Download turns",410,200,5,4,3,rgb(128,128,128))
+		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(128,128,128))
 		#ENDIF
 	elseif OfflineMode = 0 then 
 		gfxstring("Network Mode",10,200,5,4,3,rgb(255,255,255))
@@ -697,51 +730,93 @@ sub menu
 	#ENDIF
 	
 	if ReplayerMode = MODE_SETTINGS then
-		gfxstring("Engine Options",10,450,5,4,3,rgb(255,255,0))
+		gfxstring("Engine Options",10,(MaxMenuEntries+1)*50,5,4,3,rgb(255,255,0))
 
-		gfxstring("Preferred quick list:",410,95,3,3,2,rgb(255,255,255))
-		gfxstring(PreferType,430,115,3,3,2,rgb(255,255,255))
+		gfxstring("Preferred quick list:",CanvasScreen.Wideth/2+10,95,3,3,2,rgb(255,255,255))
+		gfxstring(PreferType,CanvasScreen.Wideth/2+30,115,3,3,2,rgb(255,255,255))
 
-		if MouseY > = 90 AND MouseY < 135 AND MouseX >= 400 then
-			drawBox(400,90,799,134)
+		if MouseY > = 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				if PreferType = "Championship" then
-					PreferType = "Academy"
-				elseif PreferType = "Academy" AND APIkey <> "" then
+				if PreferType = "Seasonal Championship" then
+					PreferType = "Zodiac Wars"
+				elseif PreferType = "Zodiac Wars" AND APIKey <> "" then
 					PreferType = "Personal"
+				elseif PreferType = "Personal" OR PreferType = "Zodiac Wars" then 
+					PreferType = "Recent"
 				else
-					PreferType = "Championship"
+					PreferType = "Seasonal Championship"
 				end if
-				while inkey < > "":wend
 			end if
 		end if
 
-		if SWidth > 1024 AND SHeight > 768 then
-			gfxstring("Condensed View:",410,145,3,3,2,rgb(255,255,255))
+		if BaseScreen.Wideth > 1024 AND BaseScreen.Height > 768 then
+			gfxstring("Condensed View:",CanvasScreen.Wideth/2+10,145,3,3,2,rgb(255,255,255))
 			if SimpleView then
-				gfxstring("Active",430,165,3,3,2,rgb(255,255,255))
+				gfxstring("Active",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(255,255,255))
 			else
-				gfxstring("Disabled",430,165,3,3,2,rgb(255,255,255))
+				gfxstring("Disabled",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(255,255,255))
 			end if
 	
-			if MouseY > = 140 AND MouseY < 185 AND MouseX >= 400 then
-				drawBox(400,140,799,184)
+			if MouseY > = 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					SimpleView = 1 - SimpleView
-					while inkey < > "":wend
 				end if
 			end if
 		else
-			gfxstring("Condensed View:",410,145,3,3,2,rgb(128,128,128))
-			gfxstring("(Overridden)",430,165,3,3,2,rgb(128,128,128))
+			gfxstring("Condensed View:",CanvasScreen.Wideth/2+10,145,3,3,2,rgb(128,128,128))
+			gfxstring("(Overridden)",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(128,128,128))
+		end if
+
+		gfxstring("Exclude blitz games:",CanvasScreen.Wideth/2+10,195,3,3,2,rgb(255,255,255))
+		if ExcludeBlitzes then
+			gfxstring("Active",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
+		else
+			gfxstring("Disabled",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
+		end if
+
+		if MouseY > = 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				ExcludeBlitzes = 1 - ExcludeBlitzes
+			end if
+		end if
+
+		gfxstring("Exclude Mentor vs. Midshipmen games:",CanvasScreen.Wideth/2+10,245,3,3,2,rgb(255,255,255))
+		if ExcludeMvM then
+			gfxstring("Active",CanvasScreen.Wideth/2+30,265,3,3,2,rgb(255,255,255))
+		else
+			gfxstring("Disabled",CanvasScreen.Wideth/2+30,265,3,3,2,rgb(255,255,255))
+		end if
+
+		if MouseY > = 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				ExcludeMvM = 1 - ExcludeMvM
+			end if
+		end if
+
+		gfxstring("Exclude games with no local data:",CanvasScreen.Wideth/2+10,295,3,3,2,rgb(255,255,255))
+		if ExcludeNodata then
+			gfxstring("Active",CanvasScreen.Wideth/2+30,315,3,3,2,rgb(255,255,255))
+		else
+			gfxstring("Disabled",CanvasScreen.Wideth/2+30,315,3,3,2,rgb(255,255,255))
+		end if
+
+		if MouseY > = 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				ExcludeNodata = 1 - ExcludeNodata
+			end if
 		end if
 	else
-		gfxstring("Engine Options",10,450,5,4,3,rgb(255,255,255))
+		gfxstring("Engine Options",10,(MaxMenuEntries+1)*50,5,4,3,rgb(255,255,255))
 	end if
-	gfxstring("Exit",10,500,5,4,3,rgb(255,255,255))
+	gfxstring("Exit",10,(MaxMenuEntries+2)*50,5,4,3,rgb(255,255,255))
 	
-	if MouseY > = 90 AND MouseY < 135 AND MouseX < 400 then
-		drawBox(0,90,399,134)
+	if MouseY > = 90 AND MouseY < 135 AND MouseX < CanvasScreen.Wideth/2 then
+		drawBox(0,90,CanvasScreen.Wideth/2-1,134)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			if ReplayerMode = MODE_QUICK then
 				ReplayerMode = MODE_MENU
@@ -749,40 +824,36 @@ sub menu
 				loadGameList("",1)
 				ReplayerMode = MODE_QUICK
 			end if 
-			while inkey < > "":wend
 		end if
-	elseif MouseY > = 140 AND MouseY < 185 AND MouseX < 400 then
-		drawBox(0,140,399,184)
+	elseif MouseY > = 140 AND MouseY < 185 AND MouseX < CanvasScreen.Wideth/2 then
+		drawBox(0,140,CanvasScreen.Wideth/2-1,184)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			ReplayerMode = MODE_HUB_VIEW
-			while inkey < > "":wend
 		end if
 	#IFNDEF __FORCE_OFFLINE__
-	elseif MouseY > = 190 AND MouseY < 235 AND MouseX < 400 AND OfflineMode = 0 then
-		drawBox(0,190,399,234)
+	elseif MouseY > = 190 AND MouseY < 235 AND MouseX < CanvasScreen.Wideth/2 AND OfflineMode = 0 then
+		drawBox(0,190,CanvasScreen.Wideth/2-1,234)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			if ReplayerMode = MODE_DOWNLOAD then
 				ReplayerMode = MODE_MENU
 			else
 				ReplayerMode = MODE_DOWNLOAD
 			end if 
-			while inkey < > "":wend
 		end if
 	#ENDIF
-	elseif MouseY > = 440 AND MouseY < 485 AND MouseX < 400 then
-		drawBox(0,440,399,484)
+	elseif MouseY > = MaxMenuEntries*50 + 40 AND MouseY < (MaxMenuEntries+1)*50 + 35 AND MouseX < CanvasScreen.Wideth/2 then
+		drawBox(0,MaxMenuEntries*50 + 40,CanvasScreen.Wideth/2-1,(MaxMenuEntries+1)*50 + 34)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			if ReplayerMode = MODE_SETTINGS then
 				ReplayerMode = MODE_MENU
 			else
 				ReplayerMode = MODE_SETTINGS
 			end if 
-			while inkey < > "":wend
 		end if
 	end if
 	
-	if MouseY > = 490 AND MouseY < 535 then
-		drawBox(0,490,799,534)
+	if MouseY > = (MaxMenuEntries+1)*50 + 40 AND MouseY < (MaxMenuEntries+2)*50 + 35 then
+		drawBox(0,(MaxMenuEntries+1)*50 + 40,CanvasScreen.Wideth-1,(MaxMenuEntries+2)*50 + 34)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			ReplayerMode = MODE_EXIT
 		end if
@@ -806,9 +877,11 @@ sub replayHub(DownloadMode as byte = 0)
 	 ' a game
 	 '/
 	dim as string RMessage, GameFilter, ReplayerTips(5)
-	dim as ubyte Legal, CurrentTip
+	dim as ubyte Legal, CurrentTip, TotalRows = hiWord(width)
 	dim as integer TotalTurnCount = 0, LongestGame = 0, _
 		ShortestGame = 9999, FastGames = 0
+		
+	MidPoint = GamesPerPage / 2
 
 	do
 		TotalTurnCount = 0
@@ -824,33 +897,37 @@ sub replayHub(DownloadMode as byte = 0)
 		end if
 		color rgb(255,255,255)
 		if OfflineMode = 1 then
-			print word_wrap("WARNING: "+ErrorMsg,100)
+			print word_wrap("WARNING: "+ErrorMsg)
 		else
 			if DownloadMode = 0 then
 				print word_wrap("Instructions: The Nu Replayer is a specialist client "+_
 					"that may be used to review various completed games by rendering "+_
 					"the starmap and updating it turn by turn.\n\nThe game room allows "+_
-					"to review games already downloaded.",100)
+					"to review games already downloaded.")
 			else
 				print word_wrap("Instructions: The download room is used to download "+_
 					"new turns and add them to the local storage.\n\nA limited subset of "+_
-					"features is available in this build, but it will be completed... eventually",100)
+					"features is available in this build, but it will be completed... eventually.")
 			end if
 		end if
 		locate 7,1
 		color rgb(0,255,255)
 		print "Available games ("+GameFilter+"*)"
-		print "ID        Game Name                                              Turn   Status"
+		if CanvasScreen.Wideth < 1024 then
+			print "ID        Game Name                                              Turn   Status"
+		else
+			print "ID        Game Name                                              Game Type                   Turn   Status"
+		end if
 		for Index as uinteger = 1 to TotalGamesLoaded
 			with GameObj(Index)
 				if .ID = 0 then
 					exit for
-				elseif abs(Index-SelectedIndex) < 13 OR _
-					((Index < = 25 AND SelectedIndex < 13) OR _
-					(abs(Index-TotalGamesLoaded) < 25 AND _
-					SelectedIndex > TotalGamesLoaded - 13)) then
+				elseif Index-SelectedIndex < ceil(MidPoint) OR _
+					-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
+					((Index < = GamesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+					(abs(Index-TotalGamesLoaded) < GamesPerPage AND SelectedIndex > TotalGamesLoaded - ceil(MidPoint))) then
 					if SelectedIndex = Index then
-						if SWidth < 1024 OR SHeight < 768 then
+						if BaseScreen.Wideth < 1024 OR BaseScreen.Height < 768 then
 							Legal = 0
 							RMessage = "Nu Replayer requires a 1024x768 in order to render the starmap."
 						elseif .GameState = 0 then
@@ -910,9 +987,15 @@ sub replayHub(DownloadMode as byte = 0)
 							color rgb(128,128,128)
 						end if
 					end if
-					'            ID        Game Name                                              Turn   Status
-					print using "#######   \                                                  \   ####   ";_
-						.ID;.Namee;.LastTurn;
+					if CanvasScreen.Wideth < 1024 then
+						'            ID        Game Name                                              Turn   Status
+						print using "#######   \                                                  \   ####   ";_
+							.ID;.Namee;.LastTurn;
+					else
+						'            ID        Game Name                                              Game Type                   Turn   Status
+						print using "#######   \                                                  \   \                       \   ####   ";_
+							.ID;.Namee;.GameDesc;.LastTurn;
+					end if
 					if DownloadMode = 0 then
 						select case .GameState
 							case 0
@@ -947,15 +1030,15 @@ sub replayHub(DownloadMode as byte = 0)
 		if TotalGamesLoaded = 0 then
 			RMessage = "No games exist. Please broaden the filter."
 		end if
-		locate 39,1
+		locate TotalRows-3,1
 		color rgb(0,255,255),rgb(0,0,0)
-		if TotalGamesLoaded > 0 then
+		if TotalGamesLoaded > 1 then
 			print TotalGamesLoaded;" games found spanning "& TotalTurnCount;" turns";
 			print using " (average ###.### turns)";TotalTurnCount/TotalGamesLoaded
 		elseif TotalGamesLoaded = 1 then
 			print "1 game found"
 		end if
-		locate 40,1
+		locate TotalRows-2,1
 		color rgb(255,0,255)
 		print RMessage
 		color rgb(255,255,255)
@@ -976,12 +1059,12 @@ sub replayHub(DownloadMode as byte = 0)
 		elseif InType = DownArrow AND SelectedIndex < TotalGamesLoaded then
 			SelectedIndex += 1
 		elseif InType = PageUp then
-			if SelectedIndex > 24 then SelectedIndex -= 24 else SelectedIndex = 1
+			if SelectedIndex > (GamesPerPage - 1) then SelectedIndex -= (GamesPerPage - 1) else SelectedIndex = 1
 		elseif InType = PageDown then
-			if TotalGamesLoaded < 24 then
+			if TotalGamesLoaded < (GamesPerPage - 1) then
 				SelectedIndex = TotalGamesLoaded
-			elseif SelectedIndex < TotalGamesLoaded - 24 then
-				SelectedIndex += 24
+			elseif SelectedIndex < TotalGamesLoaded - (GamesPerPage - 1) then
+				SelectedIndex += (GamesPerPage - 1)
 			else
 				SelectedIndex = TotalGamesLoaded
 			end if
@@ -1004,10 +1087,10 @@ sub replayHub(DownloadMode as byte = 0)
 						cls
 						color rgb(255,255,255)
 						print word_wrap("Now converting turn "+str(.LastTurn)+" for "+.Namee+_
-							". This may take several minutes depending on game specifications...",128)
+							". This may take several minutes depending on game specifications...")
 						print
 						print word_wrap("Once conversion is complete, Nu Replayer will "+_
-							"automatically jump to the newly created turn.",128) 
+							"automatically jump to the newly created turn.") 
 						
 						line(0,748)-(1023,767),rgb(255,255,255),b
 						screencopy

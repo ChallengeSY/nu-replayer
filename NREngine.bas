@@ -424,7 +424,7 @@ sub recordPersonalGames
 		end if
 	next Char
 	
-	for PersonalSlot as byte = 1 to 8
+	for PersonalSlot as byte = 1 to 12
 		PersonalIDs(PersonalSlot) = 0
 	next PersonalSlot
 
@@ -476,7 +476,7 @@ sub recordPersonalGames
 		end if
 		if mid(InStream,DID,4) = quote("id") then
 			GamesRegistered += 1
-			if GamesRegistered <= 8 then
+			if GamesRegistered <= 12 then
 				PersonalIDs(GamesRegistered) = valint(mid(InStream,DID+5,7))
 			else
 				rotatePersonalGames(valint(mid(InStream,DID+5,7)))

@@ -49,7 +49,7 @@ function irandom(Minimum as integer, Maximum as integer) as integer
 	return int(rnd * ((Maximum - Minimum) + 1 - 1e-100)) + Minimum
 end function
 
-#IF __FB_VERSION__ < "1.01"
+#IFNDEF max
 function max(ValueA as double, ValueB as double) as double
 	return iif(ValueA > ValueB,ValueA,ValueB) 
 end function

@@ -34,14 +34,14 @@ type ParsePlan
 	NatHappy as short
 
 	'Resources
-	Neu as short
-	Dur as short
-	Trit as short
-	Moly as short
-	GNeu as short
-	GDur as short
-	GTrit as short
-	GMoly as short
+	Neu as integer
+	Dur as integer
+	Trit as integer
+	Moly as integer
+	GNeu as integer
+	GDur as integer
+	GTrit as integer
+	GMoly as integer
 	DNeu as short
 	DDur as short
 	DTrit as short
@@ -66,10 +66,10 @@ type ParseShip
 	Cloaked as byte
 	Experience as short
 
-	Neu as short
-	Dur as short
-	Trit as short
-	Moly as short
+	Neu as integer
+	Dur as integer
+	Trit as integer
+	Moly as integer
 	Megacredits as integer
 	Supplies as integer
 	Colonists as short

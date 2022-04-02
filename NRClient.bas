@@ -6,7 +6,7 @@ sub renderClient
 	dim as uinteger PaintColor(2)
 	dim as string TurnStr
 
-	Sidebar = iif(SimpleView = 0,SWidth - 768,256)
+	Sidebar = CanvasScreen.Wideth - 768
 	with ViewGame
 		MapSize = max(.MapWidth,.MapHeight)
 		AbsMin = 2000 - MapSize/2
@@ -145,10 +145,10 @@ sub renderClient
 					cls
 					color rgb(255,255,255)
 					print word_wrap("Now converting turn "+str(JumpCut)+" for "+GameName+_
-						". This may take several minutes depending on game specifications...",128)
+						". This may take several minutes depending on game specifications...")
 					print
 					print word_wrap("Once conversion is complete, Nu Replayer will "+_
-						"automatically jump to the newly created turn.",128)
+						"automatically jump to the newly created turn.")
 
 					line(0,748)-(1023,767),rgb(255,255,255),b
 					screencopy
@@ -175,7 +175,7 @@ sub renderClient
 	end if
 
 	if InType = FunctionFive then
-		playerList(int((768+Sidebar)/8))
+		playerList
 	elseif InType = FunctionSix then
 		planetList
 	elseif InType = FunctionSeven then
@@ -183,8 +183,9 @@ sub renderClient
 	end if
 
 
-	dim as string NativeRaces(1 to 9) => {"Humanoid", "Bovinoid", "Reptilian", _
-	"Avian", "Amorphou", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid"}
+	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
+		"Avian", "Amorphou", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
+		"", "Botanical"}
 
 	windowtitle WindowStr
 	cls
@@ -351,7 +352,7 @@ sub renderClient
 
 	'Creates a game summary. It can contain the players, or a planet report
 	with GameTitle
-		gfxString(GameName, 768 + Sidebar - gfxLength(GameName,3,2,2) ,0,3,2,2,rgb(.Red,.Green,.Blue))
+		gfxString(GameName, min(768 + Sidebar - gfxLength(GameName,3,2,2), 768) ,0,3,2,2,rgb(.Red,.Green,.Blue))
 	end with
 	TurnStr = "Turn "+str(TurnNum)
 
@@ -371,10 +372,13 @@ sub renderClient
 	gfxString(TurnStr,768,20,3,2,2,rgb(255,255,255))
 
 	if NearestPlan <= 0 AND ShipsFound = 0 then
+		dim as byte PlayersFound = 0
+		
 		'If no planets or ships are selected, then this provides a player list
 		for RID as short = 1 to ParticipatingPlayers
 			with PlayerSlot(RID)
-				if len(.Race) > 0 AND len(.PlayerName) > 0 then
+				if len(.Race) > 0 AND len(.PlayerName) > 0 AND .Race <> "Unassigned" then
+					PlayersFound += 1 
 					dim as string PrintStr = .Race + " (" + .PlayerName + ")"
 					if gfxLength(PrintStr,3,2,2) >= Sidebar then
 						PrintStr = .PlayerName
@@ -383,12 +387,12 @@ sub renderClient
 						PaintColor(1) = rgb(.Red,.Green,.Blue)
 						PaintColor(2) = rgb(.Red * .75,.Green * .75,.Blue * .75)
 						if PlayerSlot(RID).PlanetCount > 0 then
-							line(1024,(RID+1)*20-2)-(1024+PlayerSlot(RID).Starbases,(RID+2)*20-4),PaintColor(2),bf
+							line(1024,(PlayersFound+1)*20-2)-(1024+PlayerSlot(RID).Starbases,(PlayersFound+2)*20-4),PaintColor(2),bf
 
 							DiamondBase = 1024 + PlayerSlot(RID).PlanetCount
 							for DiamSize as byte = 0 to 9
-								DiamL = (RID+1)*20-2 + DiamSize
-								DiamH = (RID+2)*20-4 - DiamSize
+								DiamL = (PlayersFound+1)*20-2 + DiamSize
+								DiamH = (PlayersFound+2)*20-4 - DiamSize
 								if DiamondBase-DiamSize >= 1024 then
 									line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(2)
 								end if
@@ -396,7 +400,7 @@ sub renderClient
 							next
 						end if
 					end with
-					gfxString(PrintStr,768,(RID+1)*20,3,2,2,PaintColor(1))
+					gfxString(PrintStr,768,(PlayersFound+1)*20,3,2,2,PaintColor(1))
 				end if
 			end with
 		next RID
@@ -430,8 +434,9 @@ sub renderClient
 	else
 		dim as string FullObjName, ClimateStr, NativeStr, ResourceStr
 		dim as integer PopulationNum, UsableMetals, MinableOre, OreDensity, MiningRate, RacialMining, _
-			MaxColonists, MaxNatives
+			MaxNatives
 		dim as ushort ShipCX, ShipCY, ShipsCounted
+		dim as double MaxColonists
 
 		'With a planet selected, this provides a planet report with ships that are closest to the planet
 		with Planets(NearestPlan)
@@ -442,11 +447,11 @@ sub renderClient
 			end if
 			FullObjName = .ObjName
 			ClimateStr = "Climate: "
-			MaxColonists = int(sin(3.14 * (100 - .Temp)/100) * 100000 + 0.5)
-			MaxNatives = int(sin(3.14 * (100 - .Temp)/100) * 150000 + 0.5)
+			MaxColonists = sin(3.14 * (100 - .Temp)/100) * 100000
+			MaxNatives = sin(3.14 * (100 - .Temp)/100) * 150000
 			if .Temp < 15 then
 				ClimateStr += "Arctic "+str(.Temp)
-				MaxColonists = int((299.9 + (200 * .Temp)) / ClimateDeathRate)
+				MaxColonists = (299.9 + (200 * .Temp)) / ClimateDeathRate
 			elseif .Temp < 38 then
 				ClimateStr += "Cool   "+str(.Temp)
 			elseif .Temp < 63 then
@@ -455,7 +460,7 @@ sub renderClient
 				ClimateStr += "Tropic "+str(.Temp)
 			else
 				ClimateStr += "Desert "+str(.Temp)
-				MaxColonists = int((20099.9 - (200 * .Temp)) / ClimateDeathRate)
+				MaxColonists = (20099.9 - (200 * .Temp)) / ClimateDeathRate
 			end if
 			
 			if .NativeType = 9 then
@@ -489,7 +494,7 @@ sub renderClient
 						PaintColor(1) = rgb(128,80,80)
 						line(1024,138)-(1024+int(.Natives/PopDividor),156),PaintColor(1),bf
 
-						DiamondBase = 1024+int(MaxNatives/PopDividor)
+						DiamondBase = max(1024,1024+int(MaxNatives/PopDividor))
 						for DiamSize as byte = 0 to 9
 							DiamL = 138 + DiamSize
 							DiamH = 156 - DiamSize
@@ -501,7 +506,7 @@ sub renderClient
 
 						PopulationNum = .Natives * 100
 						NativeStr = commaSep(PopulationNum)+" "
-						if .NativeType >= 1 AND .NativeType <= 9 then
+						if (.NativeType >= 1 AND .NativeType <= 11) then
 							NativeStr += NativeRaces(.NativeType)
 						else
 							NativeStr += "Chupanoid"
@@ -600,7 +605,7 @@ sub renderClient
 								line(1024,158+Mineral*20)-(1024+int(UsableMetals/50),176+Mineral*20),PaintColor(1),bf
 							end if
 	
-							DiamondBase = 1024+int((UsableMetals+MinableOre)/50)
+							DiamondBase = max(1024,1024+int((UsableMetals+MinableOre)/50))
 							for DiamSize as byte = 0 to 9
 								DiamL = 158+Mineral*20 + DiamSize
 								DiamH = 176+Mineral*20 - DiamSize
@@ -674,6 +679,13 @@ sub renderClient
 					MaxColonists = 60
 				end if
 				
+				'Newly discovered Botanicals allow for 50% more colonists
+				if .NativeType = 11 AND .Natives > 0 then
+					MaxColonists = int(MaxColonists * 1.5)
+				else
+					MaxColonists = int(MaxColonists)
+				end if
+				
 				if .Colonists > MaxColonists then
 					'Ensure that the meter remains solid
 					MaxColonists = .Colonists
@@ -702,7 +714,7 @@ sub renderClient
 				PaintColor(1) = rgb(64,128,128)
 				line(1024,118)-(1024+int(.Colonists/PopDividor),136),PaintColor(1),bf
 
-				DiamondBase = 1024+int(MaxColonists/PopDividor)
+				DiamondBase = max(1024,1024+int(MaxColonists/PopDividor))
 				for DiamSize as byte = 0 to 9
 					DiamL = 118 + DiamSize
 					DiamH = 136 - DiamSize
@@ -720,7 +732,7 @@ sub renderClient
 					PaintColor(1) = rgb(128,80,80)
 					line(1024,138)-(1024+int(.Natives/PopDividor),156),PaintColor(1),bf
 
-					DiamondBase = 1024+int(MaxNatives/PopDividor)
+					DiamondBase = max(1024,1024+int(MaxNatives/PopDividor))
 					for DiamSize as byte = 0 to 9
 						DiamL = 138 + DiamSize
 						DiamH = 156 - DiamSize
@@ -732,7 +744,7 @@ sub renderClient
 
 					PopulationNum = .Natives * 100
 					NativeStr = commaSep(PopulationNum)+" "
-					if .NativeType >= 1 AND .NativeType <= 9 then
+					if (.NativeType >= 1 AND .NativeType <= 11) then
 						NativeStr += NativeRaces(.NativeType)
 					else
 						NativeStr += "Chupanoid"
@@ -834,7 +846,7 @@ sub renderClient
 							line(1024,158+Mineral*20)-(1024+int(UsableMetals/50),176+Mineral*20),PaintColor(1),bf
 						end if
 	
-						DiamondBase = 1024+int((UsableMetals+MinableOre)/50)
+						DiamondBase = max(1024,1024+int((UsableMetals+MinableOre)/50))
 						for DiamSize as byte = 0 to 9
 							DiamL = 158+Mineral*20 + DiamSize
 							DiamH = 176+Mineral*20 - DiamSize
@@ -1010,12 +1022,11 @@ sub renderClient
 			if multikey(SC_LSHIFT) then
 				ReplayerMode = MODE_EXIT
 			else
-				if SWidth <= 800 OR SHeight <= 600 then
-					screen 19,24,2,GFX_FULLSCREEN OR GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES
-				else
-					screen 19,24,2,GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES
+				if BaseScreen.Wideth > 1024 AND BaseScreen.Height > 768 AND SimpleView = 0 then
+					prepCanvas(1024,768)
 				end if
 				
+				ViewGame.PlayerCount = 0
 				GameID = 0
 				ReplayerMode = MODE_MENU
 				InType = chr(255)

@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.28 (Alpha 19)"
+const BROWSER_LONG = "Nu Replayer 0.29b (Alpha 20)"
 
 #IFNDEF __FORCE_OFFLINE__
 /'
@@ -16,7 +16,7 @@ dim shared as TCPSocket NuSocket
 
 dim shared as string SendBuffer
 dim shared as double LastFill
-dim shared as integer PersonalIDs(8)
+dim shared as integer PersonalIDs(12), LoadTurnDetected
 
 sub updateStatistics
 	dim as string ScoreFile, ResourceFile, RelationsFile
@@ -486,7 +486,7 @@ end function
 		cls
 		ErrorMsg = ""
 		print word_wrap("Privacy: Your credidentials are used to allow NU REPLAYER to interact with the PLANETS NU server, and they will also be saved to the disk. "+_
-			"Supplying NU REPLAYER your information will allow it to download turns bound to open slots in completed games, and allow easier access to your most recent finihsed games.",100)
+			"Supplying NU REPLAYER your information will allow it to download turns bound to open slots in completed games, and allow easier access to your most recent finished games.")
 		print
 		line input "Enter your Planets Nu username: ",Username
 		print "Enter your password: ";
@@ -506,7 +506,7 @@ end function
 			return 0
 		else
 			if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
-				ErrorMsg = "Nu Replayer did not successfully sent its request to Planets Nu's servers."
+				ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 				return 0
 			else
 				MemoryBuffer = ""
@@ -570,7 +570,7 @@ end function
 			return 1
 		else
 			if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
-				ErrorMsg = "Nu Replayer did not successfully sent its request to Planets Nu's servers."
+				ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 				return 1
 			else
 				mkdir "games/"+str(GameID)
@@ -650,37 +650,38 @@ sub createMeter(Filling as double = LastFill, ProgressStr as string = LastProgre
 end sub
 
 sub loadTurnUI(Players as ubyte)
-	dim as byte Detected
 	dim as string ProgressMeter
 	
 	if ViewGame.PlayerCount > 0 then
-		Detected = ViewGame.PlayerCount
+		LoadTurnDetected = ViewGame.PlayerCount
 	else
-		Detected = GameParser.PlayerCount
+		LoadTurnDetected = GameParser.PlayerCount
 	end if
 	
-	ProgressMeter = str(Players)+" / "+str(Detected)+" players done"
-	createMeter(Players/Detected,ProgressMeter,0)
+	ProgressMeter = str(Players)+" / "+str(LoadTurnDetected)+" players converted"
+	createMeter(Players/LoadTurnDetected,ProgressMeter,0)
 	screencopy
 	sleep 15
 end sub
 
-sub loadTurnKB(KBCount as integer, Players as ubyte)
+sub loadTurnKB(KBCount as integer, PlayerID as ubyte)
 	dim as integer FileSize, XPos
 	dim as string FileProgress
-	if timer > KBUpdate + 0.125 then
-		for PlotIndeter as short = 0 to 22
-			XPos = (PlotIndeter-1)*50 + remainder(int(KBCount/2),50)
-			put(XPos,748),Indeterminate,pset
-		next PlotIndeter
-		createMeter
-
+	if 1 OR timer > KBUpdate + 0.125 then
 		KBUpdate = timer
-		FileSize = int(FileLen("raw/"+str(GameID)+"/player"+str(Players)+"-turn"+str(TurnNum)+".trn")/1e3)
+		FileSize = int(FileLen("raw/"+str(GameID)+"/player"+str(PlayerID)+"-turn"+str(TurnNum)+".trn")/1e3)
+
 		if FileSize > 0 then
-			FileProgress = str(KBCount)+"/"+str(FileSize)+" KB done for player "+str(Players)
+			createMeter((PlayerID-1+KBCount/FileSize)/LoadTurnDetected)
+			FileProgress = str(KBCount)+"/"+str(FileSize)+" KB done for player "+str(PlayerID)
 		else
-			FileProgress = str(KBCount)+"/??? KB done for player "+str(Players)
+			for PlotIndeter as short = 0 to 22
+				XPos = (PlotIndeter-1)*50 + remainder(int(KBCount/2),50)
+				put(XPos,748),Indeterminate,pset
+			next PlotIndeter
+			createMeter
+
+			FileProgress = str(KBCount)+"/??? KB done for player "+str(PlayerID)
 		end if
 		gfxstring(FileProgress,1024-gfxlength(FileProgress,3,3,2),730,3,3,2,rgb(255,255,255))
 		screencopy
@@ -688,17 +689,17 @@ sub loadTurnKB(KBCount as integer, Players as ubyte)
 end sub
 
 sub rotatePersonalGames(NewID as integer)
-	for PersonalSlot as byte = 1 to 7
+	for PersonalSlot as byte = 1 to 11
 		PersonalIDs(PersonalSlot) = PersonalIDs(PersonalSlot+1)
 	next PersonalSlot
 	
-	PersonalIDs(8) = NewID
+	PersonalIDs(12) = NewID
 end sub
 
 function isPersonalGame(SearchID as integer) as integer
 	dim as integer GameFound = 0
 	
-	for PersonalSlot as byte = 1 to 8
+	for PersonalSlot as byte = 1 to 12
 		if PersonalIDs(PersonalSlot) = SearchID then
 			GameFound = 1
 		end if

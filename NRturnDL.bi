@@ -3,7 +3,7 @@ declare function downloadLastTurns(GameID as integer) as integer
 sub downloadGame(GameName as string, GameID as integer)
 	'Downloads game summary and data
 	cls
-	print word_wrap("Creating preparation data for "+GameName+". This may take several minutes depending on the number of players...",100)
+	print word_wrap("Creating preparation data for "+GameName+". This may take several minutes depending on the number of players...")
 	screencopy
 	
 	if downloadLastTurns(GameID) then
@@ -13,12 +13,12 @@ sub downloadGame(GameName as string, GameID as integer)
 		close #7
 
 		print
-		print word_wrap("Last turn successfully downloaded. If you wish to download more turns for this game, use the LoadAll API in a browser and download the ZIP.",100)
+		print word_wrap("Last turn successfully downloaded. If you wish to download more turns for this game, use the LoadAll API in a browser and download the ZIP.")
 		screencopy
 		sleep
 	else
 		print
-		print word_wrap(ErrorMsg,100)
+		print word_wrap(ErrorMsg)
 		screencopy
 		sleep
 	end if
@@ -43,7 +43,11 @@ function downloadLastTurns(GameID as integer) as integer
 			exit do
 		end if
 		
-		createMeter((Player-1)/max(GameParser.PlayerCount,1),"Downloading player "+str(Player)+"'s data...",0,1)
+		if Player = 1 then
+			createMeter(0,"Acquiring settings...",0,abs(CanvasScreen.Height < 768))
+		else
+			createMeter((Player-1)/GameParser.PlayerCount,str(Player-1)+" / "+str(GameParser.PlayerCount)+" players downloaded",0,abs(CanvasScreen.Height < 768))
+		end if
 		screencopy
 		
 		if APIKey = "" then
@@ -60,7 +64,7 @@ function downloadLastTurns(GameID as integer) as integer
 			return 0
 		else
 			if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
-				ErrorMsg = "Nu Replayer did not successfully sent its request to Planets Nu's servers."
+				ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 				return 0
 			else
 				mkdir "raw"
@@ -165,6 +169,6 @@ function downloadLastTurns(GameID as integer) as integer
 		SDLNet_TCP_Close( NuSocket )
 	loop
 
-	createMeter(1,"",0,1)
+	createMeter(1,"",0,abs(CanvasScreen.Height < 768))
 	return abs(ErrorMsg = "") 
 end function

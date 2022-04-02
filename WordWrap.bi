@@ -5,9 +5,10 @@ function quote(InParam as string) as string
 	return chr(34)+InParam+chr(34)
 end function
 
-function word_wrap(Text as string, Cap as ushort = 80) as string
-	dim as ushort RefChar, RaisedChar, TotalRaised
+function word_wrap(Text as string) as string
+	dim as ushort RefChar, RaisedChar, TotalRaised, Cap
 	dim as string OutText = Text
+	Cap = loWord(width)
 	for WID as ushort = 1 to len(Text)
 		if mid(Text,WID,1) = chr(32) then
 			RefChar = WID

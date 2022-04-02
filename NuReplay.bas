@@ -19,6 +19,10 @@ sub cleaning destructor
 	print #1, quote("Key");",";APIKey
 	print #1, quote("Preferred Type");",";PreferType
 	print #1, quote("Simple View");",";SimpleView
+	print #1, quote("Exclude Blitz Games");",";ExcludeBlitzes
+	print #1, quote("Exclude MvM Games");",";ExcludeMvM
+	print #1, quote("Exclude Dataless Games");",";ExcludeNodata
+	print #1, quote("Borderless");",";BorderlessFS
 	close #1
 	
 	ImageDestroy(TerritoryMap)
@@ -35,52 +39,15 @@ end sub
 
 WindowStr = BROWSER_LONG
 
-'Checks desktop size and acts accordingly
-Screencontrol GET_DESKTOP_SIZE, SWidth, SHeight
-
-if SWidth < 800 OR SHeight < 600 then
-	/'
-	 'If desktop size does not meet program requirements, it reports an
-	 'error and closes
-	 '/
-	open "stderr.txt" for output as #9
-	print #9, "Nu Replayer requires 800x600 in order to run." 
-	close #9
-	
-	cleaning
-	end -2
-elseif SWidth = 800 OR SHeight = 600 then
-	/'
-	 ' If the desktop size is equal to the hub requirements on
-	 ' either side, then it forces fullscreen. Access to most
-	 ' features are disabled
-	 '/
-	screen 19,24,2,GFX_FULLSCREEN OR GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES
-else
-	/'
-	 ' If the desktop size is greater than the hub requirements on
-	 ' both sides, then it forces to a window to allow a graceful
-	 ' switch in window size.
-	 '/
-	screen 19,24,2,GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES
-end if
-
-if screenptr = 0 then
-	'Error setting video mode
-	open "stderr.txt" for output as #9
-	print #9, "Video mode was not successfully established" 
-	close #9
-	
-	cleaning
-	end -2
-end if
-
 if FileExists("Login.csv") AND FileExists("Settings.csv") = 0 then name("Login.csv","Settings.csv")
 
 Username = "guest"
 APIKey = ""
-PreferType = "Championship"
+PreferType = "Seasonal Championship"
 SimpleView = 0
+ExcludeBlitzes = 1
+ExcludeMvM = 1
+ExcludeNodata = 0
 
 if FileExists("Settings.csv") then
 	open "Settings.csv" for input as #1
@@ -95,19 +62,80 @@ if FileExists("Settings.csv") then
 				input #1, PreferType
 			case "Simple View"
 				input #1, SimpleView
+			case "Exclude Blitz Games"
+				input #1, ExcludeBlitzes
+			case "Exclude MvM Games"
+				input #1, ExcludeMvM
+			case "Exclude Dataless Games"
+				input #1, ExcludeNodata
+			case "Borderless"
+				input #1, BorderlessFS
 		end select
 	loop until eof(1)
 	close #1
+	
+	'Personal games are available only with an API Key
 	if APIKey = "" then
 		Username = "guest"
 		if PreferType = "Personal" then
-			PreferType = "Championship"
+			PreferType = "Seasonal Championship"
 		end if
+	end if
+	
+	'Academy games are now deprecated - Fall back to Seasonal Championship
+	if PreferType = "Academy" then
+		PreferType = "Seasonal Championship"
+	end if
+	
+	'Chmapionship games have been split into two categories.
+	'The oldest 12 championship matches are now called the Zodiac Wars.
+	if PreferType = "Championship" then
+		PreferType = "Seasonal Championship"
 	end if
 end if
 
-'Utilizes double-buffering to prevent sheering
-screenset 0,1
+'Checks desktop size and acts accordingly
+with BaseScreen
+	Screencontrol GET_DESKTOP_SIZE, .Wideth, .Height
+	
+	if .Wideth < 800 OR .Height < 600 then
+		/'
+		 'If desktop size does not meet program requirements, it reports an
+		 'error and closes
+		 '/
+		open "stderr.txt" for output as #9
+		print #9, "Nu Replayer requires 800x600 in order to run." 
+		close #9
+		
+		cleaning
+		end -2
+	elseif .Wideth <= 1024 OR .Height <= 800 then
+		/'
+		 ' If the desktop size is equal to the hub requirements on
+		 ' either side, then it forces fullscreen. Access to most
+		 ' features are disabled
+		 '/
+		prepCanvas(.Wideth,.Height,GFX_FULLSCREEN OR (GFX_NO_FRAME AND sgn(BorderlessFS)))
+	else
+		/'
+		 ' If the desktop size is greater than the hub requirements on
+		 ' both sides, then it forces to a window to allow a graceful
+		 ' switch in window size.
+		 '/
+		prepCanvas(1024,768)
+	end if
+end with
+
+if screenptr = 0 then
+	'Error setting video mode
+	open "stderr.txt" for output as #9
+	print #9, "Video mode was not successfully established" 
+	close #9
+	
+	cleaning
+	end -2
+end if
+
 'Creates the territory and island maps
 TerritoryMap = ImageCreate(768,768)
 IslandMap =  ImageCreate(768,768)
@@ -179,10 +207,13 @@ do
 					#ENDIF
 				end if
 			end if
+			while screenevent(@e):wend
 		case MODE_HUB_DL
 			replayHub(1)
+			while screenevent(@e):wend
 		case else
 			renderClient
+			while screenevent(@e):wend
 	end select
 
 	if (multikey(SC_ALT) AND multikey(SC_F4)) then
