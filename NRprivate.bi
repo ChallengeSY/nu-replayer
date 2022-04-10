@@ -117,15 +117,17 @@ sub importPrivateGame
 			next DID
 		end if
 	
-		if FileExists("games/Custom List.csv") = 0 then
-			open "games/Custom List.csv" for output as #8
-			print #8, quote("ID")+","+quote("Name")+","+quote("Desc")+","+quote("Turn")
-			close #8
+		if GameName <> "" AND FinalTurn > 0 AND ErrorMsg = "" then
+			if FileExists("games/Custom List.csv") = 0 then
+				open "games/Custom List.csv" for output as #8
+				print #8, quote("ID")+","+quote("Name")+","+quote("Desc")+","+quote("Turn")
+				close #8
+			end if
+		
+			open "games/Custom List.csv" for append as #9
+			print #9, ""& GameNum;",";GameName;",";ShortDesc;","& FinalTurn
+			close #9
 		end if
-	
-		open "games/Custom List.csv" for append as #9
-		print #9, ""& GameNum;",";GameName;",";ShortDesc;","& FinalTurn
-		close #9
 	end if
 	
 	if ErrorMsg <> "" then
