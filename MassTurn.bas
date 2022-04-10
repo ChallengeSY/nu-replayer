@@ -1,5 +1,6 @@
 #include "vbcompat.bi"
 #include "fbgfx.bi"
+#include "CSYMath.bi"
 using FB
 
 declare sub loadTurnTerritory(AmtDone as short)

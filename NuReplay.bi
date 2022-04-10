@@ -14,6 +14,7 @@ declare sub loadTurnUI(Players as ubyte)
 '#DEFINE __FORCE_OFFLINE__
 #IFNDEF __FORCE_OFFLINE__
 	'#DEFINE __USE_ZLIB__
+	'#DEFINE __USE_LIBZIP__ 
 	#DEFINE __API_LOGIN__
 	#DEFINE __DOWNLOAD_LIST__
 	#DEFINE __DOWNLOAD_TURNS__
@@ -334,6 +335,9 @@ declare sub recordPersonalGames
 declare function isPersonalGame(SearchID as integer) as integer
 #IFDEF __DOWNLOAD_TURNS__
 declare sub downloadGame(GameName as string, GameID as integer)
+#ENDIF
+#IFNDEF __FORCE_OFFLINE__
+declare sub importPrivateGame
 #ENDIF
 
 'Randomize seed
@@ -724,6 +728,15 @@ sub menu
 		#ELSE
 		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(128,128,128))
 		#ENDIF
+		
+		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(255,255,255))
+	
+		if MouseY > = 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				importPrivateGame
+			end if
+		end if
 	elseif OfflineMode = 0 then 
 		gfxstring("Network Mode",10,200,5,4,3,rgb(255,255,255))
 	end if

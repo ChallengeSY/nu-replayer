@@ -1,13 +1,13 @@
 #IF NOT defined(__FORCE_OFFLINE__) AND NOT defined(__FB_DOS__)
-/'
- ' When Nu Replayer has online support, then it will includes the libraries
- ' necessary to interact with Planets Nu.
- '
- ' SDL is needed to connect to Planets Nu. Likewise, zlib is needed to
- ' decompress data
- '/
-
-#include "SDL/SDL_net.bi"
+	/'
+	 ' When Nu Replayer has online support, then it will includes the libraries
+	 ' necessary to interact with Planets Nu.
+	 '
+	 ' SDL is needed to connect to Planets Nu. Likewise, zlib is needed to
+	 ' decompress data
+	 '/
+	
+	#include "SDL/SDL_net.bi"
 	#IFDEF ____USE_ZLIB__
 	#include "zlib.bi"
 	#ENDIF
@@ -17,6 +17,7 @@
 #IFDEF __DOWNLOAD_TURNS__
 #include "NRturnDL.bi"
 #ENDIF
+#include "NRprivate.bi"
 
 declare function listGames as integer
 
