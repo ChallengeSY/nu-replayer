@@ -102,6 +102,7 @@ function downloadLastTurns(GameID as integer) as integer
 					.PlayerCount = 0
 					.MapWidth = 2000
 					.MapHeight = 2000
+					.CloudyIonStorms = 0
 					.Sphere = 0
 					.Academy = 0
 					.DynamicMap = 0
@@ -124,6 +125,10 @@ function downloadLastTurns(GameID as integer) as integer
 				
 						if strMatch(InStream,DID,quote("mapheight")+":") then
 							.MapHeight = valint(mid(InStream,DID+12,4))
+						end if
+				
+						if strMatch(InStream,DID,quote("nuionstorms")+":true") then
+							.CloudyIonStorms = 1
 						end if
 				
 						if strMatch(InStream,DID,quote("sphere")+":true") then
@@ -150,11 +155,14 @@ function downloadLastTurns(GameID as integer) as integer
 					print "Found the following settings..."
 					print "* Players: "& .PlayerCount
 					print "* Map Size: "& .MapWidth;" X "& .MapHeight
+					if .CloudyIonStorms > 0 then
+						print "* Cloudy ion storms active"
+					end if
 					if .Sphere > 0 then
-						print "* Sphere activated"
+						print "* Sphere active"
 					end if
 					if .Academy > 0 then
-						print "* Academy activated"
+						print "* Academy active"
 					end if
 					if .AccelStart > 0 then
 						print "* Accelerated Start: "& .AccelStart;" turns"

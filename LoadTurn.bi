@@ -78,6 +78,17 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			.UseTorp = 0
 		end with
 		
+		with IonParser(ObjIDa)
+			.XLoc = 0
+			.YLoc = 0
+			.Radius = 0
+			.Voltage = 0
+			.WarpFactor = 0
+			.StormHeading = 0
+			.StormGrowing = 0
+			.ParentID = 0
+		end with
+		
 		with RelateParser(ObjIDa)
 			.FromPlr = 0
 			.ToPlr = 0
@@ -358,11 +369,27 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					end if
 				end if
 					
+				if ParsingDone(PARSER_IONSTORMS) = 0 then
+					if strMatch(InStream,DID,quote("ionstorms")+": [") then
+						
+						'Skip converting ion storms if they are already recorded this turn
+						if PID > 1 then
+							ParseWhat = PARSER_NONE
+						else
+							ParseWhat = PARSER_IONSTORMS
+						end if
+
+						ParsingDone(PARSER_IONSTORMS) = 1
+						DID = strMatch(InStream,DID,quote("ionstorms")+": [") - ScanSpeed
+						continue for
+					end if
+				end if
+					
 				if ParsingDone(PARSER_NEBULAE) = 0 then
 					if strMatch(InStream,DID,quote("nebulas")+": [") then
 						
 						'Skip converting nebulae if they are already recorded
-						if PID > 1 OR  FileExists("games/"+str(GameNum)+"/Nebulae.csv") then
+						if PID > 1 OR FileExists("games/"+str(GameNum)+"/Nebulae.csv") then
 							ParseWhat = PARSER_NONE
 						else
 							ParseWhat = PARSER_NEBULAE
@@ -1129,6 +1156,55 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 									.Radius = InterMinef.Radius
 									.FCode = ObjCode
 								end if
+							end with
+						end if
+						
+					case PARSER_IONSTORMS
+						with InterIon
+							if strMatch(InStream,DID,quote("x")) then
+								.XLoc = valint(mid(InStream,DID+4,4))
+							end if
+							if strMatch(InStream,DID,quote("y")) then
+								.YLoc = valint(mid(InStream,DID+4,4))
+							end if
+							if strMatch(InStream,DID,quote("radius")) then
+								.Radius = valint(mid(InStream,DID+9,4))
+							end if
+							if strMatch(InStream,DID,quote("voltage")) then
+								.Voltage = valint(mid(InStream,DID+10,4))
+							end if
+							if strMatch(InStream,DID,quote("warp")) then
+								.WarpFactor = valint(mid(InStream,DID+7,2))
+							end if
+							if strMatch(InStream,DID,quote("heading")) then
+								.StormHeading = valint(mid(InStream,DID+10,4))
+							end if
+							if strMatch(InStream,DID,quote("isgrowing")+":true") then
+								.StormGrowing = 1
+							end if
+							if strMatch(InStream,DID,quote("parentid")) then
+								.ParentID = valint(mid(InStream,DID+11,4))
+							end if
+							if strMatch(InStream,DID,quote("id")) then
+								ObjIDa = valint(mid(InStream,DID+5,4))
+							end if
+						end with
+	
+						if strMatch(InStream,DID,"}") AND PID < 2 then
+							if cmdLine("--verbose") OR cmdLine("-vi") then
+								print "Identified ion storm #"& ObjIDa
+							end if
+
+							print #9, "[";Time;", ";Date;"]  Registered star cluster #"& ObjIDa
+							with IonParser(ObjIDa)
+								.XLoc = InterIon.XLoc
+								.YLoc = InterIon.YLoc
+								.Radius = InterIon.Radius
+								.Voltage = InterIon.Voltage
+								.WarpFactor = InterIon.WarpFactor
+								.StormHeading = InterIon.StormHeading
+								.StormGrowing = InterIon.StormGrowing
+								.ParentID = InterIon.ParentID
 							end with
 						end if
 						

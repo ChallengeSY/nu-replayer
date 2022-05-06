@@ -119,6 +119,17 @@ type ParseMinef
 	FCode as string
 end type
 
+type ParseIonStorm
+	XLoc as short
+	YLoc as short
+	Radius as short
+	Voltage as short
+	WarpFactor as short
+	StormHeading as short
+	StormGrowing as byte
+	ParentID as short
+end type
+
 type ParseStar
 	ClustName as string
 	XLoc as short
@@ -207,6 +218,7 @@ type ParseGame
 	MapHeight as short
 	DynamicMap as byte
 	PlayerCount as byte
+	CloudyIonStorms as byte
 	Sphere as byte
 	Academy as byte
 	AccelStart as short
@@ -218,6 +230,7 @@ dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan
 dim shared as ParseShip ShipParser(LimitObjs), InterShip
 dim shared as ParseBase BaseParser(LimitObjs), InterBase
 dim shared as ParseStar StarParser(LimitObjs), InterStar
+dim shared as ParseIonStorm IonParser(LimitObjs), InterIon
 dim shared as ParseNebulae NebParser(LimitObjs), InterNeb
 dim shared as ParseStock StockParser(MetaLimit)
 dim shared as ParseMinef MinefParser(MetaLimit), InterMinef
@@ -234,6 +247,7 @@ enum ParserModes
 	PARSER_STARBASE
 	PARSER_BASE_STORAGE
 	PARSER_MINEFIELDS
+	PARSER_IONSTORMS
 	PARSER_STAR_CLUSTER
 	PARSER_NEBULAE
 	PARSER_DIPLOMACY
@@ -379,6 +393,28 @@ sub exportMinefields(GameID as integer, CurTurn as short)
 	close #18
 end sub
 
+sub exportIonList(GameID as integer, CurTurn as short)
+	dim as integer ObjID
+	dim as string FileName
+	FileName = "games/"+str(GameID)+"/"+str(CurTurn)+"/Ion Storms.csv"
+
+	open FileName for output as #24
+	print #24, quote("InternalID")+","+quote("ParentID")+","+quote("X")+","+quote("Y")+","+_
+		quote("Radius")+","+quote("Voltage")+","+quote("Warp")+","+quote("Heading")+","+_
+		quote("Growing")
+
+	for ObjID = 1 to LimitObjs
+		with IonParser(ObjID)
+			if .Voltage > 0 then
+				print #24, ""& ObjID;","& .ParentID;","& .XLoc;","& .YLoc; _
+					","& .Radius;","& .Voltage;","& .WarpFactor;","& .StormHeading; _
+					","& .StormGrowing
+			end if
+		end with
+	next
+	close #24
+end sub
+
 sub exportStarList(GameID as integer)
 	dim as integer ObjID
 	dim as string FileName
@@ -416,7 +452,7 @@ sub exportNebList(GameID as integer)
 		for ObjID = 1 to LimitObjs
 			with NebParser(ObjID)
 				if len(.NebName) > 0 then
-					print #15, ""& ObjID;","& .NebName;","& .XLoc;","& .YLoc; _
+					print #22, ""& ObjID;","& .NebName;","& .XLoc;","& .YLoc; _
 						","& .Radius;","& .Intense;","& .Gas
 				end if
 			end with
@@ -435,6 +471,7 @@ sub exportSettings(GameID as integer, AlwaysWrite as byte = 0)
 			print #23, quote("Width");","& .MapWidth
 			print #23, quote("Height");","& .MapHeight
 			print #23, quote("Dynamic");","& .DynamicMap
+			print #23, quote("CloudyStorms");","& .CloudyIonStorms
 			print #23, quote("Wraparound");","& .Sphere
 			print #23, quote("Academy");","& .Academy
 			print #23, quote("AccelStart");","& .AccelStart
@@ -603,6 +640,7 @@ sub exportCSVfiles(GameID as integer, CurTurn as short)
 	exportShipList(GameID,CurTurn)
 	exportBaseList(GameID,CurTurn)
 	exportMinefields(GameID,CurTurn)
+	exportIonList(GameID,CurTurn)
 	exportNebList(GameID)
 	exportRelationships(GameID,CurTurn)
 	exportSettings(GameID)
