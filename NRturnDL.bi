@@ -1,19 +1,20 @@
 declare function downloadLastTurns(GameID as integer) as integer
+declare function downloadZipPackage(GameID as integer) as integer
 
 sub downloadGame(GameName as string, GameID as integer)
 	'Downloads game summary and data
 	cls
-	print word_wrap("Creating preparation data for "+GameName+". This may take several minutes depending on the number of players...")
+	print word_wrap("Creating preparation data and downloading turns for "+GameName+". This may take several minutes depending on the number of players and ZIP package size...")
 	screencopy
 	
-	if downloadLastTurns(GameID) then
+	if downloadLastTurns(GameID) AND downloadZipPackage(GameID) then
 		'Indicate successful operation
-		open "raw/DLturn.txt" for output as #7
-		print #7, "Last downloaded game #"& GameID
-		close #7
+		open "raw/DLturn.txt" for output as #9
+		print #9, "Last downloaded game #"& GameID
+		close #9
 
 		print
-		print word_wrap("Last turn successfully downloaded. If you wish to download more turns for this game, use the LoadAll API in a browser and download the ZIP.")
+		print word_wrap("Process successful. To retrieve earlier turns, just extract the included ZIP package.")
 		screencopy
 		sleep
 	else
@@ -46,7 +47,7 @@ function downloadLastTurns(GameID as integer) as integer
 		if Player = 1 then
 			createMeter(0,"Acquiring settings...",0,abs(CanvasScreen.Height < 768))
 		else
-			createMeter((Player-1)/GameParser.PlayerCount,str(Player-1)+" / "+str(GameParser.PlayerCount)+" players downloaded",0,abs(CanvasScreen.Height < 768))
+			createMeter((Player-1)/(GameParser.PlayerCount+2),str(Player-1)+" / "+str(GameParser.PlayerCount)+" players downloaded",0,abs(CanvasScreen.Height < 768))
 		end if
 		screencopy
 		
@@ -69,7 +70,7 @@ function downloadLastTurns(GameID as integer) as integer
 			else
 				mkdir "raw"
 				mkdir "raw/"+str(GameID)+""
-				open "raw/"+str(GameID)+"/player"+str(Player)+"-turn"+str(GameParser.LastTurn)+".trn" for output as #4
+				open TargetFile(0) for output as #4
 	
 				do
 					Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBuffer ), RECVBUFFLEN )
@@ -86,7 +87,7 @@ function downloadLastTurns(GameID as integer) as integer
 				close #4
 			end if
 			
-			open "raw/"+str(GameID)+"/player"+str(Player)+"-turn"+str(GameParser.LastTurn)+".trn" for input as #5
+			open TargetFile(0) for input as #5
 			do
 				if eof(5) then
 					ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to lack of opening brace."
@@ -177,6 +178,87 @@ function downloadLastTurns(GameID as integer) as integer
 		SDLNet_TCP_Close( NuSocket )
 	loop
 
-	createMeter(1,"",0,abs(CanvasScreen.Height < 768))
-	return abs(ErrorMsg = "") 
+	createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"",0,abs(CanvasScreen.Height < 768))
+	return ErrorMsg = ""
+end function
+
+function downloadZipPackage(GameID as integer) as integer
+	dim SendBuffer as string
+	dim RecvBufferTxt as zstring * RECVBUFFLEN+1
+	dim Bytes as integer
+
+	Static As UByte chunk(0 To (RECVBUFFLEN - 1))
+	#define DL_BUFFER (@chunk(0))
+	
+	dim as string InStream, TargetFile
+	dim as integer BlankLines = 0, ZipOutcome
+	dim as longint TotalBytes = 0
+	ErrorMsg = ""
+	
+	SendBuffer = loadAddress("game/loadall?gameid="+str(GameID))
+	
+	NuSocket = SDLNet_TCP_Open( @NuIP )
+	if FileExists("raw/"+str(GameID)+"/game"+str(GameID)+".zip") then
+		ErrorMsg = "Nu Replayer skipped downloading the ZIP archive: It already exists"
+		return 0
+	elseif( NuSocket = 0 ) then
+		ErrorMsg = "Nu Replayer did not successfully open a socket to Planets Nu's servers."
+		return 0
+	else
+		if SDLNet_TCP_Send(NuSocket, strptr(SendBuffer), len(SendBuffer)) < len(SendBuffer) then
+			ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
+			return 0
+		else
+			mkdir "raw"
+			mkdir "raw/"+str(GameID)+""
+			open "raw/"+str(GameID)+"/gameZipPrep.txt" for output as #6
+
+			do
+				Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBufferTxt ), 1 )
+				if ( Bytes <= 0 ) then
+					ErrorMsg = "Nu Replayer did not successfully acquire the file."
+					return 0
+				end if
+
+				'' add the null-terminator
+				RecvBufferTxt[Bytes] = 0
+
+				'' print it as string
+				print #6, RecvBufferTxt;
+				
+				if left(RecvBufferTxt,1) < chr(32) then
+					BlankLines += 1
+				else
+					BlankLines = 0
+				end if 
+				
+				TotalBytes += Bytes
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),commaSep(TotalBytes)+" bytes downloaded so far",0,abs(CanvasScreen.Height < 768))
+				screencopy
+			loop until BlankLines >= 4
+			close #6
+			
+			TargetFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
+			
+			open TargetFile for binary as #7
+
+			do
+				Bytes = SDLNet_TCP_Recv( NuSocket, DL_BUFFER, RECVBUFFLEN )
+				if ( Bytes <= 0 ) then
+					exit do
+				end if
+
+				put #7, , *DL_BUFFER, Bytes
+				
+				TotalBytes += Bytes
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),commaSep(TotalBytes)+" bytes downloaded so far",0,abs(CanvasScreen.Height < 768))
+				screencopy
+			loop
+			close #7
+		end if
+	end if
+	
+	createMeter(1,commaSep(TotalBytes)+" bytes downloaded",0,abs(CanvasScreen.Height < 768))
+	SDLNet_TCP_Close( NuSocket )
+	return ErrorMsg = ""
 end function

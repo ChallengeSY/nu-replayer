@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.29c (Alpha 20)"
+const BROWSER_LONG = "Nu Replayer 0.29d (Alpha 20)"
 
 #IFNDEF __FORCE_OFFLINE__
 /'
@@ -486,7 +486,7 @@ end function
 		cls
 		ErrorMsg = ""
 		print word_wrap("Privacy: Your credidentials are used to allow NU REPLAYER to interact with the PLANETS NU server, and they will also be saved to the disk. "+_
-			"Supplying NU REPLAYER your information will allow it to download turns bound to open slots in completed games, and allow easier access to your most recent finished games.")
+			"Supplying NU REPLAYER your information will allow easier access to your most recent finished games.")
 		print
 		line input "Enter your Planets Nu username: ",Username
 		print "Enter your password: ";
