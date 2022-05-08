@@ -1,5 +1,6 @@
 declare function downloadLastTurns(GameID as integer) as integer
 declare function downloadZipPackage(GameID as integer) as integer
+#include "NRzip.bi"
 
 sub downloadGame(GameName as string, GameID as integer)
 	'Downloads game summary and data
@@ -13,8 +14,9 @@ sub downloadGame(GameName as string, GameID as integer)
 		print #9, "Last downloaded game #"& GameID
 		close #9
 
+		createMeter(1,"",0,abs(CanvasScreen.Height < 768))
 		print
-		print word_wrap("Process successful. To retrieve earlier turns, just extract the included ZIP package.")
+		print word_wrap("Process successful. You can now use the Game Room for "+GameName+".")
 		screencopy
 		sleep
 	else
@@ -190,12 +192,13 @@ function downloadZipPackage(GameID as integer) as integer
 	Static As UByte chunk(0 To (RECVBUFFLEN - 1))
 	#define DL_BUFFER (@chunk(0))
 	
-	dim as string InStream, TargetFile
+	dim as string InStream, GoalStr, TargetFile
 	dim as integer BlankLines = 0, ZipOutcome
-	dim as longint TotalBytes = 0
+	dim as longint BytesDownloaded = 0, TotalBytes = 0
 	ErrorMsg = ""
 	
 	SendBuffer = loadAddress("game/loadall?gameid="+str(GameID))
+	GoalStr = "Content-Length: "
 	
 	NuSocket = SDLNet_TCP_Open( @NuIP )
 	if FileExists("raw/"+str(GameID)+"/game"+str(GameID)+".zip") then
@@ -211,7 +214,9 @@ function downloadZipPackage(GameID as integer) as integer
 		else
 			mkdir "raw"
 			mkdir "raw/"+str(GameID)+""
-			open "raw/"+str(GameID)+"/gameZipPrep.txt" for output as #6
+			
+			TargetFile = "raw/"+str(GameID)+"/gameZipPrep.txt"
+			open TargetFile for output as #6
 
 			do
 				Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBufferTxt ), 1 )
@@ -232,33 +237,74 @@ function downloadZipPackage(GameID as integer) as integer
 					BlankLines = 0
 				end if 
 				
-				TotalBytes += Bytes
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),commaSep(TotalBytes)+" bytes downloaded so far",0,abs(CanvasScreen.Height < 768))
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Analyzing heading...",0,abs(CanvasScreen.Height < 768))
+				screencopy
+			loop until BlankLines >= 4
+			close #6
+
+			open TargetFile for input as #7
+			while eof(7) = 0
+				input #7, InStream
+				if left(InStream, len(GoalStr)) = GoalStr then
+					TotalBytes = vallng(right(InStream, len(InStream) - len(GoalStr)))
+					exit while
+				end if
+			wend
+			close #7
+
+			do
+				Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBufferTxt ), 1 )
+				if ( Bytes <= 0 ) then
+					ErrorMsg = "Nu Replayer did not successfully acquire the file."
+					return 0
+				end if
+
+				'' add the null-terminator
+				RecvBufferTxt[Bytes] = 0
+
+				'' print it as string
+				print #6, RecvBufferTxt;
+				
+				if left(RecvBufferTxt,1) < chr(32) then
+					BlankLines += 1
+				else
+					BlankLines = 0
+				end if 
+				
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Analyzing heading...",0,abs(CanvasScreen.Height < 768))
 				screencopy
 			loop until BlankLines >= 4
 			close #6
 			
 			TargetFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
+			BytesDownloaded = 0
 			
-			open TargetFile for binary as #7
-
+			open TargetFile for binary as #8
 			do
 				Bytes = SDLNet_TCP_Recv( NuSocket, DL_BUFFER, RECVBUFFLEN )
 				if ( Bytes <= 0 ) then
 					exit do
 				end if
 
-				put #7, , *DL_BUFFER, Bytes
+				put #8, , *DL_BUFFER, Bytes
 				
-				TotalBytes += Bytes
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),commaSep(TotalBytes)+" bytes downloaded so far",0,abs(CanvasScreen.Height < 768))
+				BytesDownloaded += Bytes
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),commaSep(BytesDownloaded)+" / "+commaSep(TotalBytes)+" bytes downloaded so far",0,abs(CanvasScreen.Height < 768))
 				screencopy
 			loop
-			close #7
+			close #8
 		end if
+		
+		ZipOutcome = unpackZipPackage(TargetFile, (GameParser.PlayerCount+1)/(GameParser.PlayerCount+2))
 	end if
 	
-	createMeter(1,commaSep(TotalBytes)+" bytes downloaded",0,abs(CanvasScreen.Height < 768))
+	if ZipOutcome = 2 then
+		ErrorMsg = "Could not open the ZIP package for extraction."
+	elseif ZipOutcome = 1 then
+		ErrorMsg = "Some files could not be extracted from the ZIP package."
+	end if
+
+	while inkey <> "":wend	
 	SDLNet_TCP_Close( NuSocket )
 	return ErrorMsg = ""
 end function
