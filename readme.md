@@ -8,7 +8,7 @@ The default interface that is opened up is a menu, housing access to the game li
 The game room is a common interface, originally the default when Nu Replayer is first opened. It contains a list of finished games, and a filter can be applied to make it easier to find a desired game.
 
 ### Starmap ###
-After a suitable game has been selected (either with converted or raw files present), then the game opens into the starmap interface as shown on the right, converting the last turn of the game to a more readable format if necessary.
+After a suitable game has been selected (either with converted or raw files present), then the game opens into the starmap interface, converting the last turn of the game to a more readable format if necessary.
 
 By default, the starmap is accessed using the entire screen. To get a smaller window (if one is using a desktop &gt;1024&times;768), simply turn on the Compressed View setting in the Engine Options.
 
