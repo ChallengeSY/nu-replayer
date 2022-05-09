@@ -108,15 +108,15 @@ Function unpackZipPackage(ByRef archive As String, ByVal displayMeter As Single 
 
 	'' For each file in the .zip... (really nice API, thanks libzip)
 	For i As Integer = 0 To (zip_get_num_entries(zip, 0) - 1)
-		If unpackZipFile(zip, i) Then
-			errorCount += 1
-		End If
 		#ifdef BROWSER_LONG
 		If displayMeter >= 0 Then
-			createMeter(displayMeter,commaSep(i+1)+" / "+commaSep(zip_get_num_entries(zip, 0))+" files extracted from the package",0,abs(CanvasScreen.Height < 768))
+			createMeter(displayMeter,"Extracting files... ("+commaSep(i)+" / "+commaSep(zip_get_num_entries(zip, 0))+" done)",0,abs(CanvasScreen.Height < 768))
 			Screencopy
 		End If
 		#endif
+		If unpackZipFile(zip, i) Then
+			errorCount += 1
+		End If
 	Next
 
 	zip_close(zip)

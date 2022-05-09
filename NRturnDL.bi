@@ -25,6 +25,8 @@ sub downloadGame(GameName as string, GameID as integer)
 		screencopy
 		sleep
 	end if
+	
+	ErrorMsg = ""
 end sub
 
 function downloadLastTurns(GameID as integer) as integer
@@ -47,9 +49,9 @@ function downloadLastTurns(GameID as integer) as integer
 		end if
 		
 		if Player = 1 then
-			createMeter(0,"Acquiring settings...",0,abs(CanvasScreen.Height < 768))
+			createMeter(0,"Downloading turns... (0 / ? players done)",0,abs(CanvasScreen.Height < 768))
 		else
-			createMeter((Player-1)/(GameParser.PlayerCount+2),str(Player-1)+" / "+str(GameParser.PlayerCount)+" players downloaded",0,abs(CanvasScreen.Height < 768))
+			createMeter((Player-1)/(GameParser.PlayerCount+2),"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)",0,abs(CanvasScreen.Height < 768))
 		end if
 		screencopy
 		
@@ -237,7 +239,7 @@ function downloadZipPackage(GameID as integer) as integer
 					BlankLines = 0
 				end if 
 				
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Analyzing heading...",0,abs(CanvasScreen.Height < 768))
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... (finalizing prep)",0,abs(CanvasScreen.Height < 768))
 				screencopy
 			loop until BlankLines >= 4
 			close #6
@@ -265,7 +267,7 @@ function downloadZipPackage(GameID as integer) as integer
 				put #8, , *DL_BUFFER, Bytes
 				
 				BytesDownloaded += Bytes
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),commaSep(BytesDownloaded)+" / "+commaSep(TotalBytes)+" bytes downloaded so far",0,abs(CanvasScreen.Height < 768))
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... ("+commaSep(int(BytesDownloaded/1e3))+" / "+commaSep(int(TotalBytes/1e3))+" KB downloaded)",0,abs(CanvasScreen.Height < 768))
 				screencopy
 			loop
 			close #8
