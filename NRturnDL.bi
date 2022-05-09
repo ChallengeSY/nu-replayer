@@ -251,30 +251,6 @@ function downloadZipPackage(GameID as integer) as integer
 				end if
 			wend
 			close #7
-
-			do
-				Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBufferTxt ), 1 )
-				if ( Bytes <= 0 ) then
-					ErrorMsg = "Nu Replayer did not successfully acquire the file."
-					return 0
-				end if
-
-				'' add the null-terminator
-				RecvBufferTxt[Bytes] = 0
-
-				'' print it as string
-				print #6, RecvBufferTxt;
-				
-				if left(RecvBufferTxt,1) < chr(32) then
-					BlankLines += 1
-				else
-					BlankLines = 0
-				end if 
-				
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Analyzing heading...",0,abs(CanvasScreen.Height < 768))
-				screencopy
-			loop until BlankLines >= 4
-			close #6
 			
 			TargetFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
 			BytesDownloaded = 0
