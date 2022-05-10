@@ -1,7 +1,7 @@
 #IFNDEF __NR_COMMON__
 #DEFINE __NR_COMMON__ 'Protects Nu Replayer from having this duplicated
-const LimitObjs = 999 'Defines the maximum number of planets or ships
-const DataFormat = 42565.75
+const LimitObjs = 1999 'Defines the maximum number of planets or ships
+const DataFormat = 44682
 
 function findReplace(BaseTxt as string, InChar as string, OutChar as string) as string
 	'Automatically replaces characters as appropriate.
