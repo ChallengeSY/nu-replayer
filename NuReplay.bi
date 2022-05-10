@@ -488,7 +488,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 				with GameObj(0)
 					WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
 					ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
-					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Starbases.csv"
+					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Ion Storms.csv"
 					RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
 				
 					if FileExists(WorkingFile) then
@@ -919,8 +919,8 @@ sub replayHub(DownloadMode as byte = 0)
 					"to review games already downloaded.")
 			else
 				print word_wrap("Instructions: The download room is used to download "+_
-					"new turns and add them to the local storage.\n\nA limited subset of "+_
-					"features is available in this build, but it will be completed... eventually.")
+					"new turns and add them to the local storage. The entirety of a "+_
+					"game's raw files will be downloaded this way.")
 			end if
 		end if
 		locate 7,1
@@ -943,22 +943,34 @@ sub replayHub(DownloadMode as byte = 0)
 						if BaseScreen.Wideth < 1024 OR BaseScreen.Height < 768 then
 							Legal = 0
 							RMessage = "Nu Replayer requires a 1024x768 in order to render the starmap."
-						elseif .GameState = 0 then
+						elseif .GameState = 0 OR .GameState = 7 then
 							#IFDEF __DOWNLOAD_TURNS__
 							if ErrorMsg <> "" then 
 								Legal = 0
 								RMessage = "Without an operational network, games cannot be downloaded."
 							else
 								Legal = DownloadMode
-								if DownloadMode = 0 then
-									RMessage = "You cannot download turns from here. Visit the Download room to acquire this game."
+								if .GameState = 0 then
+									if DownloadMode = 0 then
+										RMessage = "You cannot download turns from here. Visit the Download room to acquire this game."
+									else
+										RMessage = "Game has never been downloaded. Press ENTER to begin download."
+									end if
 								else
-									RMessage = "Game has never been downloaded. Press ENTER to begin download."
+									if DownloadMode = 0 then
+										RMessage = "Last turn's data format is outdated, and raw files are not available."
+									else
+										RMessage = "Last turn's data format is outdated. Press ENTER to re-download, allowing for re-conversion."
+									end if
 								end if
 							end if
 							#ELSE
 							Legal = 0
-							RMessage = "Downloading turns have not yet been implemented into Nu Replayer."
+							if .GameState = 0 then
+								RMessage = "Downloading turns have not yet been implemented into Nu Replayer."
+							else
+								RMessage = "Last turn's data format is outdated, and raw files are not available."
+							end if
 							#ENDIF
 						elseif DownloadMode > 0 then
 							Legal = 0
@@ -966,9 +978,6 @@ sub replayHub(DownloadMode as byte = 0)
 						elseif .GameState = 1 then
 							Legal = 1
 							RMessage = "Press ENTER to convert the last turn and view the game."
-						elseif .GameState = 7 then
-							Legal = 0
-							RMessage = "Last turn's data format is outdated, and raw files are not available."
 						elseif .GameState = 8 then
 							Legal = 1
 							RMessage = "Last turn's data format is outdated. Press ENTER to re-convert and view the game."
@@ -996,6 +1005,8 @@ sub replayHub(DownloadMode as byte = 0)
 					else
 						if .GameState = 0 then
 							color rgb(0,255,0)
+						elseif .GameState = 7 then
+							color rgb(255,128,128)
 						else
 							color rgb(128,128,128)
 						end if
@@ -1022,10 +1033,15 @@ sub replayHub(DownloadMode as byte = 0)
 							case 9
 								print "Being converted externally"
 						end select
-					elseif .GameState = 0 then
-						print "Ready for download"
 					else
-						print "Already downloaded"
+						select case .GameState
+							case 0
+								print "Ready for download"
+							case 7
+								print "Data format outdated"
+							case else
+								print "Already downloaded"
+						end select
 					end if
 				end if
 				TotalTurnCount += .LastTurn

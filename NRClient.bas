@@ -42,9 +42,9 @@ sub renderClient
 	if InType = CtrlJ then
 		'Allows instantly jumping to any turn
 		dim as ushort JumpCut, OldTurn
-		dim as ubyte CutLegal, ProcessNeeded
+		dim as ubyte CutLegal, ProcessNeeded, ZipDLenabled = 0
 		dim as byte Results
-		dim as string ScoreFile, PlanetFile, RawFile
+		dim as string ScoreFile, AuxFile, RawFile, ZipFile
 
 		do
 			color rgb(255,255,255)
@@ -59,8 +59,9 @@ sub renderClient
 			CutLegal = 0
 			ProcessNeeded = 0
 			ScoreFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Score.csv"
-			PlanetFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Starbases.csv"
+			AuxFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Ion Storms.csv"
 			RawFile = "raw/"+str(GameID)+"/player1-turn"+str(JumpCut)+".trn"
+			ZipFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
 			
 			if JumpCut = 0 then
 				color rgb(255,128,128)
@@ -76,12 +77,13 @@ sub renderClient
 				FileExists(RawFile) = 0 then
 				color rgb(128,128,128)
 				print "Missing"
+				ZipDLenabled = 1
 			elseif FileExists(ScoreFile) = 0 then
 				CutLegal = 1
 				ProcessNeeded = 1
 				color rgb(128,255,128)
 				print "Ready for conversion"
-			elseif FileDateTime(PlanetFile) < DataFormat AND FileExists(PlanetFile) then
+			elseif FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
 				color rgb(255,128,128)
 				if FileExists(RawFile) then
 					CutLegal = 1
@@ -89,6 +91,7 @@ sub renderClient
 					print "Data format compatibility broken. Re-conversion required"
 				else
 					print "Data format compatibility broken. No raw files available"
+					ZipDLenabled = 1
 				end if
 			else
 				CutLegal = 1
@@ -102,7 +105,7 @@ sub renderClient
 			print GameName
 			for TID as short = 1 to ViewGame.LastTurn
 				ScoreFile = "games/"+str(GameID)+"/"+str(TID)+"/Score.csv"
-				PlanetFile = "games/"+str(GameID)+"/"+str(TID)+"/Starbases.csv"
+				AuxFile = "games/"+str(GameID)+"/"+str(TID)+"/Ion Storms.csv"
 				RawFile = "raw/"+str(GameID)+"/player1-turn"+str(TID)+".trn"
 
 				if FileExists("games/"+str(GameID)+"/"+str(TID)+"/Working") then
@@ -114,7 +117,7 @@ sub renderClient
 					color rgb(255,255,0)
 				elseif FileExists(ScoreFile) = 0 then
 					color rgb(128,128,128)
-				elseif FileDateTime(PlanetFile) < DataFormat AND FileExists(PlanetFile) then
+				elseif FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
 					if FileExists(RawFile) then
 						color rgb(255,128,128)
 					else
@@ -128,8 +131,17 @@ sub renderClient
 					print
 				end if
 			next TID
+			color rgb(255,255,255)
 			print
-
+			print
+			if ZipDLenabled then
+				if FileExists(ZipFile) then
+					print "A ZIP package has been detected alongside the raw turn files. Simply extract it to acquire the remaining turns."
+				else
+					print "You can use Nu Replayer to download a ZIP package containing the remaining turns. Hit ENTER on an invalid turn to proceed."
+				end if
+			end if
+			
 			if InType = chr(27) AND JumpCut > 0 then
 				JumpCut = 0
 				InType = chr(255)
@@ -163,6 +175,15 @@ sub renderClient
 				end if
 				loadTurnExtras
 				exit do
+			#IFDEF __DOWNLOAD_TURNS__
+			elseif InType = chr(13) AND ZipDLenabled AND FileExists(ZipFile) = 0 then
+				if downloadZipPackage(GameId) then
+					ZipDLenabled = 0
+				else
+					print word_wrap(ErrorMsg)
+				end if
+				ErrorMsg = ""
+			#ENDIF
 			end if
 			if Results > 0 then
 				TurnNum = OldTurn
@@ -191,8 +212,8 @@ sub renderClient
 	cls
 
 	if TurnNum > 1 AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Base Stock.csv") AND _
-		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Base Stock.csv") >= DataFormat AND _
+		FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Ion Storms.csv") AND _
+		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Ion Storms.csv") >= DataFormat AND _
 		FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Working") = 0 then
 		CanNavigate(0) = 1
 	else
@@ -200,8 +221,8 @@ sub renderClient
 	end if
 
 	if TurnNum < ViewGame.LastTurn AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Base Stock.csv") AND _
-		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Base Stock.csv") >= DataFormat AND _
+		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Stormscsv") AND _
+		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Storms.csv") >= DataFormat AND _
 		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Working") = 0 then
 		CanNavigate(1) = 1
 	else
@@ -1033,3 +1054,4 @@ sub renderClient
 			end if
 	end select
 end sub
+

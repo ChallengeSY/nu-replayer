@@ -57,8 +57,8 @@ else
 		GamePath = "games/"+str(GameNum)+"/"+str(TurnNum)+"/"
 		
 		cls
-		if ((FileExists(GamePath+"Score.csv") = 0 OR FileExists(GamePath+"Starbases.csv") = 0) AND FileExists(GamePath+"Working") = 0) OR _
-			(FileDateTime(GamePath+"Starbases.csv") < DataFormat AND FileExists(GamePath+"Working") = 0) OR _
+		if ((FileExists(GamePath+"Score.csv") = 0 OR FileExists(GamePath+"Ion Storms.csv") = 0) AND FileExists(GamePath+"Working") = 0) OR _
+			(FileDateTime(GamePath+"Ion Storms.csv") < DataFormat AND FileExists(GamePath+"Working") = 0) OR _
 			(FileExists(GamePath+"Working") AND cmdLine("--skipPart") = 0) OR _
 			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0 then
 			
@@ -130,6 +130,7 @@ sub loadTurnKB(KBCount as integer, Players as ubyte)
 		screencopy
 		
 		if inkey = chr(255,107) then
+			kill("games/"+str(GameNum)+"/"+str(TurnNum)+"/Working")
 			end 1
 		end if
 	end if

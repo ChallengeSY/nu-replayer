@@ -1,15 +1,11 @@
-const BROWSER_LONG = "Nu Replayer 0.29d (Alpha 20)"
+const BROWSER_LONG = "Nu Replayer 0.60 (Beta 1)"
 
 #IFNDEF __FORCE_OFFLINE__
-/'
- ' When Nu Replayer has online support, then it utilizes parameters 
- ' similar to web browsing
- '/
-
+' Online support parameters
 const RECVBUFFLEN = 8192
 const NEWLINE = !"\r\n"
 const DEFAULT_HOST = "api.planets.nu"
-const BROWSER_SHORT = "NuReplayer Alpha"
+const BROWSER_SHORT = "NuReplayer Beta"
 dim shared as IPAddress NuIP
 dim shared as TCPSocket NuSocket
 #ENDIF
