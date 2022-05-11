@@ -221,7 +221,7 @@ sub renderClient
 	end if
 
 	if TurnNum < ViewGame.LastTurn AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Stormscsv") AND _
+		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Storms.csv") AND _
 		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Storms.csv") >= DataFormat AND _
 		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Working") = 0 then
 		CanNavigate(1) = 1
