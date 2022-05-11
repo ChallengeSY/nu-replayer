@@ -60,7 +60,6 @@ const ClimateDeathRate = 10
 const PopDividor = 500
 
 const CooldownList = 8/24
-const CooldownTurn = 5/60/24
 
 type ScreenSpecs
 	Wideth as integer
@@ -706,23 +705,12 @@ sub menu
 		#ENDIF
 		
 		#IFDEF __DOWNLOAD_TURNS__
-		if TurnDLAge > CooldownTurn then
-			gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
-	
-			if MouseY > = 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
-				drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
-				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-					ReplayerMode = MODE_HUB_DL
-				end if
+		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
+		if MouseY > = 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				ReplayerMode = MODE_HUB_DL
 			end if
-		else
-			dim as double DaysRem = CooldownTurn - TurnDLAge
-			dim as double HoursRem = DaysRem * 24
-			dim as integer MinutesRem = remainder(ceil(HoursRem * 60),60)
-			
-			dim as string MinutesStr = str(MinutesRem)
-			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
-			gfxstring("Download turns ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(128,128,128))
 		end if
 
 		#ELSE
