@@ -1,5 +1,5 @@
 ## Overview
-Nu Replayer is a standalone add-on for Planets Nu, written in FreeBASIC. It is designed to build and view replays of completed games. Nu Replayer is currently in alpha, as many features are still missing or incomplete.
+Nu Replayer is a standalone add-on for Planets Nu, written in FreeBASIC. It is designed to build and view replays of completed games. Nu Replayer is currently in beta, as most core features are in place.
 
 ## Interface ##
 The default interface that is opened up is a menu, housing access to the game list, network functions, and configuration.
@@ -20,9 +20,9 @@ Turns within a game can be navigate with PageUp / PageDown, or a specific turn c
 Nu Replayer carries multiple object lists that supplement the starmap. These lists come in their own screen and, as a result, will need to be accessed with a key in order to view the list. The playerlist is currently bound to F5, the planet list to F6, and the ship list to F7.
 
 ## Networking ##
-Nu Replayer's ultimate goal is to have complete networking support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser). Although that goal has not yet been achieved, version 0.25 serves as a step in the right direction by allowing raw game lists to be downloaded from Planets Nu's servers, with an *immediate* conversion afterward. For safety reasons, this operation carries an 8 hour cooldown, during which another game list may not be downloaded from within Nu Replayer
+Starting with version 0.60, Nu Replayer now features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).
 
-Starting with version 0.27, it is also possible to download the last turns and settings of a game in Nu Replayer. The download room functions similarly to the game room, only it serves the exclusive purpose of downloading *new* games. This operation carries a 5 minute cooldown.
+Raw game lists can be downloaded and auto-converted to CSV. Additionally, it is possible to download a complete game just by visiting the download room. The download room functions similarly to the game room, only it serves the exclusive purpose of downloading *new* games.
 
 ## Installing ##
 Installing under Windows is very simple. All you have to do (if you haven't already done so) is extract the package that Nu Replayer and its assets were in, and you are all set. Nu Replayer has been tested on Windows XP/7/8/10. It has been compiled using FreeBASIC 1.09.0.
