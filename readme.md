@@ -30,7 +30,7 @@ Installing under Windows is very simple. All you have to do (if you haven't alre
 ### GNU/Linux ###
 Installing under GNU/Linux, on the other hand, is not so simple. Since the architecture for this system is all over the place, no binaries are provided for GNU/Linux, so you must compile from the included source. Furthermore, FreeBASIC has not been seen in any package manager, so you will likely need to download it directly from the <a href="http://www.freebasic.net">developer website</a> and follow its installation instructions. A simple makefile is supplied.
 
-You will likely need to install additional libraries, notably development variants of SDL, SDL_mixer, and SDL_net, zlib, and libzip. Feel free to poke around until you are able to get a spiffy new binary built just for your system.
+You will likely need to install additional libraries, notably development variants of SDL, SDL_mixer, SDL_net, zlib, and libzip. Feel free to poke around until you are able to get a spiffy new binary built just for your system.
 
 ### FreeBSD ###
 FreeBSD support was added in FreeBASIC 1.09.0. We presume instructions are similiar to GNU/Linux, but this is untested. Feel free to experiment as need be, until you are able to build your own program.
