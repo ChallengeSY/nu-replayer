@@ -410,15 +410,33 @@ sub shipList
 							end if
 							
 							CargoUsed = .Colonists + .Dur + .Trit + .Moly + .Supplies + .Ammo
-							if .TubeNum > 0 OR .BayNum > 0 then
+							if PlayerSlot(.Ownership).Race = "Horwasp" then
+								if .BayNum > 0 then
+									dim as integer MaxFighters = 70
+									if .ClassName = "Soldier" then
+										MaxFighters = 40
+									end if 
+									
+									dim as integer ComputeAmmo = int(.Colonists * (MaxFighters - 10) / .MaxCargo) + 10 
+									
+									AmmoStr = space(4-len(str(ComputeAmmo))) + str(ComputeAmmo)
+								else
+									AmmoStr = "----"
+								end if
+							elseif .TubeNum > 0 OR .BayNum > 0 then
 								AmmoStr = space(4-len(str(.Ammo))) + str(.Ammo)
 							else
 								AmmoStr = "----"
 							end if
 							
-							'            ID   Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass
-							print using "###  \                            \   ####/####    ####   ####   ####   ####   ####   #####   \  \   ####/####   ####/####";_
-								.LinkId;.ShipName;.Neu;.MaxFuel;.Colonists;.Dur;.Trit;.Moly;.Supplies;.Megacredits;AmmoStr;CargoUsed;.MaxCargo;.HullMass;.TotalMass
+							'               ID   Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass
+							if .MaxCargo > 9999 then
+								print using "###  \                            \   ####/####   #####   ####   ####   ####   ####   #####   \  \   #####/##K   ####/#####";_
+									.LinkId;.ShipName;.Neu;.MaxFuel;.Colonists;.Dur;.Trit;.Moly;.Supplies;.Megacredits;AmmoStr;CargoUsed;ceil(.MaxCargo/1000);.HullMass;.TotalMass
+							else
+								print using "###  \                            \   ####/####   #####   ####   ####   ####   ####   #####   \  \   ####/####   ####/#####";_
+									.LinkId;.ShipName;.Neu;.MaxFuel;.Colonists;.Dur;.Trit;.Moly;.Supplies;.Megacredits;AmmoStr;CargoUsed;.MaxCargo;.HullMass;.TotalMass
+							end if
 		
 						end if
 					end with
