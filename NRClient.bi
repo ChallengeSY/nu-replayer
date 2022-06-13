@@ -339,7 +339,7 @@ sub shipList
 			case 0
 				print "Ship Status for ";GameName;" (turn "& TurnNum;")"
 				locate 2,1
-				print "ID   Ship Name                        Location      Ship Class                     Ownership                          Dmg   XP"
+				print "ID    Ship Name                        Location      Ship Class                     Ownership                         Dmg   XP"
 				for Index as uinteger = 1 to LimitObjs
 					with ShipListIndex(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
@@ -364,15 +364,15 @@ sub shipList
 								end with
 							end if
 							
-							print using "###  \                            \   ";.LinkId;.ShipName;
+							print using "####  \                            \   ";.LinkId;.ShipName;
 							if .OrbitingPlan > 0 then
 								'            Location      '
 								print using "Planet ###    ";.OrbitingPlan;
 							else
 								print using "(####_,####)   ";.XLoc;.YLoc;
 							end if
-							'            Ship Class                     Ownership                          Dmg   XP
-							print using "\                          \   \                              \   ###%  ";_
+							'            Ship Class                     Ownership                         Dmg   XP
+							print using "\                          \   \                             \   ###%  ";_
 								.ClassName;ShipOwner;.HullDmg;
 							
 							if .Experience < 1000 then
@@ -387,7 +387,7 @@ sub shipList
 			case 1
 				print "Ship Details for ";GameName;" (turn "& TurnNum;")"
 				locate 2,1
-				print "ID   Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass"
+				print "ID    Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass"
 				for Index as uinteger = 1 to LimitObjs
 					with ShipListIndex(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
@@ -429,12 +429,12 @@ sub shipList
 								AmmoStr = "----"
 							end if
 							
-							'               ID   Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass
+							'               ID    Ship Name                        Fuel        Clans   Dur    Trit   Moly   Supp   Money   Ammo   Cargo       Mass
 							if .MaxCargo > 9999 then
-								print using "###  \                            \   ####/####   #####   ####   ####   ####   ####   #####   \  \   #####/##K   ####/#####";_
+								print using "####  \                            \   ####/####   #####   ####   ####   ####   ####   #####   \  \   #####/##K   ####/#####";_
 									.LinkId;.ShipName;.Neu;.MaxFuel;.Colonists;.Dur;.Trit;.Moly;.Supplies;.Megacredits;AmmoStr;CargoUsed;ceil(.MaxCargo/1000);.HullMass;.TotalMass
 							else
-								print using "###  \                            \   ####/####   #####   ####   ####   ####   ####   #####   \  \   ####/####   ####/#####";_
+								print using "####  \                            \   ####/####   #####   ####   ####   ####   ####   #####   \  \   ####/####   ####/#####";_
 									.LinkId;.ShipName;.Neu;.MaxFuel;.Colonists;.Dur;.Trit;.Moly;.Supplies;.Megacredits;AmmoStr;CargoUsed;.MaxCargo;.HullMass;.TotalMass
 							end if
 		
