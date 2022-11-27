@@ -6,17 +6,8 @@
 #include "NRCommon.bi"
 #include "ParseData.bas"
 
-const ScanSpeed = 1
-
-function strMatch(MasterStr as string, StartPos as integer, FindStr as string) as integer
-	dim as byte StrFound = 0
-	dim as integer CurrentPos
-	for CurrentPos = StartPos to StartPos + (ScanSpeed - 1)
-		StrFound = StrFound OR abs(mid(MasterStr,CurrentPos,len(FindStr)) = FindStr)
-	next CurrentPos
-	
-	return iif(StrFound = 0,0,CurrentPos)
-end function
+const ArrayClose = "}],"
+const ObjClose = "},"
 
 #IFNDEF __DOWNLOAD_TURNS__
 dim shared as string ErrorMsg
@@ -26,8 +17,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	randomize timer
 	
 	dim as string InStream, ObjName, ObjCode, RawPath, LoadFile
-	dim as integer ObjIDa, ObjIDb, RelateID, StorageID, CombatID, ErrorLog
-	dim as byte ParseWhat, RaceType, AssignVCRSide, TempIgnore
+	dim as integer ObjIDa, ObjIDb, RelateID, StorageID, CombatID, ErrorLog, BlockChar(2), SeekChar(2)
+	dim as byte RaceType
 	dim as double ParseStart, ParseEnd
 
 	mkdir("games/"+str(GameNum))
@@ -219,9 +210,6 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			loop until eof(5)
 		end with
 		close #5
-		ParsingDone(PARSER_SETTINGS) = 1
-	else
-		ParsingDone(PARSER_SETTINGS) = 0
 	end if
 
 	with GameParser
@@ -237,10 +225,6 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	loadTurnUI(0)
 	
 	for PID as ubyte = 1 to 35
-		for ParseThru as byte = 1 to PARSER_MAX
-			ParsingDone(ParseThru) = 0
-		next
-
 		LoadFile = RawPath+"/player"+str(PID)+"-turn"+str(TurnNum)+".trn"
 		if FileExists(LoadFile) = 0 then
 			LoadFile = RawPath+"/"+str(TurnNum)+"/loadturn"+str(PID)
@@ -271,8 +255,6 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 		end if
 		print #9, "[";Time;", ";Date;"] Parsing Player "& PID;"'s data from ";LoadFile;"..."
 
-		ParseWhat = PARSER_NONE
-
 		open LoadFile for input as #1
 		do
 			line input #1, InStream
@@ -283,1191 +265,919 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			ProcessSlot(PID).Namee = quote("error")
 			ProcessSlot(PID).RaceType = "Unknown"
 		else
-			for DID as integer = 1 to len(InStream) step ScanSpeed
-				if remainder(DID,1e3) = 0 then
-					loadTurnKB(int(DID/1e3),PID)
+			'In case the Settings.csv file doesn't exist, convert settings from here
+			if PID = 1 AND FileExists("games/"+str(GameNum)+"/Settings.csv") = 0 then
+				BlockChar(0) = instr(InStream,quote("settings")+": {")
+								
+				if BlockChar(0) > 0 then
+					BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
+					
+					with GameParser
+						SeekChar(0) = instr(BlockChar(0),InStream,quote("slots")+":")
+						.PlayerCount = valint(mid(InStream,SeekChar(0)+8,2))
+						
+						SeekChar(0) = instr(BlockChar(0),InStream,quote("mapwidth")+":")
+						.MapWidth = valint(mid(InStream,SeekChar(0)+11,4))
+						
+						SeekChar(0) = instr(BlockChar(0),InStream,quote("mapheight")+":")
+						.MapHeight = valint(mid(InStream,SeekChar(0)+12,4))
+						
+						SeekChar(0) = instr(BlockChar(0),InStream,quote("sphere")+":true")
+						.Sphere = abs(sgn(SeekChar(0) > 0 AND SeekChar(0) < BlockChar(1)))
+						
+						SeekChar(0) = instr(BlockChar(0),InStream,quote("isacademy")+":true")
+						.Academy = abs(sgn(SeekChar(0) > 0 AND SeekChar(0) < BlockChar(1)))
+						
+						SeekChar(0) = instr(BlockChar(0),InStream,quote("acceleratedturns")+":")
+						.AccelStart = valint(mid(InStream,SeekChar(0)+19,3))
+						
+						MinXPos = 2000 - .MapWidth/2
+						MaxXPos = MinXPos + .MapWidth
+						MinYPos = 2000 - .MapHeight/2
+						MaxYPos = MinYPos + .MapHeight
+					end with
 				end if
 				
-				if ParsingDone(PARSER_SETTINGS) = 0 then
-					if strMatch(InStream,DID,quote("settings")+": {") OR _
-						strMatch(InStream,DID,quote("game")+": {") then
-						ParseWhat = PARSER_SETTINGS
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("game")+": {") - ScanSpeed
-						continue for
-					end if
-				end if
-
-				if ParsingDone(PARSER_PLAYER) = 0 then
-					if strMatch(InStream,DID,quote("player")+": {") then
-						ParseWhat = PARSER_PLAYER
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("player")+": {") - ScanSpeed
-						continue for
-					end if
+				if cmdLine("--verbose") then
+					print "Acquired game settings for game "& GameNum 
 				end if
 				
-				if ParsingDone(PARSER_SCORES) = 0 then
-					if strMatch(InStream,DID,quote("players")+": [") then
-						ParseWhat = PARSER_NONE
-					end if
-
-					if strMatch(InStream,DID,quote("scores")+": [") then
-						ParseWhat = PARSER_SCORES
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("scores")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-				
-				if ParsingDone(PARSER_PLANET) = 0 then
-					if strMatch(InStream,DID,quote("maps")+": [") then
-						ParseWhat = PARSER_NONE
-					end if
-
-					if strMatch(InStream,DID,quote("planets")+": [") then
-						ParseWhat = PARSER_PLANET
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("planets")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_STARBASE) = 0 then
-					if strMatch(InStream,DID,quote("ionstorms")+": [") then
-						ParseWhat = PARSER_NONE
-					end if
-					
-					if strMatch(InStream,DID,quote("starbases")+": [") then
-						
-						'Skip converting bases if none are present (but not on the first turn)
-						if ProcessSlot(PID).Bases > 0 OR TurnNum = 1 OR TurnNum < GameParser.AccelStart then
-							ParseWhat = PARSER_STARBASE
-						else
-							ParseWhat = PARSER_NONE
-						end if
-
-						ParsingDone(PARSER_STARBASE) = 1
-						DID = strMatch(InStream,DID,quote("starbases")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_SHIP) = 0 then
-					if strMatch(InStream,DID,quote("ships")+": [") then
-						
-						'Skip converting ships if none are present (but, again, not on the first turn)
-						if ProcessSlot(PID).TotalShips > 0 OR TurnNum = 1 OR TurnNum < GameParser.AccelStart then
-							ParseWhat = PARSER_SHIP
-						else
-							ParseWhat = PARSER_NONE
-						end if
-						
-						ParsingDone(PARSER_SHIP) = 1
-						DID = strMatch(InStream,DID,quote("ships")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_IONSTORMS) = 0 then
-					if strMatch(InStream,DID,quote("ionstorms")+": [") then
-						
-						'Skip converting ion storms if they are already recorded this turn
-						if PID > 1 then
-							ParseWhat = PARSER_NONE
-						else
-							ParseWhat = PARSER_IONSTORMS
-						end if
-
-						ParsingDone(PARSER_IONSTORMS) = 1
-						DID = strMatch(InStream,DID,quote("ionstorms")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_NEBULAE) = 0 then
-					if strMatch(InStream,DID,quote("nebulas")+": [") then
-						
-						'Skip converting nebulae if they are already recorded
-						if PID > 1 OR FileExists("games/"+str(GameNum)+"/Nebulae.csv") then
-							ParseWhat = PARSER_NONE
-						else
-							ParseWhat = PARSER_NEBULAE
-						end if
-
-						ParsingDone(PARSER_NEBULAE) = 1
-						DID = strMatch(InStream,DID,quote("nebulas")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_STAR_CLUSTER) = 0 then
-					if strMatch(InStream,DID,quote("stars")+": [") then
-						
-						'Skip converting star clusters if they are already recorded
-						if PID > 1 OR FileExists("games/"+str(GameNum)+"/StarClusters.csv") then
-							ParseWhat = PARSER_NONE
-						else
-							ParseWhat = PARSER_STAR_CLUSTER
-						end if
-
-						ParsingDone(PARSER_STAR_CLUSTER) = 1
-						DID = strMatch(InStream,DID,quote("stars")+": [") - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_BASE_STORAGE) = 0 then
-					if strMatch(InStream,DID,quote("stock")+": [") then
-						
-						'Skip converting base storage if no bases are present (but, yet again, not on the first turn)
-						if ProcessSlot(PID).Bases > 0 OR TurnNum = 1 OR TurnNum < GameParser.AccelStart then
-							ParseWhat = PARSER_BASE_STORAGE
-						else
-							ParseWhat = PARSER_NONE
-						end if
-
-						ParsingDone(PARSER_BASE_STORAGE) = 1
-						DID = strMatch(InStream,DID,quote("stock")+": [") + 1 - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_MINEFIELDS) = 0 then
-					if strMatch(InStream,DID,quote("minefields")+": [") then
-						ParseWhat = PARSER_MINEFIELDS
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("minefields")+": [") + 1 - ScanSpeed
-						continue for
-					end if
-				end if
-					
-				if ParsingDone(PARSER_DIPLOMACY) = 0 then
-					if strMatch(InStream,DID,quote("relations")+": [") then
-						ParseWhat = PARSER_DIPLOMACY
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("relations")+": [") + 1 - ScanSpeed
-						continue for
-					end if
-				end if
-				
-				if ParsingDone(PARSER_VCR) = 0 then
-					if strMatch(InStream,DID,quote("messages")+": [") then
-						ParseWhat = PARSER_NONE
-					end if
-
-					if strMatch(InStream,DID,quote("vcrs")+": [") then
-						ParseWhat = PARSER_VCR
-						ParsingDone(ParseWhat) = 1
-						DID = strMatch(InStream,DID,quote("vcrs")+": [") + 1 - ScanSpeed
-						continue for
-					end if
-				end if
-
-				if strMatch(InStream,DID,quote("races")+": [") then
-					exit for
-				end if
-				
-				select case ParseWhat
-					case PARSER_SETTINGS
-						with GameParser
-							if strMatch(InStream,DID,quote("slots")+":") then
-								.PlayerCount = valint(mid(InStream,DID+8,2))
-							end if
-					
-							if strMatch(InStream,DID,quote("mapwidth")+":") then
-								.MapWidth = valint(mid(InStream,DID+11,4))
-							end if
-					
-							if strMatch(InStream,DID,quote("mapheight")+":") then
-								.MapHeight = valint(mid(InStream,DID+12,4))
-							end if
-					
-							if strMatch(InStream,DID,quote("sphere")+":true") then
-								.Sphere = 1
-							end if
-					
-							if strMatch(InStream,DID,quote("isacademy")+":true") then
-								.Academy = 1
-							end if
-							
-							if strMatch(InStream,DID,quote("acceleratedturns")) then
-								.AccelStart = valint(mid(InStream,DID+19,3))
-							end if
-						end with
-						
-					case PARSER_PLAYER
-						with ProcessSlot(PID)
-							if strMatch(InStream,DID,quote("raceid")) then
-								RaceType = valint(mid(InStream,DID+9,2))
-							end if
-		
-							if strMatch(InStream,DID,quote("username")) then
-								for StringLen as short = 2 to 500
-									.Namee = mid(InStream,DID+11,StringLen)
-									if right(.Namee,1) = chr(34) then
-										exit for
-									end if
-								next StringLen
-							end if
-		
-							if strMatch(InStream,DID,quote("duranium")) then
-								.StockDu = valint(mid(InStream,DID+11,7))
-							end if
-		
-							if strMatch(InStream,DID,quote("tritanium")) then
-								.StockTr = valint(mid(InStream,DID+12,7))
-							end if
-		
-							if strMatch(InStream,DID,quote("molybdenum")) then
-								.StockMo = valint(mid(InStream,DID+13,7))
-							end if
-		
-							if strMatch(InStream,DID,quote("megacredits")) then
-								.StockCr = valint(mid(InStream,DID+14,7))
-							end if
-		
-							select case RaceType
-								case 1
-									.RaceType = "Fed"
-								case 2
-									.RaceType = "Lizard"
-								case 3
-									.RaceType = "Bird Man"
-								case 4
-									.RaceType = "Fascist"
-								case 5
-									.RaceType = "Privateer"
-								case 6
-									.RaceType = "Cyborg"
-								case 7
-									.RaceType = "Crystalline"
-								case 8
-									.RaceType = "Empire"
-								case 9
-									.RaceType = "Robotic"
-								case 10
-									.RaceType = "Rebel"
-								case 11
-									.RaceType = "Colonial"
-								case 12
-									.RaceType = "Horwasp"
-								case else
-									.RaceType = "Unassigned"
-							end select
-						end with
-						
-					case PARSER_SCORES
-						if strMatch(InStream,DID,quote("ownerid")) then
-							InterPlan.PlanetOwner = valint(mid(InStream,DID+10,2))
-						end if
-		
-						if InterPlan.PlanetOwner = PID then
-							with ProcessSlot(PID)
-								if strMatch(InStream,DID,quote("capitalships")) then
-									.TotalShips = valint(mid(InStream,DID+15,3))
-								end if
-								if strMatch(InStream,DID,quote("freighters")) then
-									.Freighters = valint(mid(InStream,DID+13,3))
-									.TotalShips += .Freighters
-								end if
-								if strMatch(InStream,DID,quote("planets")) then
-									.Planets = valint(mid(InStream,DID+10,3))
-								end if
-								if strMatch(InStream,DID,quote("starbases")) then
-									.Bases = valint(mid(InStream,DID+12,3))
-								end if
-								if strMatch(InStream,DID,quote("militaryscore")) then
-									.Military = valint(mid(InStream,DID+16,10))
-								end if
-							end with
-						end if
-						
-					case PARSER_PLANET
-						if strMatch(InStream,DID,quote("name")) then
-							for StringLen as short = 2 to 500
-								ObjName = mid(InStream,DID+7,StringLen)
-								if right(ObjName,1) = chr(34) then
-									exit for
-								end if
-							next StringLen
-						end if
-						if strMatch(InStream,DID,quote("friendlycode")+":"+quote("")) then
-							ObjCode = ""
-						elseif strMatch(InStream,DID,quote("friendlycode")) then
-							for StringLen as short = 2 to 5
-								ObjCode = mid(InStream,DID+15,StringLen)
-								if right(ObjCode,1) = chr(34) then
-									exit for
-								end if
-							next StringLen
-						end if
-						
-						if right(ObjCode,1) <> chr(34) AND len(ObjCode) > 0 then
-							ObjCode += chr(34)
-						end if
-						
-						with InterPlan
-							if strMatch(InStream,DID,quote("x")) then
-								.XLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("y")) then
-								.YLoc = valint(mid(InStream,DID+4,4))
-							end if
-							
-							if strMatch(InStream,DID,quote("ownerid")) then
-								.PlanetOwner = valint(mid(InStream,DID+10,2))
-							end if
-							if strMatch(InStream,DID,quote("clans")) then
-								.Colonists = valint(mid(InStream,DID+8,6))
-							end if
-							if strMatch(InStream,DID,quote("colonisttaxrate")) then
-								.ColTaxes = valint(mid(InStream,DID+18,3))
-							end if
-							if strMatch(InStream,DID,quote("colonisthappypoints")) then
-								.ColHappy = valint(mid(InStream,DID+22,3))
-							end if
-							if strMatch(InStream,DID,quote("temp")) then
-								.Temp = valint(mid(InStream,DID+7,3))
-							end if
-							if strMatch(InStream,DID,quote("infoturn")) then
-								.LastScan = valint(mid(InStream,DID+11,4))
-							end if
-							
-							if strMatch(InStream,DID,quote("nativeclans")) then
-								.Natives = valint(mid(InStream,DID+14,6))
-							end if
-							if strMatch(InStream,DID,quote("nativetaxrate")) then
-								.NatTaxes = valint(mid(InStream,DID+16,3))
-							end if
-							if strMatch(InStream,DID,quote("nativehappypoints")) then
-								.NatHappy = valint(mid(InStream,DID+20,3))
-							end if
-							if strMatch(InStream,DID,quote("nativetype")) then
-								.NativeType = valint(mid(InStream,DID+13,2))
-							end if
-							if strMatch(InStream,DID,quote("nativegovernment")) then
-								.NativeGov = valint(mid(InStream,DID+19,1))
-							end if
-		
-							if strMatch(InStream,DID,quote("neutronium")) then
-								.Neu = valint(mid(InStream,DID+13,5))
-							end if
-							if strMatch(InStream,DID,quote("molybdenum")) then
-								.Moly = valint(mid(InStream,DID+13,5))
-							end if
-							if strMatch(InStream,DID,quote("duranium")) then
-								.Dur = valint(mid(InStream,DID+11,5))
-							end if
-							if strMatch(InStream,DID,quote("tritanium")) then
-								.Trit = valint(mid(InStream,DID+12,5))
-							end if
-	
-							if strMatch(InStream,DID,quote("groundneutronium")) then
-								.GNeu = valint(mid(InStream,DID+19,5))
-							end if
-							if strMatch(InStream,DID,quote("groundmolybdenum")) then
-								.GMoly = valint(mid(InStream,DID+19,5))
-							end if
-							if strMatch(InStream,DID,quote("groundduranium")) then
-								.GDur = valint(mid(InStream,DID+17,5))
-							end if
-							if strMatch(InStream,DID,quote("groundtritanium")) then
-								.GTrit = valint(mid(InStream,DID+18,5))
-							end if
-		
-							if strMatch(InStream,DID,quote("densityneutronium")) then
-								.DNeu = valint(mid(InStream,DID+20,3))
-							end if
-							if strMatch(InStream,DID,quote("densitymolybdenum")) then
-								.DMoly = valint(mid(InStream,DID+20,3))
-							end if
-							if strMatch(InStream,DID,quote("densityduranium")) then
-								.DDur = valint(mid(InStream,DID+18,3))
-							end if
-							if strMatch(InStream,DID,quote("densitytritanium")) then
-								.DTrit = valint(mid(InStream,DID+19,3))
-							end if
-		
-							if strMatch(InStream,DID,quote("megacredits")) then
-								.Megacredits = valint(mid(InStream,DID+14,7))
-							end if
-							if strMatch(InStream,DID,quote("supplies")) then
-								.Supplies = valint(mid(InStream,DID+11,6))
-							end if
-							if strMatch(InStream,DID,quote("mines")) then
-								.MineralMines = valint(mid(InStream,DID+8,7))
-							end if
-							if strMatch(InStream,DID,quote("factories")) then
-								.Factories = valint(mid(InStream,DID+12,6))
-							end if
-	
-							if strMatch(InStream,DID,quote("debrisdisk")) then
-								.Asteroid = valint(mid(InStream,DID+13,1))
-							end if
-						end with
-						if strMatch(InStream,DID,quote("id")) then
-							ObjIDa = valint(mid(InStream,DID+5,3))
-						end if
-						if strMatch(InStream,DID,"}") then
-							if (cmdLine("--verbose") OR cmdLine("-vp")) AND InterPlan.PlanetOwner > 0 then
-								print "Identified planet #"& ObjIDa;" as belonging to player "& InterPlan.PlanetOwner
-							end if
-							
-							if InterPlan.PlanetOwner = PID then
-								with PlanetParser(ObjIDa)
-									if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND TurnNum < GameParser.AccelStart) then
-										print #9, "[";Time;", ";Date;"]  Registered planet #"& ObjIDa;" (";ObjName;")"
-										.PlanetOwner = InterPlan.PlanetOwner
-										.LockOwner = 1
-										.PlanName = findReplace(ObjName,",","&")
-										.FriendlyCode = findReplace(ObjCode,",","&")
-										.LastScan = TurnNum
+				loadTurnKB(int(BlockChar(1)/1e3),PID)
+			end if
 			
-										.XLoc = InterPlan.XLoc
-										.YLoc = InterPlan.YLoc
-										.Asteroid = InterPlan.Asteroid
-		
-										.Colonists = InterPlan.Colonists
-										.ColTaxes = InterPlan.ColTaxes
-										.ColHappy = InterPlan.ColHappy
-										
-										.Natives = InterPlan.Natives
-										.NatTaxes = InterPlan.NatTaxes
-										.NatHappy = InterPlan.NatHappy
-										.NativeType = InterPlan.NativeType
-										.NativeGov = InterPlan.NativeGov
-										
-										.Temp = InterPlan.Temp
-										.Neu = InterPlan.Neu
-										.Dur = InterPlan.Dur
-										.Trit = InterPlan.Trit
-										.Moly = InterPlan.Moly
-										.GNeu = InterPlan.GNeu
-										.GDur = InterPlan.GDur
-										.GTrit = InterPlan.GTrit
-										.GMoly = InterPlan.GMoly
-										.DNeu = InterPlan.DNeu
-										.DDur = InterPlan.DDur
-										.DTrit = InterPlan.DTrit
-										.DMoly = InterPlan.DMoly
-										.Megacredits = InterPlan.Megacredits
-										.Supplies = InterPlan.Supplies
-										.MineralMines = InterPlan.MineralMines
-										.Factories = InterPlan.Factories
-									end if
-								end with
-							else
-								with PlanetParser(ObjIDa)
-									if .LockOwner = 0 then
-										.PlanetOwner = 0
-										.BasePresent = 0
-										.PlanName = findReplace(ObjName,",","&")
-										.FriendlyCode = findReplace(ObjCode,",","&")
-										if InterPlan.LastScan >= PlanetParser(ObjIDa).LastScan then
-											.LastScan = InterPlan.LastScan
-										end if
-										.Asteroid = InterPlan.Asteroid
+			'Convert player data
+			BlockChar(0) = instr(InStream,quote("player")+": {")
+			if BlockChar(0) > 0 then
+				BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
+				
+				with ProcessSlot(PID)
+					SeekChar(0) = instr(BlockChar(0),InStream,quote("raceid"))
+					RaceType = valint(mid(InStream,SeekChar(0)+9,2))
+
+					SeekChar(0) = instr(BlockChar(0),InStream,quote("username"))
+					SeekChar(1) = instr(SeekChar(0)+12,InStream,chr(34))
+					.Namee = mid(InStream, SeekChar(0)+12, SeekChar(1)-SeekChar(0)-12)
+
+					'Academy resources
+					SeekChar(0) = instr(BlockChar(0),InStream,quote("duranium"))
+					.StockDu = valint(mid(InStream,SeekChar(0)+11,7))
+					SeekChar(0) = instr(BlockChar(0),InStream,quote("tritanium"))
+					.StockTr = valint(mid(InStream,SeekChar(0)+12,7))
+					SeekChar(0) = instr(BlockChar(0),InStream,quote("molybdenum"))
+					.StockMo = valint(mid(InStream,SeekChar(0)+13,7))
+					SeekChar(0) = instr(BlockChar(0),InStream,quote("megacredits"))
+					.StockCr = valint(mid(InStream,SeekChar(0)+14,7))
+
+					select case RaceType
+						case 1
+							.RaceType = "Fed"
+						case 2
+							.RaceType = "Lizard"
+						case 3
+							.RaceType = "Bird Man"
+						case 4
+							.RaceType = "Fascist"
+						case 5
+							.RaceType = "Privateer"
+						case 6
+							.RaceType = "Cyborg"
+						case 7
+							.RaceType = "Crystalline"
+						case 8
+							.RaceType = "Empire"
+						case 9
+							.RaceType = "Robotic"
+						case 10
+							.RaceType = "Rebel"
+						case 11
+							.RaceType = "Colonial"
+						case 12
+							.RaceType = "Horwasp"
+						case else
+							.RaceType = "Unassigned"
+					end select
+				end with
+				
+				if cmdLine("--verbose") then
+					print "Acquired player data for player "& PID 
+				end if
+				
+				loadTurnKB(int(BlockChar(1)/1e3),PID)
+			end if
 			
-										.XLoc = InterPlan.XLoc
-										.YLoc = InterPlan.YLoc
-		
-										.Colonists = InterPlan.Colonists
-										.ColTaxes = InterPlan.ColTaxes
-										.ColHappy = InterPlan.ColHappy
-										
-										if InterPlan.Temp >= 0 AND InterPlan.LastScan >= .NativesUpdated then
-											.NativesUpdated = InterPlan.LastScan
-											.Natives = InterPlan.Natives
-											.NatTaxes = InterPlan.NatTaxes
-											.NatHappy = InterPlan.NatHappy
-											.NativeType = InterPlan.NativeType
-											.Temp = InterPlan.Temp
-										end if
-										
-										if InterPlan.DNeu >= 0 AND InterPlan.DDur >= 0 AND InterPlan.DTrit >= 0 AND InterPlan.DMoly >= 0 AND _
-											InterPlan.LastScan >= .MineralsUpdated then
-											.NativeGov = InterPlan.NativeGov
-											.MineralsUpdated = InterPlan.LastScan
-											.Neu = InterPlan.Neu
-											.Dur = InterPlan.Dur
-											.Trit = InterPlan.Trit
-											.Moly = InterPlan.Moly
-											.GNeu = InterPlan.GNeu
-											.GDur = InterPlan.GDur
-											.GTrit = InterPlan.GTrit
-											.GMoly = InterPlan.GMoly
-											.DNeu = InterPlan.DNeu
-											.DDur = InterPlan.DDur
-											.DTrit = InterPlan.DTrit
-											.DMoly = InterPlan.DMoly
-										end if
-										
-										if InterPlan.Megacredits >= 0 AND InterPlan.Supplies >= 0 AND InterPlan.LastScan >= .MoneyUpdated then
-											.MoneyUpdated = InterPlan.LastScan
-											.Megacredits = InterPlan.Megacredits
-											.Supplies = InterPlan.Supplies
-										end if
-										
-										if InterPlan.MineralMines >= 0 AND InterPlan.Factories >= 0 AND InterPlan.LastScan >= .BuildingsUpdated then
-											.BuildingsUpdated = InterPlan.LastScan
-											.MineralMines = InterPlan.MineralMines
-											.Factories = InterPlan.Factories
-										end if
-									end if
-								end with
-							end if
-						elseif PlanetParser(ObjIDa).BasePresent = -1 then
-							with PlanetParser(ObjIDa)
+			'Score data
+			BlockChar(0) = instr(InStream,quote("scores")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(1) = instr(BlockChar(0),InStream,ArrayClose)
+				
+				SeekChar(0) = instr(BlockChar(0),InStream,quote("ownerid")+":"+str(PID))
+				if SeekChar(0) < BlockChar(1) then
+					with ProcessSlot(PID)
+						'Starships
+						SeekChar(1) = instr(SeekChar(0),InStream,quote("capitalships")) 
+						.TotalShips = valint(mid(InStream,SeekChar(1)+15,3))
+						SeekChar(1) = instr(SeekChar(0),InStream,quote("freighters")) 
+						.Freighters = valint(mid(InStream,SeekChar(1)+13,3))
+						.TotalShips += .Freighters
+						
+						'Planets/Bases/Military
+						SeekChar(1) = instr(SeekChar(0),InStream,quote("planets")) 
+						.Planets = valint(mid(InStream,SeekChar(1)+10,3))
+						SeekChar(1) = instr(SeekChar(0),InStream,quote("starbases")) 
+						.Bases = valint(mid(InStream,SeekChar(1)+12,3))
+						SeekChar(1) = instr(SeekChar(0),InStream,quote("militaryscore")) 
+						.Military = valint(mid(InStream,SeekChar(1)+16,13))
+					end with
+				end if
+				
+				if cmdLine("--verbose") then
+					print "Acquired score data for player "& PID 
+				end if
+				
+				loadTurnKB(int(BlockChar(1)/1e3),PID)
+			end if
+			
+			'Planet data
+			BlockChar(0) = instr(InStream,quote("planets")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+					ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
+					SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
+					ObjCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
+					
+					with InterPlan
+						'Coordinates
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						
+						'Colony info
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
+						.PlanetOwner = valint(mid(InStream,SeekChar(0)+10,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
+						.Colonists = valint(mid(InStream,SeekChar(0)+8,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("colonisttaxrate"))
+						.ColTaxes = valint(mid(InStream,SeekChar(0)+18,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("colonisthappypoints"))
+						.ColHappy = valint(mid(InStream,SeekChar(0)+22,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("temp"))
+						.Temp = valint(mid(InStream,SeekChar(0)+7,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("infoturn"))
+						.LastScan = valint(mid(InStream,SeekChar(0)+11,4))
+						
+						'Native info
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativeclans"))
+						.Natives = valint(mid(InStream,SeekChar(0)+14,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativetaxrate"))
+						.NatTaxes = valint(mid(InStream,SeekChar(0)+16,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativehappypoints"))
+						.NatHappy = valint(mid(InStream,SeekChar(0)+20,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativetype"))
+						.NativeType = valint(mid(InStream,SeekChar(0)+13,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativegovernment"))
+						.NativeGov = valint(mid(InStream,SeekChar(0)+19,1))
+						
+						'Surface minerals
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("neutronium"))
+						.Neu = valint(mid(InStream,SeekChar(0)+13,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
+						.Dur = valint(mid(InStream,SeekChar(0)+11,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
+						.Trit = valint(mid(InStream,SeekChar(0)+12,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
+						.Moly = valint(mid(InStream,SeekChar(0)+13,6))
+						
+						'Mineable minerals
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundneutronium"))
+						.GNeu = valint(mid(InStream,SeekChar(0)+19,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundduranium"))
+						.GDur = valint(mid(InStream,SeekChar(0)+17,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundtritanium"))
+						.GTrit = valint(mid(InStream,SeekChar(0)+18,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundmolybdenum"))
+						.GMoly = valint(mid(InStream,SeekChar(0)+19,6))
+						
+						'Mineral densities
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("densityneutronium"))
+						.DNeu = valint(mid(InStream,SeekChar(0)+20,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("densityduranium"))
+						.DDur = valint(mid(InStream,SeekChar(0)+18,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("densitytritanium"))
+						.DTrit = valint(mid(InStream,SeekChar(0)+19,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("densitymolybdenum"))
+						.DMoly = valint(mid(InStream,SeekChar(0)+20,3))
+						
+						'Miscellaneous info
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("megacredits"))
+						.Megacredits = valint(mid(InStream,SeekChar(0)+14,7))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("supplies"))
+						.Supplies = valint(mid(InStream,SeekChar(0)+11,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mines"))
+						.MineralMines = valint(mid(InStream,SeekChar(0)+8,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("factories"))
+						.Factories = valint(mid(InStream,SeekChar(0)+12,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("debrisdisk"))
+						.Asteroid = valint(mid(InStream,SeekChar(0)+13,2))
+					end with
+					
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+					ObjIDa = valint(mid(InStream,SeekChar(0)+5,4))
+					
+					if (cmdLine("--verbose") OR cmdLine("-vp")) AND InterPlan.PlanetOwner > 0 then
+						print "Identified planet #"& ObjIDa;" as belonging to player "& InterPlan.PlanetOwner
+					end if
+					
+					if InterPlan.PlanetOwner = PID then
+						with PlanetParser(ObjIDa)
+							if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND TurnNum < GameParser.AccelStart) then
+								print #9, "[";Time;", ";Date;"]  Registered planet #"& ObjIDa;" (";ObjName;")"
+								.PlanetOwner = InterPlan.PlanetOwner
+								.BasePresent = 0
+								.LockOwner = 1
 								.PlanName = ObjName
+								.FriendlyCode = ObjCode
+								.LastScan = TurnNum
+	
 								.XLoc = InterPlan.XLoc
 								.YLoc = InterPlan.YLoc
 								.Asteroid = InterPlan.Asteroid
-								.BasePresent = 0
-							end with
-						end if
-					
-					case PARSER_SHIP
-						if strMatch(InStream,DID,quote("name")) then
-							for StringLen as short = 2 to 500
-								ObjName = mid(InStream,DID+7,StringLen)
-								if right(ObjName,1) = chr(34) then
-									exit for
-								end if
-							next StringLen
-						end if
-						if strMatch(InStream,DID,quote("friendlycode")+":"+quote("")) then
-							ObjCode = ""
-						elseif strMatch(InStream,DID,quote("friendlycode")) then
-							for StringLen as short = 2 to 5
-								ObjCode = mid(InStream,DID+15,StringLen)
-								if right(ObjCode,1) = chr(34) then
-									exit for
-								end if
-							next StringLen
-						end if
-						
-						if right(ObjCode,1) <> chr(34) AND len(ObjCode) > 0 then
-							ObjCode += chr(34)
-						end if
-						
-						with InterShip
-							if TempIgnore then
-								if strMatch(InStream,DID,"]") then
-									TempIgnore = 0
-								else
-									continue for
-								end if
-							end if
-							
-							if (strMatch(InStream,DID,quote("waypoints")+":[") AND strMatch(InStream,DID,quote("waypoints")+":[]") = 0) OR _
-								(strMatch(InStream,DID,quote("history")+":[") AND strMatch(InStream,DID,quote("history")+":[]") = 0) then
-								TempIgnore = 1
-							end if
-	
-							if strMatch(InStream,DID,quote("x")) then
-								.XLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("y")) then
-								.YLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("targetx")) then
-								.TargetX = valint(mid(InStream,DID+10,4))
-							end if
-							if strMatch(InStream,DID,quote("targety")) then
-								.TargetY = valint(mid(InStream,DID+10,4))
-							end if
-							if strMatch(InStream,DID,quote("ownerid")) then
-								.ShipOwner = valint(mid(InStream,DID+10,2))
-							end if
-							if strMatch(InStream,DID,quote("warp")) then
-								.WarpFactor = valint(mid(InStream,DID+7,6))
-							end if
-							if strMatch(InStream,DID,quote("mass")) then
-								.TotalMass = valint(mid(InStream,DID+7,6))
-							end if
-	
-							if strMatch(InStream,DID,quote("beams")) then
-								.BeamCount = valint(mid(InStream,DID+8,6))
-							end if
-							if strMatch(InStream,DID,quote("bays")) then
-								.BayCount = valint(mid(InStream,DID+7,6))
-							end if
-							if strMatch(InStream,DID,quote("torps")) then
-								.TubeCount = valint(mid(InStream,DID+8,6))
-							end if
-		
-							if strMatch(InStream,DID,quote("clans")) then
-								.Colonists = valint(mid(InStream,DID+8,6))
-							end if
-							if strMatch(InStream,DID,quote("neutronium")) then
-								.Neu = valint(mid(InStream,DID+13,5))
-							end if
-							if strMatch(InStream,DID,quote("molybdenum")) then
-								.Moly = valint(mid(InStream,DID+13,5))
-							end if
-							if strMatch(InStream,DID,quote("duranium")) then
-								.Dur = valint(mid(InStream,DID+11,5))
-							end if
-							if strMatch(InStream,DID,quote("tritanium")) then
-								.Trit = valint(mid(InStream,DID+12,5))
-							end if
-							if strMatch(InStream,DID,quote("megacredits")) then
-								.Megacredits = valint(mid(InStream,DID+14,7))
-							end if
-							if strMatch(InStream,DID,quote("supplies")) then
-								.Supplies = valint(mid(InStream,DID+11,6))
-							end if
-	
-							if strMatch(InStream,DID,quote("damage")) then
-								.Damage = valint(mid(InStream,DID+9,6))
-							end if
-							if strMatch(InStream,DID,quote("crew")) then
-								.Crewmen = valint(mid(InStream,DID+7,6))
-							end if
-							if strMatch(InStream,DID,quote("ammo")) then
-								.Ordnance = valint(mid(InStream,DID+7,6))
-							end if
-							if strMatch(InStream,DID,quote("hullid")) then
-								.ShipType = valint(mid(InStream,DID+9,4))
-							end if
-							if strMatch(InStream,DID,quote("engineid")) then
-								.EngineID = valint(mid(InStream,DID+11,4))
-							end if
-							if strMatch(InStream,DID,quote("beamid")) then
-								.BeamID = valint(mid(InStream,DID+9,4))
-							end if
-							if strMatch(InStream,DID,quote("torpedoid")) then
-								.TubeID = valint(mid(InStream,DID+12,4))
-							end if
-							if strMatch(InStream,DID,quote("experience")) then
-								.Experience = valint(mid(InStream,DID+13,4))
-							end if
-	
-							if strMatch(InStream,DID,quote("iscloaked")+":true") then
-								.Cloaked = 1
-							end if
-						end with
-						if strMatch(InStream,DID,quote("id")) then
-							ObjIDa = valint(mid(InStream,DID+5,3))
-						end if
-						if strMatch(InStream,DID,"}") then
-							if (cmdLine("--verbose") OR cmdLine("-vs")) AND InterShip.ShipOwner > 0 then
-								print "Identified ship #"& ObjIDa;" as belonging to player "& InterShip.ShipOwner
-							end if
-							
-							if InterShip.ShipOwner = PID then
-								with ShipParser(ObjIDa)
-									if .LockOwner = 0 then
-										print #9, "[";Time;", ";Date;"]  Registered ship #"& ObjIDa;" (";ObjName;")"
-										.ShipOwner = InterShip.ShipOwner
-										.LockOwner = 1
-										if len(ObjName) < 3 then
-											.ShipName = "(Ship "+str(ObjIDa)+")"
-										else
-											.ShipName = findReplace(ObjName,",","&")
-										end if
-										.ShipType = InterShip.ShipType
-										.FriendlyCode = findReplace(ObjCode,",","&")
-										.XLoc = InterShip.XLoc
-										.YLoc = InterShip.YLoc
-										.TargetX = InterShip.TargetX
-										.TargetY = InterShip.TargetY
-										.WarpFactor = InterShip.WarpFactor
-										.TotalMass = InterShip.TotalMass
-										
-										.EngineID = InterShip.EngineID
-										.BeamCount = InterShip.BeamCount
-										.BeamID = InterShip.BeamID
-										.TubeCount = InterShip.TubeCount
-										.TubeID = InterShip.TubeID
-										.BayCount = InterShip.BayCount
-										
-										.Colonists = InterShip.Colonists
-										.Neu = InterShip.Neu
-										.Dur = InterShip.Dur
-										.Trit = InterShip.Trit
-										.Moly = InterShip.Moly
-										.Megacredits = InterShip.Megacredits
-										.Supplies = InterShip.Supplies
-										.Ordnance = InterShip.Ordnance
-										
-										.Damage = InterShip.Damage
-										.Crewmen = InterShip.Crewmen
-										.Cloaked = InterShip.Cloaked
-										.Experience = InterShip.Experience
-										InterShip.Cloaked = 0
-									end if
-								end with
-							end if
-						end if
-						
-					case PARSER_STARBASE
-						with InterBase
-							if strMatch(InStream,DID,quote("defense")) then
-								.OrbitalDef = valint(mid(InStream,DID+10,6))
-							end if
-							if strMatch(InStream,DID,quote("damage")) then
-								.DamageLev = valint(mid(InStream,DID+9,6))
-							end if
-							if strMatch(InStream,DID,quote("fighters")) then
-								.Fighters = valint(mid(InStream,DID+11,6))
-							end if
-							
-							if strMatch(InStream,DID,quote("enginetechlevel")) then
-								.EngineTech = valint(mid(InStream,DID+18,3))
-							end if
-							if strMatch(InStream,DID,quote("hulltechlevel")) then
-								.HullTech = valint(mid(InStream,DID+16,3))
-							end if
-							if strMatch(InStream,DID,quote("beamtechlevel")) then
-								.BeamTech = valint(mid(InStream,DID+16,3))
-							end if
-							if strMatch(InStream,DID,quote("torptechlevel")) then
-								.TorpTech = valint(mid(InStream,DID+16,3))
-							end if
-							
-							if strMatch(InStream,DID,quote("buildengineid")) then
-								.UseEngine = valint(mid(InStream,DID+16,3))
-							end if
-							if strMatch(InStream,DID,quote("buildhullid")) then
-								.UseHull = valint(mid(InStream,DID+14,3))
-							end if
-							if strMatch(InStream,DID,quote("buildbeamid")) then
-								.UseBeam = valint(mid(InStream,DID+14,3))
-							end if
-							if strMatch(InStream,DID,quote("buildtorpedoid")) then
-								.UseTorp = valint(mid(InStream,DID+17,3))
-							end if
 
-							if strMatch(InStream,DID,quote("isbuilding")+":false") then
-								.UseEngine = 0
-								.UseHull = 0
-								.UseBeam = 0
-								.UseTorp = 0
-							end if
-						end with
-					
-						if strMatch(InStream,DID,quote("planetid")) then
-							ObjIDa = valint(mid(InStream,DID+11,3))
-						end if
-
-						if strMatch(InStream,DID,quote("id")) then
-							ObjIDb = valint(mid(InStream,DID+5,3))
-						end if
-							
-						if strMatch(InStream,DID,"}") then
-							if PlanetParser(ObjIDa).PlanetOwner = PID then
-								print #9, "[";Time;", ";Date;"]  Registered starbase #"& ObjIDa
-								with PlanetParser(ObjIDa)
-									.BasePresent = ObjIDb
-								end with
+								.Colonists = InterPlan.Colonists
+								.ColTaxes = InterPlan.ColTaxes
+								.ColHappy = InterPlan.ColHappy
 								
-								with BaseParser(ObjIDa)
-									.OrbitalDef = InterBase.OrbitalDef
-									.DamageLev = InterBase.DamageLev
-									.Fighters = InterBase.Fighters
-									.EngineTech = InterBase.EngineTech
-									.HullTech = InterBase.HullTech
-									.BeamTech = InterBase.BeamTech
-									.TorpTech = InterBase.TorpTech
-									.UseEngine = InterBase.UseEngine
-									.UseHull = InterBase.UseHull
-									.UseBeam = InterBase.UseBeam
-									.UseTorp = InterBase.UseTorp
-								end with
-							end if
-						end if
-						
-					case PARSER_BASE_STORAGE
-						with StockParser(StorageID)
-							if strMatch(InStream,DID,quote("stocktype")) then
-								.ItemType = valint(mid(InStream,DID+12,2))
-							end if
-							if strMatch(InStream,DID,quote("stockid")) then
-								.ItemId = valint(mid(InStream,DID+10,4))
-							end if
-							if strMatch(InStream,DID,quote("amount")) then
-								.ItemAmt = valint(mid(InStream,DID+9,5))
-							end if
-							if strMatch(InStream,DID,quote("starbaseid")) then
-								.StarbaseId = valint(mid(InStream,DID+13,3))
+								.Natives = InterPlan.Natives
+								.NatTaxes = InterPlan.NatTaxes
+								.NatHappy = InterPlan.NatHappy
+								.NativeType = InterPlan.NativeType
+								.NativeGov = InterPlan.NativeGov
+								
+								.Temp = InterPlan.Temp
+								.Neu = InterPlan.Neu
+								.Dur = InterPlan.Dur
+								.Trit = InterPlan.Trit
+								.Moly = InterPlan.Moly
+								.GNeu = InterPlan.GNeu
+								.GDur = InterPlan.GDur
+								.GTrit = InterPlan.GTrit
+								.GMoly = InterPlan.GMoly
+								.DNeu = InterPlan.DNeu
+								.DDur = InterPlan.DDur
+								.DTrit = InterPlan.DTrit
+								.DMoly = InterPlan.DMoly
+								.Megacredits = InterPlan.Megacredits
+								.Supplies = InterPlan.Supplies
+								.MineralMines = InterPlan.MineralMines
+								.Factories = InterPlan.Factories
 							end if
 						end with
+					else
+						with PlanetParser(ObjIDa)
+							if .LockOwner = 0 then
+								.PlanetOwner = 0
+								.BasePresent = 0
+								.PlanName = findReplace(ObjName,",","&")
+								.FriendlyCode = findReplace(ObjCode,",","&")
+								if InterPlan.LastScan >= PlanetParser(ObjIDa).LastScan then
+									.LastScan = InterPlan.LastScan
+								end if
+								.Asteroid = InterPlan.Asteroid
+	
+								.XLoc = InterPlan.XLoc
+								.YLoc = InterPlan.YLoc
 
-						if strMatch(InStream,DID,"}") then
-							StorageID += 1
-						end if
+								.Colonists = InterPlan.Colonists
+								.ColTaxes = InterPlan.ColTaxes
+								.ColHappy = InterPlan.ColHappy
+								
+								if InterPlan.Temp >= 0 AND InterPlan.LastScan >= .NativesUpdated then
+									.NativesUpdated = InterPlan.LastScan
+									.Natives = InterPlan.Natives
+									.NatTaxes = InterPlan.NatTaxes
+									.NatHappy = InterPlan.NatHappy
+									.NativeType = InterPlan.NativeType
+									.Temp = InterPlan.Temp
+								end if
+								
+								if InterPlan.DNeu >= 0 AND InterPlan.DDur >= 0 AND InterPlan.DTrit >= 0 AND InterPlan.DMoly >= 0 AND _
+									InterPlan.LastScan >= .MineralsUpdated then
+									.NativeGov = InterPlan.NativeGov
+									.MineralsUpdated = InterPlan.LastScan
+									.Neu = InterPlan.Neu
+									.Dur = InterPlan.Dur
+									.Trit = InterPlan.Trit
+									.Moly = InterPlan.Moly
+									.GNeu = InterPlan.GNeu
+									.GDur = InterPlan.GDur
+									.GTrit = InterPlan.GTrit
+									.GMoly = InterPlan.GMoly
+									.DNeu = InterPlan.DNeu
+									.DDur = InterPlan.DDur
+									.DTrit = InterPlan.DTrit
+									.DMoly = InterPlan.DMoly
+								end if
+								
+								if InterPlan.Megacredits >= 0 AND InterPlan.Supplies >= 0 AND InterPlan.LastScan >= .MoneyUpdated then
+									.MoneyUpdated = InterPlan.LastScan
+									.Megacredits = InterPlan.Megacredits
+									.Supplies = InterPlan.Supplies
+								end if
+								
+								if InterPlan.MineralMines >= 0 AND InterPlan.Factories >= 0 AND InterPlan.LastScan >= .BuildingsUpdated then
+									.BuildingsUpdated = InterPlan.LastScan
+									.MineralMines = InterPlan.MineralMines
+									.Factories = InterPlan.Factories
+								end if
+							end if
+						end with
+					end if
+					BlockChar(1) = instr(BlockChar(1) + len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)
+			end if
+			
+			'Ship data
+			BlockChar(0) = instr(InStream,quote("ships")+": [")
+			if BlockChar(0) > 0 then
+				'History and Waypoints are array-ized, so ion storms is explicit for safety reasons
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose+quote("ionstorms"))
+				BlockChar(1) = BlockChar(0)
+				do
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+					ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
+					SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
+					ObjCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
 						
-					case PARSER_MINEFIELDS
-						with InterMinef
-							if strMatch(InStream,DID,quote("ownerid")) then
-								.MineOwner = valint(mid(InStream,DID+10,2))
-							end if
-							if strMatch(InStream,DID,quote("isweb")+":true") then
-								.Webfield = 1
-							end if
-							if strMatch(InStream,DID,quote("units")) then
-								.Units = valint(mid(InStream,DID+8,6))
-							end if
-							if strMatch(InStream,DID,quote("x")) then
-								.XLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("y")) then
-								.YLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("radius")) then
-								.Radius = valint(mid(InStream,DID+9,3))
-							end if
-
-							if strMatch(InStream,DID,quote("friendlycode")+":"+quote("")) then
-								ObjCode = ""
-							elseif strMatch(InStream,DID,quote("friendlycode")) then
-								for StringLen as short = 2 to 5
-									ObjCode = mid(InStream,DID+15,StringLen)
-									if right(ObjCode,1) = chr(34) then
-										exit for
-									end if
-								next StringLen
-							end if
-							
-							if right(ObjCode,1) <> chr(34) AND len(ObjCode) > 0 then
-								ObjCode += chr(34)
-							end if
+					with InterShip
+						'Coordinates
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
+						.TargetX = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
+						.TargetY = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("warp"))
+						.WarpFactor = valint(mid(InStream,SeekChar(0)+7,2))
+						
+						'Basic info
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
+						.ShipOwner = valint(mid(InStream,SeekChar(0)+10,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
+						.TotalMass = valint(mid(InStream,SeekChar(0)+7,6))
+						
+						'Equipment
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("beams"))
+						.BeamCount = valint(mid(InStream,SeekChar(0)+8,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("bays"))
+						.BayCount = valint(mid(InStream,SeekChar(0)+7,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("torps"))
+						.TubeCount = valint(mid(InStream,SeekChar(0)+8,2))
+						
+						'Cargo Hold
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
+						.Colonists = valint(mid(InStream,SeekChar(0)+8,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("neutronium"))
+						.Neu = valint(mid(InStream,SeekChar(0)+13,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
+						.Dur = valint(mid(InStream,SeekChar(0)+11,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
+						.Trit = valint(mid(InStream,SeekChar(0)+12,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
+						.Moly = valint(mid(InStream,SeekChar(0)+13,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("megacredits"))
+						.Megacredits = valint(mid(InStream,SeekChar(0)+14,7))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("supplies"))
+						.Supplies = valint(mid(InStream,SeekChar(0)+11,6))
+						
+						'Ship Status
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
+						.Damage = valint(mid(InStream,SeekChar(0)+9,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("crew"))
+						.Crewmen = valint(mid(InStream,SeekChar(0)+7,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("ammo"))
+						.Ordnance = valint(mid(InStream,SeekChar(0)+7,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("experience"))
+						.Experience = valint(mid(InStream,SeekChar(0)+13,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("iscloaked"))
+						.Cloaked = abs(sgn(mid(InStream,SeekChar(0)+12,5) = ":true"))
+						
+						'Ship Specs
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("hullid"))
+						.ShipType = valint(mid(InStream,SeekChar(0)+9,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("engineid"))
+						.EngineID = valint(mid(InStream,SeekChar(0)+11,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("beamid"))
+						.BeamID = valint(mid(InStream,SeekChar(0)+9,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedoid"))
+						.TubeID = valint(mid(InStream,SeekChar(0)+12,4))
+					end with
 					
-							if strMatch(InStream,DID,quote("id")) then
-								ObjIDa = valint(mid(InStream,DID+5,3))
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					
+					if (cmdLine("--verbose") OR cmdLine("-vs")) AND InterShip.ShipOwner > 0 then
+						print "Identified ship #"& ObjIDa;" as belonging to player "& InterShip.ShipOwner
+					end if
+					
+					if InterShip.ShipOwner = PID then
+						with ShipParser(ObjIDa)
+							if .LockOwner = 0 then
+								print #9, "[";Time;", ";Date;"]  Registered ship #"& ObjIDa;" (";ObjName;")"
+								.ShipOwner = InterShip.ShipOwner
+								.LockOwner = 1
+								if len(ObjName) < 3 then
+									.ShipName = "(Ship "+str(ObjIDa)+")"
+								else
+									.ShipName = ObjName
+								end if
+								.ShipType = InterShip.ShipType
+								.FriendlyCode = ObjCode
+								.XLoc = InterShip.XLoc
+								.YLoc = InterShip.YLoc
+								.TargetX = InterShip.TargetX
+								.TargetY = InterShip.TargetY
+								.WarpFactor = InterShip.WarpFactor
+								.TotalMass = InterShip.TotalMass
+								
+								.EngineID = InterShip.EngineID
+								.BeamCount = InterShip.BeamCount
+								.BeamID = InterShip.BeamID
+								.TubeCount = InterShip.TubeCount
+								.TubeID = InterShip.TubeID
+								.BayCount = InterShip.BayCount
+								
+								.Colonists = InterShip.Colonists
+								.Neu = InterShip.Neu
+								.Dur = InterShip.Dur
+								.Trit = InterShip.Trit
+								.Moly = InterShip.Moly
+								.Megacredits = InterShip.Megacredits
+								.Supplies = InterShip.Supplies
+								.Ordnance = InterShip.Ordnance
+								
+								.Damage = InterShip.Damage
+								.Crewmen = InterShip.Crewmen
+								.Cloaked = InterShip.Cloaked
+								.Experience = InterShip.Experience
+								InterShip.Cloaked = 0
 							end if
 						end with
-
-						if strMatch(InStream,DID,"}") then
-							if (cmdLine("--verbose") OR cmdLine("-vm")) AND InterShip.ShipOwner > 0 then
-								print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
-							end if
-
-							with MinefParser(ObjIDa)
-								if InterMinef.MineOwner = PID then
-									print #9, "[";Time;", ";Date;"]  Registered minefield #"& ObjIDa
-									.MineOwner = InterMinef.MineOwner
-									.Webfield = InterMinef.Webfield
-									.Units = InterMinef.Units
-									.XLoc = InterMinef.XLoc
-									.YLoc = InterMinef.YLoc
-									.Radius = InterMinef.Radius
-									.FCode = ObjCode
-								end if
-							end with
-						end if
-						
-					case PARSER_IONSTORMS
+					end if
+					
+					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'Ion Storms data. Only read this if the first player
+			if PID = 1 then
+				BlockChar(0) = instr(InStream,quote("ionstorms")+": [")
+				if BlockChar(0) > 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					do
 						with InterIon
-							if strMatch(InStream,DID,quote("x")) then
-								.XLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("y")) then
-								.YLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("radius")) then
-								.Radius = valint(mid(InStream,DID+9,4))
-							end if
-							if strMatch(InStream,DID,quote("voltage")) then
-								.Voltage = valint(mid(InStream,DID+10,4))
-							end if
-							if strMatch(InStream,DID,quote("warp")) then
-								.WarpFactor = valint(mid(InStream,DID+7,2))
-							end if
-							if strMatch(InStream,DID,quote("heading")) then
-								.StormHeading = valint(mid(InStream,DID+10,4))
-							end if
-							if strMatch(InStream,DID,quote("isgrowing")+":true") then
-								.StormGrowing = 1
-							end if
-							if strMatch(InStream,DID,quote("parentid")) then
-								.ParentID = valint(mid(InStream,DID+11,4))
-							end if
-							if strMatch(InStream,DID,quote("id")) then
-								ObjIDa = valint(mid(InStream,DID+5,4))
-							end if
-						end with
-	
-						if strMatch(InStream,DID,"}") AND PID < 2 then
-							if cmdLine("--verbose") OR cmdLine("-vi") then
-								print "Identified ion storm #"& ObjIDa
-							end if
-
-							print #9, "[";Time;", ";Date;"]  Registered star cluster #"& ObjIDa
-							with IonParser(ObjIDa)
-								.XLoc = InterIon.XLoc
-								.YLoc = InterIon.YLoc
-								.Radius = InterIon.Radius
-								.Voltage = InterIon.Voltage
-								.WarpFactor = InterIon.WarpFactor
-								.StormHeading = InterIon.StormHeading
-								.StormGrowing = InterIon.StormGrowing
-								.ParentID = InterIon.ParentID
-							end with
-						end if
-						
-					case PARSER_STAR_CLUSTER
-						if strMatch(InStream,DID,quote("name")) then
-							for StringLen as short = 2 to 500
-								ObjName = mid(InStream,DID+7,StringLen)
-								if right(ObjName,1) = chr(34) then
-									exit for
-								end if
-							next StringLen
-						end if
-						with InterStar
-							if strMatch(InStream,DID,quote("x")) then
-								.XLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("y")) then
-								.YLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("temp")) then
-								.Temp = valint(mid(InStream,DID+7,5))
-							end if
-							if strMatch(InStream,DID,quote("radius")) then
-								.Radius = valint(mid(InStream,DID+9,3))
-							end if
-							if strMatch(InStream,DID,quote("mass")) then
-								.Mass = valint(mid(InStream,DID+7,5))
-							end if
-							if strMatch(InStream,DID,quote("planets")) then
-								.Planets = valint(mid(InStream,DID+10,3))
-							end if
-						end with
-						if strMatch(InStream,DID,quote("id")) then
-							ObjIDa = valint(mid(InStream,DID+5,3))
-						end if
-	
-						if strMatch(InStream,DID,"}") AND PID < 2 then
-							if cmdLine("--verbose") OR cmdLine("-vc") then
-								print "Identified star cluster #"& ObjIDa
-							end if
-
-							print #9, "[";Time;", ";Date;"]  Registered star cluster #"& ObjIDa
-							with StarParser(ObjIDa)
-								.ClustName = ObjName
-								.XLoc = InterStar.XLoc
-								.YLoc = InterStar.YLoc
-								.Temp = InterStar.Temp
-								.Radius = InterStar.Radius
-								.Mass = InterStar.Mass
-								.Planets = InterStar.Planets
-							end with
-						end if
-						
-					case PARSER_NEBULAE
-						if strMatch(InStream,DID,quote("name")) then
-							for StringLen as short = 2 to 500
-								ObjName = mid(InStream,DID+7,StringLen)
-								if right(ObjName,1) = chr(34) then
-									exit for
-								end if
-							next StringLen
-						end if
-						with InterNeb
-							if strMatch(InStream,DID,quote("x")) then
-								.XLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("y")) then
-								.YLoc = valint(mid(InStream,DID+4,4))
-							end if
-							if strMatch(InStream,DID,quote("radius")) then
-								.Radius = valint(mid(InStream,DID+9,3))
-							end if
-							if strMatch(InStream,DID,quote("intensity")) then
-								.Intense = valint(mid(InStream,DID+12,3))
-							end if
-							if strMatch(InStream,DID,quote("gas")) then
-								.Gas = valint(mid(InStream,DID+6,3))
-							end if
-						end with
-						if strMatch(InStream,DID,quote("id")) then
-							ObjIDa = valint(mid(InStream,DID+5,3))
-						end if
-	
-						if strMatch(InStream,DID,"}") AND PID < 2 then
-							if cmdLine("--verbose") OR cmdLine("-vn") then
-								print "Identified a part of nebulae #"& ObjIDa
-							end if
-
-							print #9, "[";Time;", ";Date;"] Registered a part of nebula #"& ObjIDa
-							with NebParser(ObjIDa)
-								.NebName = ObjName
-								.XLoc = InterNeb.XLoc
-								.YLoc = InterNeb.YLoc
-								.Radius = InterNeb.Radius
-								.Intense = InterNeb.Intense
-								.Gas = InterNeb.Gas
-							end with
-						end if
-						
-					case PARSER_DIPLOMACY
-						with RelateParser(RelateID)
-							if strMatch(InStream,DID,quote("playerid")) then
-								.FromPlr = valint(mid(InStream,DID+11,2))
-							end if
-							if strMatch(InStream,DID,quote("playertoid")) then
-								.ToPlr = valint(mid(InStream,DID+13,3))
-							end if
-							if strMatch(InStream,DID,quote("relationto")) then
-								.RelationA = valint(mid(InStream,DID+13,5))
-							end if
-							if strMatch(InStream,DID,quote("relationfrom")) then
-								.RelationB = valint(mid(InStream,DID+15,3))
-							end if
-							if strMatch(InStream,DID,quote("conflictlevel")) then
-								.ConflictLev = valint(mid(InStream,DID+16,3))
-							end if
-						end with
-
-						if strMatch(InStream,DID,"}") then
-							if RelateParser(RelateID).FromPlr = PID then
-								if cmdLine("--verbose") OR cmdLine("-vr") then
-									with RelateParser(RelateID)
-										if .FromPlr < .ToPlr then
-											print "Identified the relationship between players "& .FromPlr;" and "& .ToPlr;" as #"& RelateID
-										end if
-									end with
-								end if
-								RelateID += 1
-							end if
-						end if
-						
-					case PARSER_VCR
-						with VCRParser(CombatID)
-							if AssignVCRSide = 0 then
-								if strMatch(InStream,DID,quote("seed")) then
-									.Seed = valint(mid(InStream,DID+7,3))
-								end if
-								if strMatch(InStream,DID,quote("x")) then
-									.XLoc = valint(mid(InStream,DID+4,4))
-								end if
-								if strMatch(InStream,DID,quote("y")) then
-									.YLoc = valint(mid(InStream,DID+4,4))
-								end if
-								if strMatch(InStream,DID,quote("battletype")) then
-									.Battletype = valint(mid(InStream,DID+13,2))
-								end if
-								if strMatch(InStream,DID,quote("leftownerid")) then
-									.LeftOwner = valint(mid(InStream,DID+14,2))
-								end if
-								if strMatch(InStream,DID,quote("rightownerid")) then
-									.RightOwner = valint(mid(InStream,DID+15,2))
-								end if
-								if strMatch(InStream,DID,quote("turn")) then
-									.Turn = valint(mid(InStream,DID+7,3))
-								end if
-								if strMatch(InStream,DID,quote("id")) then
-									.InternalID = valint(mid(InStream,DID+5,7))
-								end if
-							end if
-							if strMatch(InStream,DID,quote("left")+": {") then
-								AssignVCRSide = 1
-							end if
-							if strMatch(InStream,DID,quote("right")+": {") then
-								AssignVCRSide = 2
-							end if
+							'Coordinates
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+							.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+							.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
 							
-							if AssignVCRSide > 0 then
-								with .Combatants(AssignVCRSide)
-									if strMatch(InStream,DID,quote("objectid")) then
-										.PieceID = valint(mid(InStream,DID+11,3))
-									end if
-									if strMatch(InStream,DID,quote("name")) then
-										for StringLen as short = 2 to 500
-											ObjName = mid(InStream,DID+7,StringLen)
-											if right(ObjName,1) = chr(34) then
-												exit for
-											end if
-										next StringLen
-										.Namee = ObjName
-									end if
-									if strMatch(InStream,DID,quote("beamcount")) then
-										.BeamCt = valint(mid(InStream,DID+12,2))
-									end if
-									if strMatch(InStream,DID,quote("launchercount")) then
-										.TubeCt = valint(mid(InStream,DID+16,2))
-									end if
-									if strMatch(InStream,DID,quote("baycount")) then
-										.BayCt = valint(mid(InStream,DID+11,2))
-									end if
-									if strMatch(InStream,DID,quote("hullid")) then
-										.HullID = valint(mid(InStream,DID+9,4))
-									end if
-									if strMatch(InStream,DID,quote("beamid")) then
-										.BeamID = valint(mid(InStream,DID+9,4))
-									end if
-									if strMatch(InStream,DID,quote("torpedoid")) then
-										.TorpID = valint(mid(InStream,DID+12,4))
-									end if
-									if strMatch(InStream,DID,quote("shield")) then
-										.Shield = valint(mid(InStream,DID+9,4))
-									end if
-									if strMatch(InStream,DID,quote("damage")) then
-										.Damage = valint(mid(InStream,DID+9,4))
-									end if
-									if strMatch(InStream,DID,quote("crew")) then
-										.Crew = valint(mid(InStream,DID+7,4))
-									end if
-									if strMatch(InStream,DID,quote("mass")) then
-										.Mass = valint(mid(InStream,DID+7,4))
-									end if
-									if strMatch(InStream,DID,quote("raceid")) then
-										.RaceID = valint(mid(InStream,DID+7,2))
-									end if
-									if strMatch(InStream,DID,quote("beamkillbonus")) then
-										.BeamKillX = valint(mid(InStream,DID+16,2))
-									end if
-									if strMatch(InStream,DID,quote("beamchargerate")) then
-										.BeamChargeX = valint(mid(InStream,DID+17,2))
-									end if
-									if strMatch(InStream,DID,quote("torpchargerate")) then
-										.TorpChargeX = valint(mid(InStream,DID+17,2))
-									end if
-									if strMatch(InStream,DID,quote("torpmisspercent")) then
-										.TorpMissChance = valint(mid(InStream,DID+18,2))
-									end if
-									if strMatch(InStream,DID,quote("crewdefensepercent")) then
-										.CrewDefense = valint(mid(InStream,DID+21,2))
-									end if
-									if strMatch(InStream,DID,quote("torpedos")) then
-										.TorpAmmo = valint(mid(InStream,DID+11,2))
-									end if
-									if strMatch(InStream,DID,quote("fighters")) then
-										.Fighters = valint(mid(InStream,DID+11,2))
-									end if
-									if strMatch(InStream,DID,quote("temperature")) then
-										.Temperature = valint(mid(InStream,DID+17,2))
-									end if
-									if strMatch(InStream,DID,quote("hasstarbase")+":true") then
-										.Starbase = 1
-									elseif strMatch(InStream,DID,quote("hasstarbase")+":false") then
-										.Starbase = 0
-									end if
-								end with
-							end if
+							'Storm info
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
+							.Radius = valint(mid(InStream,SeekChar(0)+9,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("voltage"))
+							.Voltage = valint(mid(InStream,SeekChar(0)+10,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("warp"))
+							.WarpFactor = valint(mid(InStream,SeekChar(0)+7,2))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("heading"))
+							.StormHeading = valint(mid(InStream,SeekChar(0)+10,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("isgrowing"))
+							.StormGrowing = abs(sgn(mid(InStream,SeekChar(0)+12,5) = ":true"))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("parentid"))
+							.ParentID = valint(mid(InStream,SeekChar(0)+11,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+							ObjIDa = valint(mid(InStream,SeekChar(0)+5,4))
 						end with
-
-						if strMatch(InStream,DID,"}}") then
-							if VCRParser(CombatID).LeftOwner = PID then
-								/'
-								if cmdLine("--verbose") OR cmdLine("-vc") then
-									with RelateParser(RelateID)
-										if .FromPlr < .ToPlr then
-											print "Identified VCR"
-										end if
-									end with
-								end if
-								'/
-								CombatID += 1
-							end if
-							AssignVCRSide = 0
+	
+						if cmdLine("--verbose") OR cmdLine("-vi") then
+							print "Identified ion storm #"& ObjIDa
 						end if
-				end select
-			next
+
+						print #9, "[";Time;", ";Date;"]  Registered ion storm #"& ObjIDa
+						with IonParser(ObjIDa)
+							.XLoc = InterIon.XLoc
+							.YLoc = InterIon.YLoc
+							.Radius = InterIon.Radius
+							.Voltage = InterIon.Voltage
+							.WarpFactor = InterIon.WarpFactor
+							.StormHeading = InterIon.StormHeading
+							.StormGrowing = InterIon.StormGrowing
+							.ParentID = InterIon.ParentID
+						end with
+						
+						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+						loadTurnKB(int(BlockChar(1)/1e3),PID)
+					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+				end if
+			end if
+			
+			'Nebulae data. Only read this if the data has not already been exported
+			if PID = 1 AND FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 then
+				BlockChar(0) = instr(InStream,quote("nebulas")+": [")
+				if BlockChar(0) > 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					do
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+						ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+						
+						with InterNeb
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+							.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+							.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
+							.Radius = valint(mid(InStream,SeekChar(0)+9,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("intensity"))
+							.Intense = valint(mid(InStream,SeekChar(0)+12,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("gas"))
+							.Gas = valint(mid(InStream,SeekChar(0)+6,3))
+						end with
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+						ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+						
+						if cmdLine("--verbose") OR cmdLine("-vn") then
+							print "Identified a part of nebulae #"& ObjIDa
+						end if
+
+						print #9, "[";Time;", ";Date;"] Registered a part of nebula #"& ObjIDa
+						with NebParser(ObjIDa)
+							.NebName = ObjName
+							.XLoc = InterNeb.XLoc
+							.YLoc = InterNeb.YLoc
+							.Radius = InterNeb.Radius
+							.Intense = InterNeb.Intense
+							.Gas = InterNeb.Gas
+						end with
+						
+						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+						loadTurnKB(int(BlockChar(1)/1e3),PID)
+					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+				end if
+			end if
+			
+			'Star Cluster data. Only read this if the data has not already been exported
+			if PID = 1 AND FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 then
+				BlockChar(0) = instr(InStream,quote("stars")+": [")
+				if BlockChar(0) > 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					do
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+						ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+						
+						with InterStar
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+							.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+							.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("temp"))
+							.Temp = valint(mid(InStream,SeekChar(0)+7,6))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
+							.Radius = valint(mid(InStream,SeekChar(0)+9,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
+							.Mass = valint(mid(InStream,SeekChar(0)+7,6))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("planets"))
+							.Planets = valint(mid(InStream,SeekChar(0)+10,3))
+						end with
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+						ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+						
+						if cmdLine("--verbose") OR cmdLine("-vc") then
+							print "Identified star cluster #"& ObjIDa
+						end if
+
+						print #9, "[";Time;", ";Date;"]  Registered star cluster #"& ObjIDa
+						with StarParser(ObjIDa)
+							.ClustName = ObjName
+							.XLoc = InterStar.XLoc
+							.YLoc = InterStar.YLoc
+							.Temp = InterStar.Temp
+							.Radius = InterStar.Radius
+							.Mass = InterStar.Mass
+							.Planets = InterStar.Planets
+						end with
+						
+						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+						loadTurnKB(int(BlockChar(1)/1e3),PID)
+					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+				end if
+			end if
+			
+			'Starbase data
+			BlockChar(0) = instr(InStream,quote("starbases")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					with InterBase
+						'Defense status
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("defense"))
+						.OrbitalDef = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
+						.DamageLev = valint(mid(InStream,SeekChar(0)+9,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("fighters"))
+						.Fighters = valint(mid(InStream,SeekChar(0)+11,4))
+						
+						'Tech levels
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("hulltechlevel"))
+						.HullTech = valint(mid(InStream,SeekChar(0)+16,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("enginetechlevel"))
+						.EngineTech = valint(mid(InStream,SeekChar(0)+18,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("beamtechlevel"))
+						.BeamTech = valint(mid(InStream,SeekChar(0)+16,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("torptechlevel"))
+						.TorpTech = valint(mid(InStream,SeekChar(0)+16,3))
+
+						'Ship yard						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("isbuilding"))
+						if mid(InStream,SeekChar(0)+13,6) = ":false" then
+							.UseHull = 0
+							.UseEngine = 0
+							.UseBeam = 0
+							.UseTorp = 0
+						else
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildhullid"))
+							.UseHull = valint(mid(InStream,SeekChar(0)+14,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildengineid"))
+							.UseEngine = valint(mid(InStream,SeekChar(0)+16,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildbeamid"))
+							.UseBeam = valint(mid(InStream,SeekChar(0)+14,4))
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildtorpedoid"))
+							.UseTorp = valint(mid(InStream,SeekChar(0)+17,4))
+						end if
+					end with
+				
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("planetid"))
+					ObjIDa = valint(mid(InStream,SeekChar(0)+11,3))
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+					ObjIDb = valint(mid(InStream,SeekChar(0)+5,3))
+						
+					if PlanetParser(ObjIDa).PlanetOwner = PID then
+						print #9, "[";Time;", ";Date;"]  Registered starbase #"& ObjIDa
+						with PlanetParser(ObjIDa)
+							.BasePresent = ObjIDb
+						end with
+						
+						with BaseParser(ObjIDa)
+							.OrbitalDef = InterBase.OrbitalDef
+							.DamageLev = InterBase.DamageLev
+							.Fighters = InterBase.Fighters
+							.EngineTech = InterBase.EngineTech
+							.HullTech = InterBase.HullTech
+							.BeamTech = InterBase.BeamTech
+							.TorpTech = InterBase.TorpTech
+							.UseEngine = InterBase.UseEngine
+							.UseHull = InterBase.UseHull
+							.UseBeam = InterBase.UseBeam
+							.UseTorp = InterBase.UseTorp
+						end with
+					end if
+				
+					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'Base Storage data
+			BlockChar(0) = instr(InStream,quote("stock")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					with StockParser(StorageID)
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("stocktype"))
+						.ItemType = valint(mid(InStream,SeekChar(0)+12,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("stockid"))
+						.ItemId = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("amount"))
+						.ItemAmt = valint(mid(InStream,SeekChar(0)+9,5))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("starbaseid"))
+						.StarbaseId = valint(mid(InStream,SeekChar(0)+13,4))
+					end with
+
+					StorageID += 1
+					BlockChar(1) = instr(BlockChar(1)+1,InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'Minefield data
+			BlockChar(0) = instr(InStream,quote("minefields")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					with InterMinef
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
+						.MineOwner = valint(mid(InStream,SeekChar(0)+10,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("isweb"))
+						.Webfield = abs(sgn(mid(InStream,SeekChar(0)+8,5) = ":true"))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("units"))
+						.Units = valint(mid(InStream,SeekChar(0)+8,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
+						.Radius = valint(mid(InStream,SeekChar(0)+9,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
+						SeekChar(1) = instr(SeekChar(0)+15,InStream,chr(34))
+						ObjCode = mid(InStream, SeekChar(0)+15, SeekChar(1)-SeekChar(0)-15)
+					end with
+					
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					
+					if (cmdLine("--verbose") OR cmdLine("-vm")) AND InterShip.ShipOwner > 0 then
+						print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
+					end if
+					
+					with MinefParser(ObjIDa)
+						if InterMinef.MineOwner = PID then
+							print #9, "[";Time;", ";Date;"]  Registered minefield #"& ObjIDa
+							.MineOwner = InterMinef.MineOwner
+							.Webfield = InterMinef.Webfield
+							.Units = InterMinef.Units
+							.XLoc = InterMinef.XLoc
+							.YLoc = InterMinef.YLoc
+							.Radius = InterMinef.Radius
+							.FCode = ObjCode
+						end if
+					end with
+						
+					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'Diplomacy relations data
+			BlockChar(0) = instr(InStream,quote("relations")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					with RelateParser(RelateID)
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("playerid"))
+						.FromPlr = valint(mid(InStream,SeekChar(0)+11,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("playertoid"))
+						.ToPlr = valint(mid(InStream,SeekChar(0)+13,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("relationto"))
+						.RelationA = valint(mid(InStream,SeekChar(0)+13,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("relationfrom"))
+						.RelationB = valint(mid(InStream,SeekChar(0)+15,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("conflictlevel"))
+						.ConflictLev = valint(mid(InStream,SeekChar(0)+16,3))
+					end with
+
+					if RelateParser(RelateID).FromPlr = PID then
+						if cmdLine("--verbose") OR cmdLine("-vr") then
+							with RelateParser(RelateID)
+								if .FromPlr < .ToPlr then
+									print "Identified the relationship between players "& .FromPlr;" and "& .ToPlr;" as #"& RelateID
+								end if
+							end with
+						end if
+						RelateID += 1
+					end if
+						
+					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'VCR data
+			BlockChar(0) = instr(InStream,quote("vcrs")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					with VCRParser(CombatID)
+						'Basic specs
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("seed"))
+						.Seed = valint(mid(InStream,SeekChar(0)+7,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("battletype"))
+						.Battletype = valint(mid(InStream,SeekChar(0)+13,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("leftownerid"))
+						.LeftOwner = valint(mid(InStream,SeekChar(0)+14,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("rightownerid"))
+						.RightOwner = valint(mid(InStream,SeekChar(0)+15,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("turn"))
+						.Turn = valint(mid(InStream,SeekChar(0)+7,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+						.InternalID = valint(mid(InStream,SeekChar(0)+5,7))
+						
+						for VCRSide as byte = 1 to 2
+							with .Combatants(VCRSide)
+								'Ship/planet piece
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("objectid"))
+								.PieceID = valint(mid(InStream,SeekChar(0)+11,4))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+								SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+								.Namee = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+								
+								'Functional weapons
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("launchercount"))
+								.BeamCt = valint(mid(InStream,SeekChar(0)+12,3))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamcount"))
+								.TubeCt = valint(mid(InStream,SeekChar(0)+16,3))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("baycount"))
+								.BayCt = valint(mid(InStream,SeekChar(0)+11,3))
+								
+								'Ship equipment
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("hullid"))
+								.HullID = valint(mid(InStream,SeekChar(0)+9,4))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamid"))
+								.BeamID = valint(mid(InStream,SeekChar(0)+9,4))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedoid"))
+								.TorpID = valint(mid(InStream,SeekChar(0)+12,4))
+								
+								'Ship integrity
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("shield"))
+								.Shield = valint(mid(InStream,SeekChar(0)+9,4))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
+								.Damage = valint(mid(InStream,SeekChar(0)+9,4))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("crew"))
+								.Crew = valint(mid(InStream,SeekChar(0)+7,5))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
+								.Mass = valint(mid(InStream,SeekChar(0)+7,5))
+								
+								'Combat odds
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamkillbonus"))
+								.BeamKillX = valint(mid(InStream,SeekChar(0)+16,2))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamchargerate"))
+								.BeamChargeX = valint(mid(InStream,SeekChar(0)+17,2))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpchargerate"))
+								.TorpChargeX = valint(mid(InStream,SeekChar(0)+17,2))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpmisspercent"))
+								.TorpMissChance = valint(mid(InStream,SeekChar(0)+18,2))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("crewdefensepercent"))
+								.CrewDefense = valint(mid(InStream,SeekChar(0)+21,2))
+								
+								'Miscellaneous
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("raceid"))
+								.RaceID = valint(mid(InStream,SeekChar(0)+9,2))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedos"))
+								.TorpAmmo = valint(mid(InStream,SeekChar(0)+11,5))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("fighters"))
+								.Fighters = valint(mid(InStream,SeekChar(0)+11,5))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("temperature"))
+								.Temperature = valint(mid(InStream,SeekChar(0)+17,5))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("hasstarbase"))
+								.Starbase = abs(sgn(mid(InStream,SeekChar(0)+17,5) = ":true"))
+								
+								BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+								loadTurnKB(int(BlockChar(1)/1e3),PID)
+							end with
+						next VCRSide
+					end with
+
+					if VCRParser(CombatID).LeftOwner = PID then
+						if cmdLine("--verbose") OR cmdLine("-vc") then
+							print "Registered a VCR between piece #"& VCRParser(CombatID).Combatants(1).PieceID;
+							print " and piece #"& VCRParser(CombatID).Combatants(2).PieceID;"."
+						end if
+						CombatID += 1
+					end if
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
 		end if
 	
 		with ProcessSlot(PID)

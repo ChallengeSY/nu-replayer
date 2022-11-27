@@ -238,25 +238,8 @@ dim shared as ParseRelation RelateParser(LimitObjs)
 dim shared as ParseVCR VCRParser(LimitObjs)
 dim shared as ParseGame GameParser
 dim shared as double KBUpdate
-enum ParserModes
-	PARSER_NONE
-	PARSER_PLAYER
-	PARSER_SCORES
-	PARSER_PLANET
-	PARSER_SHIP
-	PARSER_STARBASE
-	PARSER_BASE_STORAGE
-	PARSER_MINEFIELDS
-	PARSER_IONSTORMS
-	PARSER_STAR_CLUSTER
-	PARSER_NEBULAE
-	PARSER_DIPLOMACY
-	PARSER_VCR
-	PARSER_MAX
-	PARSER_SETTINGS
-end enum
 
-dim shared as short TerrMapping(768,768), MinXPos, MaxXPos, MinYPos, MaxYPos, ParsingDone(PARSER_MAX)
+dim shared as short TerrMapping(768,768), MinXPos, MaxXPos, MinYPos, MaxYPos
 
 #IFNDEF __CMD_LINE__
 function cmdLine(SearchStr as string) as byte
@@ -282,9 +265,9 @@ sub exportScores(GameID as integer, CurTurn as short)
 	for PID as byte = 1 to 35
 		with ProcessSlot(PID)
 			if .Namee <> "" then
-				print #12, quote(.RaceType);",";.Namee;","& .Planets;","& .Bases;","& .TotalShips;","& .Freighters;","& .Military
+				print #12, quote(.RaceType);",";quote(.Namee);","& .Planets;","& .Bases;","& .TotalShips;","& .Freighters;","& .Military
 				if GameParser.Academy then
-					print #13, .Namee;","& .StockDu;","& .StockTr;","& .StockMo;","& .StockCr
+					print #13, quote(.Namee);","& .StockDu;","& .StockTr;","& .StockMo;","& .StockCr
 				end if
 			end if
 		end with
@@ -307,7 +290,7 @@ sub exportPlanetList(GameID as integer, CurTurn as short)
 	for ObjID = 1 to LimitObjs
 		with PlanetParser(ObjID)
 			if .PlanName <> "" then
-				print #14, ""& ObjID;","& .PlanetOwner;","& .BasePresent;","& .FriendlyCode; _
+				print #14, ""& ObjID;","& .PlanetOwner;","& .BasePresent;","& quote(.FriendlyCode); _
 					","& .LastScan;","& .Colonists;","& .ColTaxes;","& .ColHappy;","& .Temp;_
 					","& .Natives;","& .NatTaxes;","& .NatHappy;","& .NativeType;","& .NativeGov; _
 					","& .Neu;","& .Dur;","& .Trit;","& .Moly; _
@@ -334,8 +317,8 @@ sub exportShipList(GameID as integer, CurTurn as short)
 	for ObjID = 1 to LimitObjs
 		with ShipParser(ObjID)
 			if .ShipType > 0 then
-				print #15, ""& ObjID;","& .ShipOwner;","& .FriendlyCode; ","& .XLoc;","& .YLoc; _
-					","& .TargetX;","& .TargetY;","& .ShipName; _
+				print #15, ""& ObjID;","& .ShipOwner;","& quote(.FriendlyCode); ","& .XLoc;","& .YLoc; _
+					","& .TargetX;","& .TargetY;","& quote(.ShipName); _
 					","& .ShipType;","& .EngineID;","& .BeamCount;","& .BeamID;","& .BayCount; _
 					","& .TubeCount;","& .TubeID;","& .TotalMass;","& .Ordnance;","& .WarpFactor; _
 					","& .Colonists;","& .Neu;","& .Dur;","& .Trit;","& .Moly; _
@@ -429,7 +412,7 @@ sub exportStarList(GameID as integer)
 		for ObjID = 1 to LimitObjs
 			with StarParser(ObjID)
 				if len(.ClustName) > 0 then
-					print #21, ""& ObjID;","& .ClustName;","& .XLoc;","& .YLoc; _
+					print #21, ""& ObjID;","& quote(.ClustName);","& .XLoc;","& .YLoc; _
 						","& .Temp;","& .Radius;","& .Mass;","& .Planets
 				end if
 			end with
@@ -438,12 +421,12 @@ sub exportStarList(GameID as integer)
 	end if
 end sub
 
-sub exportNebList(GameID as integer)
+sub exportNebList(GameID as integer, AlwaysWrite as byte = 0)
 	dim as integer ObjID
-	dim as string FileName
+	dim as string FileName, AuxFile
 	FileName = "games/"+str(GameID)+"/Nebulae.csv"
 
-	if FileExists(FileName) = 0 then
+	if FileExists(FileName) = 0 OR AlwaysWrite then
 		open FileName for output as #22
 		print #22, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
 			quote("Temp")+","+quote("Radius")+","+quote("Mass")+","+_
@@ -452,7 +435,7 @@ sub exportNebList(GameID as integer)
 		for ObjID = 1 to LimitObjs
 			with NebParser(ObjID)
 				if len(.NebName) > 0 then
-					print #22, ""& ObjID;","& .NebName;","& .XLoc;","& .YLoc; _
+					print #22, ""& ObjID;","& quote(.NebName);","& .XLoc;","& .YLoc; _
 						","& .Radius;","& .Intense;","& .Gas
 				end if
 			end with
@@ -585,7 +568,6 @@ sub createTerritory(GameID as integer, CurTurn as short, PrintTxt as byte)
 	if GameID >= 2972 AND GameParser.Academy < 1 AND (FileExists("games/"+str(GameID)+"/Territory.csv") = 0 OR GameParser.DynamicMap > 0 OR _
 		(FileExists("games/"+str(GameID)+"/Settings.csv") AND FileDateTime("games/"+str(GameID)+"/Settings.csv") > FileDateTime("games/"+str(GameID)+"/Territory.csv"))) then
 		print #9, "[";Time;", ";Date;"] Generating territory...";
-		print #9, "Generating territory...";
 		if PrintTxt then
 			print "Generating territory...";
 		end if
@@ -640,8 +622,8 @@ sub exportCSVfiles(GameID as integer, CurTurn as short)
 	exportShipList(GameID,CurTurn)
 	exportBaseList(GameID,CurTurn)
 	exportMinefields(GameID,CurTurn)
+	exportNebList(GameID, FileExists("games/"+str(GameID)+"/"+str(CurTurn)+"/Ion Storms.csv") = 0)
 	exportIonList(GameID,CurTurn)
-	exportNebList(GameID)
 	exportRelationships(GameID,CurTurn)
 	exportSettings(GameID)
 	exportStarList(GameID)

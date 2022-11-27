@@ -1,10 +1,6 @@
 sub importPrivateGame
-	dim as string InStream
-	dim as integer GameNum
-	dim as string GameName
-	dim as string ShortDesc
-	dim as integer GameStatus
-	dim as integer FinalTurn
+	dim as string InStream, GameName, ShortDesc
+	dim as integer GameNum, GameStatus, FinalTurn, SeekChar(1)
 	
 	dim SendBuffer as string
 	dim RecvBuffer as zstring * RECVBUFFLEN+1
@@ -75,46 +71,25 @@ sub importPrivateGame
 		loop until left(InStream,1) = "{"
 		close #6
 		
-		if strMatch(Instream,1,"{"+quote("success")+":false") then
+		if instr(Instream,"{"+quote("success")+":false") then
 			ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to API error."
 		else
-			for DID as integer = 1 to len(InStream)
-				if strMatch(InStream,DID,quote("name")) then
-					for StringLen as short = 2 to 500
-						GameName = mid(InStream,DID+7,StringLen)
-						if right(GameName,1) = chr(34) then
-							exit for
-						end if
-					next StringLen
-				end if
+			SeekChar(0) = instr(InStream,quote("name"))
+			SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+			GameName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
 
-				if strMatch(InStream,DID,quote("shortdescription")) then
-					for StringLen as short = 2 to 500
-						ShortDesc = mid(InStream,DID+19,StringLen)
-						if right(ShortDesc,1) = chr(34) then
-							exit for
-						end if
-					next StringLen
-				end if
-		
-				if strMatch(InStream,DID,quote("status")+":") then
-					GameStatus = valint(mid(InStream,DID+9,4))
-					
-					if GameStatus <> 3 then
-						ErrorMsg = "This game is not finished."
-						exit for
-					end if
-				end if
+			SeekChar(0) = instr(InStream,quote("shortdescription"))
+			SeekChar(1) = instr(SeekChar(0)+20,InStream,chr(34))
+			GameName = mid(InStream, SeekChar(0)+20, SeekChar(1)-SeekChar(0)-20)
 
-				if strMatch(InStream,DID,quote("turn")+":") then
-					FinalTurn = valint(mid(InStream,DID+7,4))
-				end if
-				
-				if strMatch(InStream,DID,quote("settings")+":{") then
-					'We are done here
-					exit for
-				end if
-			next DID
+			SeekChar(0) = instr(InStream,quote("status"))
+			GameStatus = valint(mid(InStream,SeekChar(0)+9,3))
+			if GameStatus = 3 then
+				SeekChar(0) = instr(InStream,quote("turn"))
+				FinalTurn = valint(mid(InStream,SeekChar(0)+7,4))
+			else
+				ErrorMsg = "This game is not finished."
+			end if
 		end if
 	
 		if GameName <> "" AND FinalTurn > 0 AND ErrorMsg = "" then

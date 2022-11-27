@@ -36,6 +36,7 @@ function downloadLastTurns(GameID as integer) as integer
 	
 	dim as string InStream, TargetFile(1)
 	dim as byte Player = 0, FoundSettings = 0
+	dim as integer SeekChar
 	ErrorMsg = ""
 	
 	GameParser.LastTurn = 0
@@ -100,7 +101,7 @@ function downloadLastTurns(GameID as integer) as integer
 			loop until left(InStream,1) = "{"
 			close #5
 			
-			if strMatch(Instream,1,"{"+quote("success")+":false") then
+			if instr(Instream,"{"+quote("success")+":false") then
 				ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to API error."
 			elseif Player = 1 then
 				with GameParser
@@ -113,45 +114,33 @@ function downloadLastTurns(GameID as integer) as integer
 					.DynamicMap = 0
 					.AccelStart = 0
 					.LastTurn = 0
-				
-					for DID as integer = 1 to len(InStream)
-						if strMatch(InStream,DID,quote("slots")+":") then
-							FoundSettings = 1
-							.PlayerCount = valint(mid(InStream,DID+8,2))
-						end if
-				
-						if .LastTurn = 0 AND strMatch(InStream,DID,quote("turn")+":") then
-							.LastTurn = valint(mid(InStream,DID+7,4))
-						end if
-				
-						if strMatch(InStream,DID,quote("mapwidth")+":") then
-							.MapWidth = valint(mid(InStream,DID+11,4))
-						end if
-				
-						if strMatch(InStream,DID,quote("mapheight")+":") then
-							.MapHeight = valint(mid(InStream,DID+12,4))
-						end if
-				
-						if strMatch(InStream,DID,quote("nuionstorms")+":true") then
-							.CloudyIonStorms = 1
-						end if
-				
-						if strMatch(InStream,DID,quote("sphere")+":true") then
-							.Sphere = 1
-						end if
-				
-						if strMatch(InStream,DID,quote("isacademy")+":true") then
-							.Academy = 1
-						end if
-						
-						if strMatch(InStream,DID,quote("acceleratedturns")) then
-							.AccelStart = valint(mid(InStream,DID+19,3))
-						end if
-						
-						if strMatch(InStream,DID,quote("id")) AND FoundSettings then
-							exit for
-						end if
-					next DID
+					
+					SeekChar = instr(InStream,quote("slots")+":")
+					if SeekChar > 0 then
+						FoundSettings = 1
+						.PlayerCount = valint(mid(InStream,SeekChar+8,2))
+					end if
+
+					SeekChar = instr(InStream,quote("turn")+":")
+					.LastTurn = valint(mid(InStream,SeekChar+7,4))
+
+					SeekChar = instr(InStream,quote("mapwidth")+":")
+					.MapWidth = valint(mid(InStream,SeekChar+11,4))
+
+					SeekChar = instr(InStream,quote("mapheight")+":")
+					.MapHeight = valint(mid(InStream,SeekChar+12,4))
+
+					SeekChar = instr(InStream,quote("nuionstorms")+":true")
+					.CloudyIonStorms = abs(sgn(SeekChar))
+
+					SeekChar = instr(InStream,quote("sphere")+":true")
+					.Sphere = abs(sgn(SeekChar))
+
+					SeekChar = instr(InStream,quote("isacademy")+":true")
+					.Academy = abs(sgn(SeekChar))
+
+					SeekChar = instr(InStream,quote("acceleratedturns")+":true")
+					.AccelStart = valint(mid(InStream,SeekChar+19,3))
 
 					mkdir("games/"+str(GameID))
 					exportSettings(GameID,1)

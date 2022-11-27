@@ -157,7 +157,7 @@ sub renderClient
 					cls
 					color rgb(255,255,255)
 					print word_wrap("Now converting turn "+str(JumpCut)+" for "+GameName+_
-						". This may take several minutes depending on game specifications...")
+						". This may take a few minutes depending on game specifications...")
 					print
 					print word_wrap("Once conversion is complete, Nu Replayer will "+_
 						"automatically jump to the newly created turn.")
@@ -1054,4 +1054,3 @@ sub renderClient
 			end if
 	end select
 end sub
-

@@ -479,7 +479,6 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 		do
 			with GameObj(0)
 				input #7, .ID, .Namee, .GameDesc, .LastTurn
-				.Namee = findReplace(.Namee,"&",",")
 			end with
 			if IgnoreLine then
 				IgnoreLine = 0
