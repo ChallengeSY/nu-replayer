@@ -29,7 +29,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 		with PlanetParser(ObjIDa)
 			.PlanetOwner = 0
 			.LockOwner = 0
-			.BasePresent = -1
+			.BasePresent = 0
 			.PlanName = ""
 			.XLoc = 0
 			.YLoc = 0
@@ -78,6 +78,26 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			.StormHeading = 0
 			.StormGrowing = 0
 			.ParentID = 0
+		end with
+		
+		with ArtifactParser(ObjIDa)
+			.ArtType = 0
+			.Namee = ""
+			.Discovered = 0
+			.LocationType = 0
+			.LocationId = 0
+			.XLoc = 0
+			.YLoc = 0
+		end with
+		
+		with WormholeParser(ObjIDa)
+			.Namee = ""
+			.XLoc = 0
+			.YLoc = 0
+			.TargetX = 0
+			.TargetY = 0
+			.Stability = 0
+			.LastScan = 0
 		end with
 		
 		with RelateParser(ObjIDa)
@@ -419,6 +439,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
 						
 						'Colony info
+						.PlanName = ObjName
+						.FriendlyCode = ObjClose
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
 						.PlanetOwner = valint(mid(InStream,SeekChar(0)+10,2))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
@@ -500,51 +522,16 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						with PlanetParser(ObjIDa)
 							if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND TurnNum < GameParser.AccelStart) then
 								print #9, "[";Time;", ";Date;"]  Registered planet #"& ObjIDa;" (";ObjName;")"
-								.PlanetOwner = InterPlan.PlanetOwner
-								.BasePresent = 0
+								PlanetParser(ObjIDa) = InterPlan
+								
 								.LockOwner = 1
-								.PlanName = ObjName
-								.FriendlyCode = ObjCode
 								.LastScan = TurnNum
-	
-								.XLoc = InterPlan.XLoc
-								.YLoc = InterPlan.YLoc
-								.Asteroid = InterPlan.Asteroid
-
-								.Colonists = InterPlan.Colonists
-								.ColTaxes = InterPlan.ColTaxes
-								.ColHappy = InterPlan.ColHappy
-								
-								.Natives = InterPlan.Natives
-								.NatTaxes = InterPlan.NatTaxes
-								.NatHappy = InterPlan.NatHappy
-								.NativeType = InterPlan.NativeType
-								.NativeGov = InterPlan.NativeGov
-								
-								.Temp = InterPlan.Temp
-								.Neu = InterPlan.Neu
-								.Dur = InterPlan.Dur
-								.Trit = InterPlan.Trit
-								.Moly = InterPlan.Moly
-								.GNeu = InterPlan.GNeu
-								.GDur = InterPlan.GDur
-								.GTrit = InterPlan.GTrit
-								.GMoly = InterPlan.GMoly
-								.DNeu = InterPlan.DNeu
-								.DDur = InterPlan.DDur
-								.DTrit = InterPlan.DTrit
-								.DMoly = InterPlan.DMoly
-								.Megacredits = InterPlan.Megacredits
-								.Supplies = InterPlan.Supplies
-								.MineralMines = InterPlan.MineralMines
-								.Factories = InterPlan.Factories
 							end if
 						end with
 					else
 						with PlanetParser(ObjIDa)
 							if .LockOwner = 0 then
 								.PlanetOwner = 0
-								.BasePresent = 0
 								.PlanName = findReplace(ObjName,",","&")
 								.FriendlyCode = findReplace(ObjCode,",","&")
 								if InterPlan.LastScan >= PlanetParser(ObjIDa).LastScan then
@@ -634,6 +621,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.WarpFactor = valint(mid(InStream,SeekChar(0)+7,2))
 						
 						'Basic info
+						.ShipName = ObJName
+						.FriendlyCode = ObjCode
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
 						.ShipOwner = valint(mid(InStream,SeekChar(0)+10,2))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
@@ -694,48 +683,13 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					end if
 					
 					if InterShip.ShipOwner = PID then
-						with ShipParser(ObjIDa)
-							if .LockOwner = 0 then
-								print #9, "[";Time;", ";Date;"]  Registered ship #"& ObjIDa;" (";ObjName;")"
-								.ShipOwner = InterShip.ShipOwner
-								.LockOwner = 1
-								if len(ObjName) < 3 then
-									.ShipName = "(Ship "+str(ObjIDa)+")"
-								else
-									.ShipName = ObjName
-								end if
-								.ShipType = InterShip.ShipType
-								.FriendlyCode = ObjCode
-								.XLoc = InterShip.XLoc
-								.YLoc = InterShip.YLoc
-								.TargetX = InterShip.TargetX
-								.TargetY = InterShip.TargetY
-								.WarpFactor = InterShip.WarpFactor
-								.TotalMass = InterShip.TotalMass
-								
-								.EngineID = InterShip.EngineID
-								.BeamCount = InterShip.BeamCount
-								.BeamID = InterShip.BeamID
-								.TubeCount = InterShip.TubeCount
-								.TubeID = InterShip.TubeID
-								.BayCount = InterShip.BayCount
-								
-								.Colonists = InterShip.Colonists
-								.Neu = InterShip.Neu
-								.Dur = InterShip.Dur
-								.Trit = InterShip.Trit
-								.Moly = InterShip.Moly
-								.Megacredits = InterShip.Megacredits
-								.Supplies = InterShip.Supplies
-								.Ordnance = InterShip.Ordnance
-								
-								.Damage = InterShip.Damage
-								.Crewmen = InterShip.Crewmen
-								.Cloaked = InterShip.Cloaked
-								.Experience = InterShip.Experience
-								InterShip.Cloaked = 0
-							end if
-						end with
+						if ShipParser(ObjIDa).LockOwner = 0 then
+							ShipParser(ObjIDa) = InterShip
+							ShipParser(ObjIDa).LockOwner = 1
+							InterShip.Cloaked = 0
+
+							print #9, "[";Time;", ";Date;"]  Registered ship #"& ObjIDa;" (";ObjName;")"
+						end if
 					end if
 					
 					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
@@ -779,16 +733,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						end if
 
 						print #9, "[";Time;", ";Date;"]  Registered ion storm #"& ObjIDa
-						with IonParser(ObjIDa)
-							.XLoc = InterIon.XLoc
-							.YLoc = InterIon.YLoc
-							.Radius = InterIon.Radius
-							.Voltage = InterIon.Voltage
-							.WarpFactor = InterIon.WarpFactor
-							.StormHeading = InterIon.StormHeading
-							.StormGrowing = InterIon.StormGrowing
-							.ParentID = InterIon.ParentID
-						end with
+						IonParser(ObjIDa) = InterIon
 						
 						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
 						loadTurnKB(int(BlockChar(1)/1e3),PID)
@@ -828,14 +773,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						end if
 
 						print #9, "[";Time;", ";Date;"] Registered a part of nebula #"& ObjIDa
-						with NebParser(ObjIDa)
-							.NebName = ObjName
-							.XLoc = InterNeb.XLoc
-							.YLoc = InterNeb.YLoc
-							.Radius = InterNeb.Radius
-							.Intense = InterNeb.Intense
-							.Gas = InterNeb.Gas
-						end with
+						NebParser(ObjIDa) = InterNeb
 						
 						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
 						loadTurnKB(int(BlockChar(1)/1e3),PID)
@@ -878,20 +816,96 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						end if
 
 						print #9, "[";Time;", ";Date;"]  Registered star cluster #"& ObjIDa
-						with StarParser(ObjIDa)
-							.ClustName = ObjName
-							.XLoc = InterStar.XLoc
-							.YLoc = InterStar.YLoc
-							.Temp = InterStar.Temp
-							.Radius = InterStar.Radius
-							.Mass = InterStar.Mass
-							.Planets = InterStar.Planets
-						end with
+						StarParser(ObjIDa) = InterStar
 						
 						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
 						loadTurnKB(int(BlockChar(1)/1e3),PID)
 					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 				end if
+			end if
+			
+			'Artifact data
+			BlockChar(0) = instr(InStream,quote("artifacts")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					with InterArtifact
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+						.Namee = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("locationtype"))
+						.LocationType = valint(mid(InStream,SeekChar(0)+15,2))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("locationid"))
+						.LocationId = valint(mid(InStream,SeekChar(0)+13,4))
+					end with
+					
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					
+					if (cmdLine("--verbose") OR cmdLine("-vm")) AND InterShip.ShipOwner > 0 then
+						print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
+					end if
+					
+					ArtifactParser(ObjIDa) = InterArtifact
+					print #9, "[";Time;", ";Date;"]  Registered artifact #"& ObjIDa
+						
+					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'Wormhole data
+			BlockChar(0) = instr(InStream,quote("wormholes")+": [")
+			if BlockChar(0) > 0 then
+				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+				BlockChar(1) = BlockChar(0)
+				do
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
+					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
+					ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+						
+					with InterWormhole
+						.Namee = ObjName
+						
+						'Coordinates
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
+						.TargetX = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
+						.TargetY = valint(mid(InStream,SeekChar(0)+10,4))
+
+						'Other info
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("stability"))
+						.Stability = valint(mid(InStream,SeekChar(0)+12,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("turn"))
+						.LastScan = valint(mid(InStream,SeekChar(0)+7,4))
+					end with
+					
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
+					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					
+					if (cmdLine("--verbose") OR cmdLine("-vw")) AND InterShip.ShipOwner > 0 then
+						print "Identified wormhole #"& ObjIDa
+					end if
+					
+					if InterWormhole.LastScan > WormholeParser(ObjIDa).LastScan then
+						print #9, "[";Time;", ";Date;"]  Updated wormhole #"& ObjIDa
+						WormholeParser(ObjIDa) = InterWormhole
+					end if
+						
+					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
+				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 			end if
 			
 			'Starbase data
@@ -949,19 +963,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							.BasePresent = ObjIDb
 						end with
 						
-						with BaseParser(ObjIDa)
-							.OrbitalDef = InterBase.OrbitalDef
-							.DamageLev = InterBase.DamageLev
-							.Fighters = InterBase.Fighters
-							.EngineTech = InterBase.EngineTech
-							.HullTech = InterBase.HullTech
-							.BeamTech = InterBase.BeamTech
-							.TorpTech = InterBase.TorpTech
-							.UseEngine = InterBase.UseEngine
-							.UseHull = InterBase.UseHull
-							.UseBeam = InterBase.UseBeam
-							.UseTorp = InterBase.UseTorp
-						end with
+						BaseParser(ObjIDa) = InterBase
 					end if
 				
 					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
@@ -1015,7 +1017,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.Radius = valint(mid(InStream,SeekChar(0)+9,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
 						SeekChar(1) = instr(SeekChar(0)+15,InStream,chr(34))
-						ObjCode = mid(InStream, SeekChar(0)+15, SeekChar(1)-SeekChar(0)-15)
+						.FCode = mid(InStream, SeekChar(0)+15, SeekChar(1)-SeekChar(0)-15)
 					end with
 					
 					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
@@ -1025,18 +1027,10 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
 					end if
 					
-					with MinefParser(ObjIDa)
-						if InterMinef.MineOwner = PID then
-							print #9, "[";Time;", ";Date;"]  Registered minefield #"& ObjIDa
-							.MineOwner = InterMinef.MineOwner
-							.Webfield = InterMinef.Webfield
-							.Units = InterMinef.Units
-							.XLoc = InterMinef.XLoc
-							.YLoc = InterMinef.YLoc
-							.Radius = InterMinef.Radius
-							.FCode = ObjCode
-						end if
-					end with
+					if InterMinef.MineOwner = PID then
+						print #9, "[";Time;", ";Date;"]  Registered minefield #"& ObjIDa
+						MinefParser(ObjIDa) = InterMinef
+					end if
 						
 					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
 					loadTurnKB(int(BlockChar(1)/1e3),PID)

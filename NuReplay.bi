@@ -486,7 +486,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 				with GameObj(0)
 					WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
 					ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
-					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Ion Storms.csv"
+					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Wormholes.csv"
 					RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
 				
 					if FileExists(WorkingFile) then

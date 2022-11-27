@@ -57,15 +57,13 @@ else
 		GamePath = "games/"+str(GameNum)+"/"+str(TurnNum)+"/"
 		
 		cls
-		if ((FileExists(GamePath+"Score.csv") = 0 OR FileExists(GamePath+"Ion Storms.csv") = 0) AND FileExists(GamePath+"Working") = 0) OR _
-			(FileDateTime(GamePath+"Ion Storms.csv") < DataFormat AND FileExists(GamePath+"Working") = 0) OR _
+		if ((FileExists(GamePath+"Score.csv") = 0 OR FileExists(GamePath+"Wormholes.csv") = 0) AND FileExists(GamePath+"Working") = 0) OR _
 			(FileExists(GamePath+"Working") AND cmdLine("--skipPart") = 0) OR _
 			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0 then
 			
 			/'
 			 ' Process the turn if any of the following are satisfied:
-			 '   The score or starbase files do not exist
-			 '   The starbase file is outdated
+			 '   The score or wormholes files do not exist
 			 '   The turn is in process (indicated by a WORKING file) and --skipPart is not supplied
 			 '   Neither --skipComp nor --skipPart command options are supplied (default)
 			 '/
@@ -97,8 +95,8 @@ sub loadTurnTerritory(AmtDone as short)
 end sub
 
 sub loadTurnUI(Players as ubyte)
-	dim as ubyte Detected
-	for PID as ubyte = 1 to 30
+	dim as ubyte Detected = 35
+	for PID as ubyte = 1 to 35
 		if FileExists("raw/"+str(GameNum)+"/player"+str(PID)+"-turn"+str(TurnNum)+".trn") = 0 AND _
 			FileExists("raw/"+str(GameNum)+"/"+str(TurnNum)+"/loadturn"+str(PID)) = 0 AND _
 			FileExists("raw/"+str(GameNum)+"/"+str(TurnNum)+"/loadturn"+str(PID)+".txt") = 0 then

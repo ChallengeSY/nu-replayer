@@ -149,6 +149,26 @@ type ParseNebulae
 	Gas as short
 end type
 
+type ParseWormhole
+	Namee as string
+	XLoc as short
+	YLoc as short
+	TargetX as short
+	TargetY as short
+	Stability as short
+	LastScan as short
+end type
+
+type ParseArtifact
+	ArtType as byte
+	Namee as string
+	Discovered as byte
+	LocationType as byte
+	LocationId as short
+	XLoc as short
+	YLoc as short
+end type
+
 type ParseRelation
 	FromPlr as byte
 	ToPlr as byte
@@ -234,6 +254,8 @@ dim shared as ParseIonStorm IonParser(LimitObjs), InterIon
 dim shared as ParseNebulae NebParser(LimitObjs), InterNeb
 dim shared as ParseStock StockParser(MetaLimit)
 dim shared as ParseMinef MinefParser(MetaLimit), InterMinef
+dim shared as ParseWormhole WormholeParser(LimitObjs), InterWormhole
+dim shared as ParseArtifact ArtifactParser(LimitObjs), InterArtifact
 dim shared as ParseRelation RelateParser(LimitObjs)
 dim shared as ParseVCR VCRParser(LimitObjs)
 dim shared as ParseGame GameParser
@@ -444,6 +466,47 @@ sub exportNebList(GameID as integer, AlwaysWrite as byte = 0)
 	end if
 end sub
 
+sub exportArtifactList(GameID as integer, CurTurn as short)
+	dim as integer ObjID
+	dim as string FileName, AuxFile
+	FileName = "games/"+str(GameID)+"/"+str(CurTurn)+"/Artifacts.csv"
+
+	open FileName for output as #24
+	print #24, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
+		quote("LocationType")+","+quote("LocationID")
+
+	for ObjID = 1 to LimitObjs
+		with ArtifactParser(ObjID)
+			if len(.Namee) > 0 then
+				print #24, ""& ObjID;","& quote(.Namee);","& .XLoc;","& .YLoc; _
+					","& .LocationType;","& .LocationId
+			end if
+		end with
+	next
+	close #24
+end sub
+
+sub exportWormholeList(GameID as integer, CurTurn as short)
+	dim as integer ObjID
+	dim as string FileName, AuxFile
+	FileName = "games/"+str(GameID)+"/"+str(CurTurn)+"/Wormholes.csv"
+
+	open FileName for output as #25
+	print #25, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
+		quote("DestX")+","+quote("DestY")+","+quote("Stability")+","+_
+		quote("LastInfo")
+
+	for ObjID = 1 to LimitObjs
+		with WormholeParser(ObjID)
+			if len(.Namee) > 0 then
+				print #25, ""& ObjID;","& quote(.Namee);","& .XLoc;","& .YLoc; _
+					","& .TargetX;","& .TargetY;","& .Stability;","& .LastScan
+			end if
+		end with
+	next
+	close #25
+end sub
+
 sub exportSettings(GameID as integer, AlwaysWrite as byte = 0)
 	dim as integer ObjID
 	
@@ -625,6 +688,8 @@ sub exportCSVfiles(GameID as integer, CurTurn as short)
 	exportNebList(GameID, FileExists("games/"+str(GameID)+"/"+str(CurTurn)+"/Ion Storms.csv") = 0)
 	exportIonList(GameID,CurTurn)
 	exportRelationships(GameID,CurTurn)
+	exportArtifactList(GameID,CurTurn)
+	exportWormholeList(GameID,CurTurn)
 	exportSettings(GameID)
 	exportStarList(GameID)
 	exportVCRs(GameID,CurTurn)
