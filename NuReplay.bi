@@ -472,7 +472,7 @@ end sub
 sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as integer, Filename as string = "List.csv")
 	dim as integer IgnoreLine
 	dim as byte MatchSucessful
-	dim as string WorkingFile, PlanetsFile, AuxFile, RawFile
+	dim as string WorkingFile, ScoreFile, AuxFile, RawFile
 	
 	IgnoreLine = 1
 	if FileExists("games/"+Filename) AND Internal < 1e6 then
@@ -486,7 +486,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 			else
 				with GameObj(0)
 					WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
-					PlanetsFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Planetary.csv"
+					ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
 					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Wormholes.csv"
 					RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
 				
@@ -496,8 +496,8 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 							kill(WorkingFile)
 						end if
 						.GameState = 9
-					elseif FileExists(PlanetsFile) then
-						if FileExists(AuxFile) = 0 OR FileDateTime(PlanetsFile) < DataFormat then
+					elseif FileExists(ScoreFile) then
+						if FileExists(AuxFile) = 0 then
 							if FileExists(RawFile) then
 								.GameState = 8
 							else

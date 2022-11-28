@@ -26,160 +26,29 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	RawPath = "raw/"+str(GameNum)
 
 	for ObjIDa = 1 to LimitObjs
-		with PlanetParser(ObjIDa)
-			.PlanetOwner = 0
-			.LockOwner = 0
-			.BasePresent = 0
-			.PlanName = ""
-			.XLoc = 0
-			.YLoc = 0
-			.FriendlyCode = quote("---")
-			.Asteroid = 0
-
-			.LastScan = 0
-			.NativesUpdated = 0
-			.MineralsUpdated = 0
-			.MoneyUpdated = 0
-			.BuildingsUpdated = 0
-		end with
-
-		with ShipParser(ObjIDa)
-			.ShipOwner = 0
-			.LockOwner = 0
-			.XLoc = 0
-			.YLoc = 0
-			.ShipName = ""
-			.ShipType = 0
-			.FriendlyCode = quote("---")
-			.Cloaked = 0
-			.Experience = 0
-		end with
+		PlanetParser(ObjIDa) = ResetPlan
+		ShipParser(ObjIDa) = ResetShip
+		BaseParser(ObjIDa) = ResetBase
 		
-		with BaseParser(ObjIDa)
-			.OrbitalDef = 0
-			.DamageLev = 0
-			.Fighters = 0
-			.HullTech = 0
-			.EngineTech = 0
-			.BeamTech = 0
-			.TorpTech = 0
-			.UseHull = 0
-			.UseEngine = 0
-			.UseBeam = 0
-			.UseTorp = 0
-		end with
+		IonParser(ObjIDa) = ResetIon
+		StarParser(ObjIDa) = ResetStar
+		NebParser(ObjIDa) = ResetNeb
 		
-		with IonParser(ObjIDa)
-			.XLoc = 0
-			.YLoc = 0
-			.Radius = 0
-			.Voltage = 0
-			.WarpFactor = 0
-			.StormHeading = 0
-			.StormGrowing = 0
-			.ParentID = 0
-		end with
-		
-		with ArtifactParser(ObjIDa)
-			.ArtType = 0
-			.Namee = ""
-			.Discovered = 0
-			.LocationType = 0
-			.LocationId = 0
-			.XLoc = 0
-			.YLoc = 0
-		end with
-		
-		with WormholeParser(ObjIDa)
-			.Namee = ""
-			.XLoc = 0
-			.YLoc = 0
-			.TargetX = 0
-			.TargetY = 0
-			.Stability = 0
-			.LastScan = 0
-		end with
-		
-		with RelateParser(ObjIDa)
-			.FromPlr = 0
-			.ToPlr = 0
-			.RelationA = 0
-			.RelationB = 0
-			.ConflictLev = 0
-		end with
-		
-		with VCRParser(ObjIDa)
-			.Seed = 0
-			.XLoc = 0
-			.YLoc = 0
-			.Battletype = 0
-			.LeftOwner = 0
-			.RightOwner = 0
-			.Turn = 0
-			.InternalID = 0
-			for Plr as byte = 1 to 2
-				with .Combatants(Plr)
-					.PieceID = 0
-					.Namee = ""
-					.BeamCt = 0
-					.TubeCt = 0
-					.BayCt = 0
-					.HullID = 0
-					.BeamID = 0
-					.TorpID = 0
-					.Shield = 0
-					.Damage = 0
-					.Crew = 0
-					.Mass = 0
-					.RaceID = 0
-					.BeamKillX = 0
-					.BeamChargeX = 0
-					.TorpChargeX = 0
-					.TorpMissChance = 0
-					.CrewDefense = 0
-					.TorpAmmo = 0
-					.Fighters = 0
-					.Temperature = 0
-					.Starbase = 0
-				end with
-			next Plr
-		end with
+		ArtifactParser(ObjIDa) = ResetArtifact
+		WormholeParser(ObjIDa) = ResetWormhole
+		RelateParser(ObjIDa) = ResetRelations
+		VCRParser(ObjIDa) = ResetVCR
 	next
 	
 	for MetaID as integer = 1 to MetaLimit
-		with StockParser(MetaID)
-			.StarbaseId = 0
-			.ItemType = 0
-			.ItemId = 0
-			.ItemAmt = 0
-		end with
-		
-		with MinefParser(MetaID)
-			.MineOwner = 0
-			.Webfield = 0
-			.Units = 0
-			.Radius = 0
-			.FCode = quote("---")
-		end with
+		StockParser(MetaID) = ResetStock
+		MinefParser(MetaID) = ResetMinef
 	next MetaID
 	
 	InterShip.ShipOwner = 0
 	
 	for PlrID as ubyte = 1 to 35
-		with ProcessSlot(PlrID)
-			.RaceType = "Unassigned"
-			.Namee = ""
-			.TotalShips = -1
-			.Freighters = 0
-			.Planets = -1
-			.Bases = 0
-			.Military = -1
-			
-			.StockDu = 0
-			.StockTr = 0
-			.StockMo = 0
-			.StockCr = 0
-		end with
+		ProcessSlot(PlrID) = ResetSlot
 	next PlrID
 
 	ParseStart = timer
@@ -195,15 +64,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	open "games/"+str(GameNum)+"/"+str(TurnNum)+"/Working" for output as #10
 	close #10 
 	
-	with GameParser
-		.MapWidth = 2000
-		.MapHeight = 2000
-		.DynamicMap = 0
-		.PlayerCount = 0
-		.Sphere = 0
-		.Academy = 0
-		.LastTurn = 0
-	end with
+	GameParser = ResetGame
 
 	print #9, "[";Time;", ";Date;"] Data will be exported for game #"& GameNum;" turn "& TurnNum;"."
 	if FileExists("games/"+str(GameNum)+"/Settings.csv") then
@@ -440,7 +301,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						
 						'Colony info
 						.PlanName = ObjName
-						.FriendlyCode = ObjClose
+						.FriendlyCode = ObjCode
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
 						.PlanetOwner = valint(mid(InStream,SeekChar(0)+10,2))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
@@ -665,7 +526,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("experience"))
 						.Experience = valint(mid(InStream,SeekChar(0)+13,6))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("iscloaked"))
-						.Cloaked = abs(sgn(mid(InStream,SeekChar(0)+12,5) = ":true"))
+						.Cloaked = abs(sgn(mid(InStream,SeekChar(0)+11,5) = ":true"))
 						
 						'Ship Specs
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("hullid"))
@@ -1007,7 +868,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
 						.MineOwner = valint(mid(InStream,SeekChar(0)+10,2))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("isweb"))
-						.Webfield = abs(sgn(mid(InStream,SeekChar(0)+8,5) = ":true"))
+						.Webfield = abs(sgn(mid(InStream,SeekChar(0)+7,5) = ":true"))
 						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
 						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
@@ -1019,8 +880,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
 						.Radius = valint(mid(InStream,SeekChar(0)+9,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
-						SeekChar(1) = instr(SeekChar(0)+15,InStream,chr(34))
-						.FCode = mid(InStream, SeekChar(0)+15, SeekChar(1)-SeekChar(0)-15)
+						SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
+						.FCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
 					end with
 					
 					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))

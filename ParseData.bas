@@ -246,23 +246,30 @@ type ParseGame
 	LastTurn as short
 end type
 
-dim shared as ParseScore ProcessSlot(35)
-dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan
-dim shared as ParseShip ShipParser(LimitObjs), InterShip
-dim shared as ParseBase BaseParser(LimitObjs), InterBase
-dim shared as ParseStar StarParser(LimitObjs), InterStar
-dim shared as ParseIonStorm IonParser(LimitObjs), InterIon
-dim shared as ParseNebulae NebParser(LimitObjs), InterNeb
-dim shared as ParseStock StockParser(MetaLimit)
-dim shared as ParseMinef MinefParser(MetaLimit), InterMinef
-dim shared as ParseWormhole WormholeParser(LimitObjs), InterWormhole
-dim shared as ParseArtifact ArtifactParser(LimitObjs), InterArtifact
-dim shared as ParseRelation RelateParser(LimitObjs)
-dim shared as ParseVCR VCRParser(LimitObjs)
-dim shared as ParseGame GameParser
+dim shared as ParseScore ProcessSlot(35), ResetSlot
+dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan, ResetPlan
+dim shared as ParseShip ShipParser(LimitObjs), InterShip, ResetShip
+dim shared as ParseBase BaseParser(LimitObjs), InterBase, ResetBase
+dim shared as ParseStar StarParser(LimitObjs), InterStar, ResetStar
+dim shared as ParseIonStorm IonParser(LimitObjs), InterIon, ResetIon
+dim shared as ParseNebulae NebParser(LimitObjs), InterNeb, ResetNeb
+dim shared as ParseStock StockParser(MetaLimit), ResetStock
+dim shared as ParseMinef MinefParser(MetaLimit), InterMinef, ResetMinef
+dim shared as ParseWormhole WormholeParser(LimitObjs), InterWormhole, ResetWormhole
+dim shared as ParseArtifact ArtifactParser(LimitObjs), InterArtifact, ResetArtifact
+dim shared as ParseRelation RelateParser(LimitObjs), ResetRelations
+dim shared as ParseVCR VCRParser(LimitObjs), ResetVCR
+dim shared as ParseGame GameParser, ResetGame
 dim shared as double KBUpdate
 
 dim shared as short TerrMapping(768,768), MinXPos, MaxXPos, MinYPos, MaxYPos
+
+ResetSlot.RaceType = "Unassigned"
+ResetPlan.FriendlyCode = quote("???")
+ResetShip.FriendlyCode = quote("???")
+ResetMinef.FCode = quote("???")
+ResetGame.MapWidth = 2000
+ResetGame.MapHeight = 2000
 
 #IFNDEF __CMD_LINE__
 function cmdLine(SearchStr as string) as byte
@@ -392,7 +399,7 @@ sub exportMinefields(GameID as integer, CurTurn as short)
 	for ObjID = 1 to MetaLimit
 		with MinefParser(ObjID)
 			if .MineOwner > 0 then
-				print #18, ""& .MineOwner;","& .Webfield;","& .Units;","& .XLoc;","& .YLoc;","& .Radius;","& .FCode
+				print #18, ""& .MineOwner;","& .Webfield;","& .Units;","& .XLoc;","& .YLoc;","& .Radius;","& quote(.FCode)
 			end if
 		end with 
 	next ObjID
