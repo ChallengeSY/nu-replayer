@@ -270,7 +270,7 @@ dim shared as PlanObj Planets(LimitObjs)
 dim shared as ShipObj Starships(LimitObjs), ShipListIndex(LimitObjs)
 dim shared as SlotSpecs PlayerSlot(MaxPlayers), GrandTotal
 dim shared as ColorSpecs Coloring(MaxPlayers), GameTitle
-dim shared as PartSpecs Engines(9), Beams(10), Tubes(10), TorpAmmo(10)
+dim shared as PartSpecs Engines(9), Beams(10), Tubes(110), TorpAmmo(110)
 dim shared as GameSpecs ViewGame
 dim shared as any ptr TerritoryMap, IslandMap, Indeterminate
 dim shared as event e
@@ -296,32 +296,32 @@ open "games/Default Partlist.csv" for input as #4
 line input #4, NullStr
 
 for PartID as byte = 1 to 9
-	with Engines(PartID)
-		input #4, NullStr, NullStr, NullStr
+	input #4, NullStr, RecordID, NullStr
+	with Engines(RecordID)
 		input #4, .PartName
 		line input #4, NullStr
 	end with
 next PartID
 
 for PartID as byte = 1 to 10
-	with Beams(PartID)
-		input #4, NullStr, NullStr, NullStr
+	input #4, NullStr, RecordID, NullStr
+	with Beams(RecordID)
 		input #4, .PartName
 		line input #4, NullStr
 	end with
 next PartID
 
-for PartID as byte = 1 to 10
-	with Tubes(PartID)
-		input #4, NullStr, NullStr, NullStr
+for PartID as byte = 1 to 16
+	input #4, NullStr, RecordID, NullStr
+	with Tubes(RecordID)
 		input #4, .PartName
 		line input #4, NullStr
 	end with
 next PartID
 
-for PartID as byte = 1 to 10
-	with TorpAmmo(PartID)
-		input #4, NullStr, NullStr, NullStr
+for PartID as byte = 1 to 16
+	input #4, NullStr, RecordID, NullStr
+	with TorpAmmo(RecordID)
 		input #4, .PartName
 		line input #4, NullStr
 	end with
@@ -1104,7 +1104,7 @@ sub replayHub(DownloadMode as byte = 0)
 						cls
 						color rgb(255,255,255)
 						print word_wrap("Now converting turn "+str(.LastTurn)+" for "+.Namee+_
-							". This may take several minutes depending on game specifications...")
+							". This may take a few minutes depending on game specifications...")
 						print
 						print word_wrap("Once conversion is complete, Nu Replayer will "+_
 							"automatically jump to the newly created turn.") 

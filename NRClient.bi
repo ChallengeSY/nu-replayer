@@ -186,10 +186,10 @@ sub planetList
 						next HID
 						
 						for Phase as byte = 1 to 3
-							for CID as ubyte = 1 to 10
+							for CID as ushort = 1 to 110
 								select case Phase
 									case 1 'Engines
-										if CID < 10 then
+										if CID < 10 AND len(Engines(CID).PartName) > 0 then
 											if .EngineCount(CID) > 0 then
 												if Planets(SelectedIndex).UseE = CID then
 													color rgb(255,255,0)
@@ -200,16 +200,18 @@ sub planetList
 											end if
 										end if
 									case 2 'Beams
-										if .BeamCount(CID) > 0 then
-											if Planets(SelectedIndex).UseB = CID then
-												color rgb(255,255,0)
-											else
-												color rgb(0,64,255)
+										if CID <= 10 AND len(Beams(CID).PartName) > 0 then
+											if .BeamCount(CID) > 0 then
+												if Planets(SelectedIndex).UseB = CID then
+													color rgb(255,255,0)
+												else
+													color rgb(0,64,255)
+												end if
+												print Beams(CID).PartName;" x"& .BeamCount(CID)
 											end if
-											print Beams(CID).PartName;" x"& .BeamCount(CID)
 										end if
 									case 3 'Torps and ammo
-										if .TubeCount(CID) > 0 then
+										if .TubeCount(CID) > 0 AND len(Tubes(CID).PartName) > 0 then
 											if Planets(SelectedIndex).UseT = CID then
 												color rgb(255,255,0)
 											else
@@ -217,7 +219,7 @@ sub planetList
 											end if
 											print Tubes(CID).PartName;" tubes x"& .TubeCount(CID)
 										end if
-										if .TorpCount(CID) > 0 then
+										if .TorpCount(CID) > 0 AND len(TorpAmmo(CID).PartName) > 0 then
 											color rgb(0,64,255)
 											print TorpAmmo(CID).PartName;" ammo x"& .TorpCount(CID)
 										end if
