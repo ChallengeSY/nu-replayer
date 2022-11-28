@@ -215,6 +215,7 @@ sub updateStarmap
 				input #4, .Supplies
 				input #4, .MineralMines
 				input #4, .Factories
+				input #4, .DefPosts
 				
 				.TerritoryValue = 0
 			end with

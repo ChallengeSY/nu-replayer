@@ -50,6 +50,7 @@ type ParsePlan
 	Supplies as integer
 	MineralMines as short
 	Factories as short
+	DefPosts as short
 end type
 
 type ParseShip
@@ -307,7 +308,7 @@ sub exportPlanetList(GameID as integer, CurTurn as short)
 		quote("NRace")+","+quote("Gov")+","+quote("Ne")+","+quote("Du")+","+quote("Tr")+","+_
 		quote("Mo")+","+quote("GNe")+","+quote("GDu")+","+quote("GTr")+","+quote("GMo")+","+_
 		quote("DNe")+","+quote("DDu")+","+quote("DTr")+","+quote("DMo")+","+_
-		quote("Mc")+","+quote("Sp")+","+quote("Mine")+","+quote("Fact")
+		quote("Mc")+","+quote("Sp")+","+quote("Mine")+","+quote("Fact")+","+quote("Def")
 
 	for ObjID = 1 to LimitObjs
 		with PlanetParser(ObjID)
@@ -318,7 +319,7 @@ sub exportPlanetList(GameID as integer, CurTurn as short)
 					","& .Neu;","& .Dur;","& .Trit;","& .Moly; _
 					","& .GNeu;","& .GDur;","& .GTrit;","& .GMoly; _
 					","& .DNeu;","& .DDur;","& .DTrit;","& .DMoly; _
-					","& .Megacredits;","& .Supplies;","& .MineralMines;","& .Factories
+					","& .Megacredits;","& .Supplies;","& .MineralMines;","& .Factories;","& .DefPosts
 			end if
 		end with
 	next

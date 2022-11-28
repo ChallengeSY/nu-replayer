@@ -419,7 +419,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Planet data
 			BlockChar(0) = instr(InStream,quote("planets")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("planets")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -506,6 +506,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.MineralMines = valint(mid(InStream,SeekChar(0)+8,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("factories"))
 						.Factories = valint(mid(InStream,SeekChar(0)+12,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("defense"))
+						.DefPosts = valint(mid(InStream,SeekChar(0)+10,4))
 						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("debrisdisk"))
 						.Asteroid = valint(mid(InStream,SeekChar(0)+13,2))
@@ -583,6 +585,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 									.BuildingsUpdated = InterPlan.LastScan
 									.MineralMines = InterPlan.MineralMines
 									.Factories = InterPlan.Factories
+									.DefPosts = InterPlan.DefPosts
 								end if
 							end if
 						end with
@@ -594,7 +597,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Ship data
 			BlockChar(0) = instr(InStream,quote("ships")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("ships")+": []") = 0 then
 				'History and Waypoints are array-ized, so ion storms is explicit for safety reasons
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose+quote("ionstorms"))
 				BlockChar(1) = BlockChar(0)
@@ -700,7 +703,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			'Ion Storms data. Only read this if the first player
 			if PID = 1 then
 				BlockChar(0) = instr(InStream,quote("ionstorms")+": [")
-				if BlockChar(0) > 0 then
+				if BlockChar(0) > 0 AND instr(InStream,quote("ionstorms")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 					BlockChar(1) = BlockChar(0)
 					do
@@ -744,7 +747,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			'Nebulae data. Only read this if the data has not already been exported
 			if PID = 1 AND FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 then
 				BlockChar(0) = instr(InStream,quote("nebulas")+": [")
-				if BlockChar(0) > 0 then
+				if BlockChar(0) > 0 AND instr(InStream,quote("nebulas")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 					BlockChar(1) = BlockChar(0)
 					do
@@ -784,7 +787,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			'Star Cluster data. Only read this if the data has not already been exported
 			if PID = 1 AND FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 then
 				BlockChar(0) = instr(InStream,quote("stars")+": [")
-				if BlockChar(0) > 0 then
+				if BlockChar(0) > 0 AND instr(InStream,quote("stars")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 					BlockChar(1) = BlockChar(0)
 					do
@@ -826,7 +829,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Artifact data
 			BlockChar(0) = instr(InStream,quote("artifacts")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("artifacts")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -849,8 +852,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
 					
-					if (cmdLine("--verbose") OR cmdLine("-vm")) AND InterShip.ShipOwner > 0 then
-						print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
+					if (cmdLine("--verbose") OR cmdLine("-va")) AND InterShip.ShipOwner > 0 then
+						print "Identified artifact #"& ObjIDa
 					end if
 					
 					ArtifactParser(ObjIDa) = InterArtifact
@@ -863,7 +866,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Wormhole data
 			BlockChar(0) = instr(InStream,quote("wormholes")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("wormholes")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -910,7 +913,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Starbase data
 			BlockChar(0) = instr(InStream,quote("starbases")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("starbases")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -973,7 +976,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Base Storage data
 			BlockChar(0) = instr(InStream,quote("stock")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("stock")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -996,7 +999,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Minefield data
 			BlockChar(0) = instr(InStream,quote("minefields")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("minefields")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -1039,7 +1042,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'Diplomacy relations data
 			BlockChar(0) = instr(InStream,quote("relations")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("relations")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
@@ -1074,7 +1077,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			
 			'VCR data
 			BlockChar(0) = instr(InStream,quote("vcrs")+": [")
-			if BlockChar(0) > 0 then
+			if BlockChar(0) > 0 AND instr(InStream,quote("vcrs")+": []") = 0 then
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do

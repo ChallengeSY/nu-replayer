@@ -116,7 +116,7 @@ end sub
 
 sub loadTurnKB(KBCount as integer, Players as ubyte)
 	dim as integer FileSize
-	if timer > KBUpdate + 2 then
+	if timer > KBUpdate + 1 then
 		KBUpdate = timer
 		FileSize = int(FileLen("raw/"+str(GameNum)+"/player"+str(Players)+"-turn"+str(TurnNum)+".trn")/1e3)
 		line(0,1)-(319,9),rgb(0,0,0),bf
