@@ -23,6 +23,8 @@ declare function listGames as integer
 
 sub updateGameList(DownloadList as byte = 0)
 	#IFDEF __DOWNLOAD_LIST__
+	dim as longint BytesDownloaded = 0	
+	
 	if DownloadList then
 		cls
 		print "Downloading a raw game list..."
@@ -31,7 +33,6 @@ sub updateGameList(DownloadList as byte = 0)
 		dim SendBuffer as string
 		dim RecvBuffer as zstring * RECVBUFFLEN+1
 		dim Bytes as integer
-		dim LinesReceived as ushort
 
 		#IFDEF __USE_ZLIB__
 		#ELSE
@@ -57,7 +58,11 @@ sub updateGameList(DownloadList as byte = 0)
 
 					'' print it as string
 					print #7, RecvBuffer;
-					LinesReceived += 1
+					BytesDownloaded += Bytes
+
+					locate 2, 1 
+					print "    ";commaSep(BytesDownloaded);" B downloaded so far.    "
+					screencopy
 				loop
 				close #7
 			end if
