@@ -49,45 +49,47 @@ Function unpackZipFile(ByVal zip As zip_t Ptr, ByVal i As Integer) As Integer
 
 	Print stat.size & " bytes"
 	'/
-
-	'' Create directories if needed
-	createParentDirs(extraDirs+filename)
-
-	'' Write out the file
-	Dim As Integer fo = FreeFile()
-	If (Open(extraDirs+filename, For Binary, Access Write, As #fo)) Then
-		' could not open output file"
-		Return 1
+	
+	If InStr(filename, "turn0") = 0 Then
+		'' Create directories if needed
+		createParentDirs(extraDirs+filename)
+	
+		'' Write out the file
+		Dim As Integer fo = FreeFile()
+		If (Open(extraDirs+filename, For Binary, Access Write, As #fo)) Then
+			' could not open output file"
+			Return 1
+		End If
+	
+		'' Input for the file comes from libzip
+		Dim As zip_file_t Ptr fi = zip_fopen_index(zip, i, 0)
+		Do
+			'' Write out the file content as returned by zip_fread(), which
+			'' also does the decoding and everything.
+			'' zip_fread() fills our buffer
+			Dim As Integer bytes = _
+				zip_fread(fi, buffer, BUFFER_SIZE)
+			If (bytes < 0) Then
+				'zip_fread() failed"
+				Return 2
+			End If
+	
+			'' EOF?
+			If (bytes = 0) Then
+				Exit Do
+			End If
+	
+			'' Write <bytes> amount of bytes of the file
+			If (Put(#fo, , *buffer, bytes)) Then
+				'file output failed"
+				Return 3
+			End If
+		Loop
+	
+		'' Done
+		zip_fclose(fi)
+		Close #fo
 	End If
-
-	'' Input for the file comes from libzip
-	Dim As zip_file_t Ptr fi = zip_fopen_index(zip, i, 0)
-	Do
-		'' Write out the file content as returned by zip_fread(), which
-		'' also does the decoding and everything.
-		'' zip_fread() fills our buffer
-		Dim As Integer bytes = _
-			zip_fread(fi, buffer, BUFFER_SIZE)
-		If (bytes < 0) Then
-			'zip_fread() failed"
-			Return 2
-		End If
-
-		'' EOF?
-		If (bytes = 0) Then
-			Exit Do
-		End If
-
-		'' Write <bytes> amount of bytes of the file
-		If (Put(#fo, , *buffer, bytes)) Then
-			'file output failed"
-			Return 3
-		End If
-	Loop
-
-	'' Done
-	zip_fclose(fi)
-	Close #fo
 	Return 0
 End Function
 

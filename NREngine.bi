@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.62 (Beta 3)"
+const BROWSER_LONG = "Nu Replayer 0.62a (Beta 3)"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
@@ -401,9 +401,9 @@ sub updateStarmap
 						case 3 'Beams
 							if PartRef <= 10 AND CountFound > 0 then .BeamCount(PartRef) = CountFound
 						case 4 'Tubes
-							if PartRef <= 10 AND CountFound > 0 then .TubeCount(PartRef) = CountFound
+							if PartRef <= 110 AND CountFound > 0 then .TubeCount(PartRef) = CountFound
 						case 5 'Torp ammo
-							if PartRef <= 10 AND CountFound > 0 then .TorpCount(PartRef) = CountFound
+							if PartRef <= 110 AND CountFound > 0 then .TorpCount(PartRef) = CountFound
 					end select
 				end with
 			end if
