@@ -139,7 +139,7 @@ function downloadLastTurns(GameID as integer) as integer
 					SeekChar = instr(InStream,quote("isacademy")+":true")
 					.Academy = abs(sgn(SeekChar))
 
-					SeekChar = instr(InStream,quote("acceleratedturns")+":true")
+					SeekChar = instr(InStream,quote("acceleratedturns")+":")
 					.AccelStart = valint(mid(InStream,SeekChar+19,3))
 
 					mkdir("games/"+str(GameID))

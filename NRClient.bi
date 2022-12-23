@@ -508,6 +508,7 @@ sub playerList
 			.TotalDur = 0
 			.TotalTrit = 0
 			.TotalMoly = 0
+			.TotalClans = 0
 			.TotalMoney = 0
 			.TotalSupplies = 0
 		end with
@@ -555,7 +556,7 @@ sub playerList
 				print "Resource Breakdown by Player for ";GameName;" (turn "& TurnNum;")"
 				color rgb(255,255,255)
 				if ViewGame.Academy then
-					print "    Empire                              Duranium   Tritanium   Molybdenum   Megacredits"
+					print "    Empire                              Duranium   Tritanium   Molybdenum   Colonists   Megacredits"
 					for PID as ubyte = 1 to ParticipatingPlayers
 						with Coloring(PID)
 							color rgb(.Red,.Green,.Blue)
@@ -564,14 +565,15 @@ sub playerList
 							.EconomicScore = 3 * (.TotalDur + .TotalTrit + .TotalMoly) + _
 								.TotalSupplies + .TotalMoney
 		
-							'                Empire                              Duranium   Tritanium   Molybdenum   Megacredits"
-							print using "[!] \                                \   ###,###     ###,###      ###,###   ###,###,###";_
-								playerCode(PID);.Race+" ("+.PlayerName+")";.TotalDur;.TotalTrit;.TotalMoly;.TotalMoney
+							'                Empire                              Duranium   Tritanium   Molybdenum    Colonists   Megacredits"
+							print using "[!] \                                \   ###,###     ###,###      ###,###   ##,###,###   ###,###,###";_
+								playerCode(PID);.Race+" ("+.PlayerName+")";.TotalDur;.TotalTrit;.TotalMoly;.TotalMoney;.TotalClans
 								
 								GrandTotal.TotalNeu += .TotalNeu
 								GrandTotal.TotalDur += .TotalDur
 								GrandTotal.TotalTrit += .TotalTrit
 								GrandTotal.TotalMoly += .TotalMoly
+								GrandTotal.TotalClans += .TotalClans
 								GrandTotal.TotalMoney += .TotalMoney
 								GrandTotal.TotalSupplies += .TotalSupplies
 						end with
@@ -579,15 +581,15 @@ sub playerList
 					color rgb(255,255,255)
 					print
 					with GrandTotal
-						'                Empire                              Duranium   Tritanium   Molybdenum   Megacredits"
-						print using "Grand Total                              ###,###     ###,###      ###,###   ###,###,###";_
-							.TotalDur;.TotalTrit;.TotalMoly;.TotalMoney
+						'                Empire                              Duranium   Tritanium   Molybdenum    Colonists   Megacredits"
+						print using "Grand Total                              ###,###     ###,###      ###,###   ##,###,###   ###,###,###";_
+							.TotalDur;.TotalTrit;.TotalMoly;.TotalClans;.TotalMoney
 					end with
 					color rgb(192,255,192)
 					print
 					print word_wrap("Only unspent resources are tallied in this list")
 				else
-					print "    Empire                            Neutronium   Duranium   Tritanium   Molybdenum   Megacredits    Supplies"
+					print "    Empire                            Neutronium   Duranium   Tritanium   Molybdenum    Colonists   Megacredits     Supplies"
 					for PID as ubyte = 1 to ParticipatingPlayers
 						with Coloring(PID)
 							color rgb(.Red,.Green,.Blue)
@@ -596,14 +598,15 @@ sub playerList
 							.EconomicScore = 3 * (.TotalDur + .TotalTrit + .TotalMoly) + _
 								.TotalSupplies + .TotalMoney
 		
-							'                Empire                            Neutronium   Duranium   Tritanium   Molybdenum   Megacredits    Supplies"
-							print using "[!] \                                \   ###,###    ###,###     ###,###      ###,###   ###,###,###   #,###,###";_
-								playerCode(PID);.Race+" ("+.PlayerName+")";.TotalNeu;.TotalDur;.TotalTrit;.TotalMoly;.TotalMoney;.TotalSupplies
+							'                Empire                            Neutronium   Duranium   Tritanium   Molybdenum    Colonists   Megacredits     Supplies"
+							print using "[!] \                                \   ###,###    ###,###     ###,###      ###,###   ##,###,###   ###,###,###   ##,###,###";_
+								playerCode(PID);.Race+" ("+.PlayerName+")";.TotalNeu;.TotalDur;.TotalTrit;.TotalMoly;.TotalClans;.TotalMoney;.TotalSupplies
 								
 								GrandTotal.TotalNeu += .TotalNeu
 								GrandTotal.TotalDur += .TotalDur
 								GrandTotal.TotalTrit += .TotalTrit
 								GrandTotal.TotalMoly += .TotalMoly
+								GrandTotal.TotalClans += .TotalClans
 								GrandTotal.TotalMoney += .TotalMoney
 								GrandTotal.TotalSupplies += .TotalSupplies
 						end with
@@ -611,8 +614,8 @@ sub playerList
 					color rgb(255,255,255)
 					print
 					with GrandTotal
-						print using "Grand Total                              ###,###    ###,###     ###,###      ###,###   ###,###,###   #,###,###";_
-							.TotalNeu;.TotalDur;.TotalTrit;.TotalMoly;.TotalMoney;.TotalSupplies
+						print using "Grand Total                              ###,###    ###,###     ###,###      ###,###   ##,###,###   ###,###,###   ##,###,###";_
+							.TotalNeu;.TotalDur;.TotalTrit;.TotalMoly;.TotalClans;.TotalMoney;.TotalSupplies
 					end with
 					color rgb(192,255,192)
 					print

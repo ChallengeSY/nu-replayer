@@ -208,6 +208,7 @@ type SlotSpecs
 	TotalTrit as integer
 	TotalMoly as integer
 	TotalMoney as integer
+	TotalClans as integer
 	TotalSupplies as integer
 	TotalTerritory as integer
 	
@@ -345,8 +346,8 @@ randomize timer
 
 sub drawBox(StartX as short,StartY as short,EndX as short,EndY as short)
 	BoxGlow -= 3
-	if BoxGlow <= -255 then
-		BoxGlow += 510
+	if BoxGlow <= -128 then
+		BoxGlow += 255
 	end if
 
 	dim as uinteger DrawColor
@@ -354,10 +355,10 @@ sub drawBox(StartX as short,StartY as short,EndX as short,EndY as short)
 	
 	for BID as short = 0 to 4
 		PaintStr = BoxGlow - (BID*24)
-		while PaintStr <= -255
-			PaintStr += 510
+		while PaintStr <= -128
+			PaintStr += 255
 		wend
-		DrawColor = rgba(128,128,255,abs(PaintStr))
+		DrawColor = rgba(128,128,255,128+abs(PaintStr))
 		
 		line(StartX+BID,StartY+BID)-(EndX-BID,StartY+BID),DrawColor
 		line(StartX+BID,StartY+BID+1)-(StartX+BID,EndY-BID),DrawColor
@@ -432,6 +433,7 @@ sub clearData
 			.TotalDur = 0
 			.TotalTrit = 0
 			.TotalMoly = 0
+			.TotalClans = 0
 			.TotalMoney = 0
 			.TotalSupplies = 0
 		end with
@@ -1143,3 +1145,4 @@ sub replayHub(DownloadMode as byte = 0)
 		end if
 	loop
 end sub
+

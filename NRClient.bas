@@ -276,6 +276,7 @@ sub renderClient
 				.TotalMoly = 0
 				.TotalMoney = 0
 			end if
+			.TotalClans = 0
 			.TotalSupplies = 0
 			.TotalTerritory = 0
 			.EconomicScore = (.TotalDur + .TotalTrit + .TotalMoly) * 3 + .TotalMoney
@@ -315,6 +316,7 @@ sub renderClient
 					PlayerSlot(.Ownership).TotalDur += .Dur
 					PlayerSlot(.Ownership).TotalTrit += .Trit
 					PlayerSlot(.Ownership).TotalMoly += .Moly
+					PlayerSlot(.Ownership).TotalClans += .Colonists
 					PlayerSlot(.Ownership).TotalMoney += .Megacredits
 					PlayerSlot(.Ownership).TotalSupplies += .Supplies
 					PlayerSlot(.Ownership).TotalTerritory += .TerritoryValue
@@ -695,7 +697,8 @@ sub renderClient
 					elseif .Temp >= 80 AND MaxColonists < 60 then
 						MaxColonists = 60
 					end if
-				elseif (PlayerSlot(.Ownership).Race = "Fascist" OR PlayerSlot(.Ownership).Race = "Robotic" OR PlayerSlot(.Ownership).Race = "Colonial") AND _
+				elseif (PlayerSlot(.Ownership).Race = "Fascist" OR PlayerSlot(.Ownership).Race = "Fury" OR _
+					PlayerSlot(.Ownership).Race = "Robotic" OR PlayerSlot(.Ownership).Race = "Colonial") AND _
 					.Temp >= 80 AND MaxColonists < 60 then
 					MaxColonists = 60
 				end if
@@ -1054,3 +1057,4 @@ sub renderClient
 			end if
 	end select
 end sub
+
