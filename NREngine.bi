@@ -50,6 +50,12 @@ sub updateStatistics
 					else
 						.PlayerName = ucase(left(.PlayerName,1)) + right(.PlayerName,len(.PlayerName) - 1)
 					end if
+					
+					if .Race = "Fascist" AND LegacyRaceNames = 0 then
+						.Race = "Fury"
+					elseif .Race = "Fury" AND LegacyRaceNames then
+						.Race = "Fascist"
+					end if
 				end with
 			end if
 		next RID

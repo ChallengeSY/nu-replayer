@@ -259,7 +259,7 @@ dim shared as ListSpecs GameObj(1e6)
 dim shared as ShipSpecs ShiplistObj(5000)
 dim shared as StorageObj BaseStorage(MetaLimit)
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, TurnNum, RecordID, Territory(767,767), GamesPerPage, NormalObjsPerPage, BasesPerPage
 dim shared as uinteger GameID, TotalGamesLoaded, SelectedIndex
@@ -811,6 +811,20 @@ sub menu
 			drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				ExcludeNodata = 1 - ExcludeNodata
+			end if
+		end if
+
+		gfxstring("Display race names:",CanvasScreen.Wideth/2+10,345,3,3,2,rgb(255,255,255))
+		if LegacyRaceNames then
+			gfxstring("Legacy names",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
+		else
+			gfxstring("Current names",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
+		end if
+
+		if MouseY > = 340 AND MouseY < 385 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,340,CanvasScreen.Wideth-1,384)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				LegacyRaceNames = 1 - LegacyRaceNames
 			end if
 		end if
 	else

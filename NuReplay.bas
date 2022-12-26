@@ -15,13 +15,14 @@ declare sub loadTurnTerritory(AmtDone as short)
 
 sub cleaning destructor
 	open "Settings.csv" for output as #1
-	print #1, quote("Login");",";Username
-	print #1, quote("Key");",";APIKey
-	print #1, quote("Preferred Type");",";PreferType
+	print #1, quote("Login");",";quote(Username)
+	print #1, quote("Key");",";quote(APIKey)
+	print #1, quote("Preferred Type");",";quote(PreferType)
 	print #1, quote("Simple View");",";SimpleView
 	print #1, quote("Exclude Blitz Games");",";ExcludeBlitzes
 	print #1, quote("Exclude MvM Games");",";ExcludeMvM
 	print #1, quote("Exclude Dataless Games");",";ExcludeNodata
+	print #1, quote("Legacy Race Names");",";LegacyRaceNames
 	print #1, quote("Borderless");",";BorderlessFS
 	close #1
 	
@@ -48,6 +49,7 @@ SimpleView = 0
 ExcludeBlitzes = 1
 ExcludeMvM = 1
 ExcludeNodata = 0
+LegacyRaceNames = 0
 
 if FileExists("Settings.csv") then
 	open "Settings.csv" for input as #1
@@ -68,6 +70,8 @@ if FileExists("Settings.csv") then
 				input #1, ExcludeMvM
 			case "Exclude Dataless Games"
 				input #1, ExcludeNodata
+			case "Legacy Race Names"
+				input #1, LegacyRaceNames
 			case "Borderless"
 				input #1, BorderlessFS
 		end select
