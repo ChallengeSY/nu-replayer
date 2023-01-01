@@ -585,7 +585,7 @@ sub menu
 	MouseError = getmouse(MouseX,MouseY,0,ButtonCombo)
 	gfxstring("Nu Replayer",10,10,10,9,5,rgb(128,255,255),rgb(0,255,255))
 
-	gfxstring("Copyright (C) 2012 - 2022 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
+	gfxstring("Copyright (C) 2012 - 2023 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
 	if OfflineMode = 0 then
 		NetworkStr = "Network okay"
 		Greeting = "Welcome, "+Username
