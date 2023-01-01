@@ -217,7 +217,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						case 3
 							.RaceType = "Bird Man"
 						case 4
-							.RaceType = "Fury"
+							.RaceType = "Fascist"
 						case 5
 							.RaceType = "Privateer"
 						case 6

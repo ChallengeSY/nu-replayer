@@ -80,7 +80,7 @@ sub importPrivateGame
 
 			SeekChar(0) = instr(InStream,quote("shortdescription"))
 			SeekChar(1) = instr(SeekChar(0)+20,InStream,chr(34))
-			GameName = mid(InStream, SeekChar(0)+20, SeekChar(1)-SeekChar(0)-20)
+			ShortDesc = mid(InStream, SeekChar(0)+20, SeekChar(1)-SeekChar(0)-20)
 
 			SeekChar(0) = instr(InStream,quote("status"))
 			GameStatus = valint(mid(InStream,SeekChar(0)+9,3))
