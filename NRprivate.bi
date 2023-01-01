@@ -100,7 +100,7 @@ sub importPrivateGame
 			end if
 		
 			open "games/Custom List.csv" for append as #9
-			print #9, ""& GameNum;",";GameName;",";ShortDesc;","& FinalTurn
+			print #9, ""& GameNum;",";quote(GameName);",";quote(ShortDesc);","& FinalTurn
 			close #9
 		end if
 	end if
