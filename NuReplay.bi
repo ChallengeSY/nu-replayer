@@ -772,7 +772,7 @@ sub menu
 			gfxstring("(Overridden)",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(128,128,128))
 		end if
 
-		gfxstring("Exclude blitz games:",CanvasScreen.Wideth/2+10,195,3,3,2,rgb(255,255,255))
+		gfxstring("Exclude short format games:",CanvasScreen.Wideth/2+10,195,3,3,2,rgb(255,255,255))
 		if ExcludeBlitzes then
 			gfxstring("Active",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
 		else
