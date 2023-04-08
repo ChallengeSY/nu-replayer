@@ -555,8 +555,12 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							print #9, "[";Time;", ";Date;"]  Registered ship #"& ObjIDa;" (";ObjName;")"
 						end if
 					end if
+
+					'Skip Ship History, it interferes with the converter
+					SeekChar(0) = instr(BlockChar(1),InStream,quote("history")+":[")
+					SeekChar(1) = instr(SeekChar(0),InStream,"],")
 					
-					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+					BlockChar(1) = instr(SeekChar(1),InStream,ObjClose)
 					loadTurnKB(int(BlockChar(1)/1e3),PID)
 				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 			end if
