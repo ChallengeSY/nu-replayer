@@ -340,65 +340,62 @@ sub loadGame(ByRef LoadID as uinteger)
 				next PID
 			else
 				'For other games, normal ships can move 81 LY max, and gravitonics can move 162 LY max
-				for LinePass as byte = 1 to 3
-					for PID as short = 1 to LimitObjs
-						for CPID as short = 1 to LimitObjs
-							with Planets(PID)
-								if .X >= MinXPos AND .X < MaxXPos AND .Y >= MinYPos AND .Y < MaxYPos AND _
-									PID < CPID AND Planets(CPID).X >= MinXPos AND Planets(CPID).X < MaxXPos AND _
-									Planets(CPID).Y >= MinYPos AND Planets(CPID).Y < MaxYPos then
-									dim as short CalcX(1), CalcY(1), Brightness
-									dim as single CalcedDist
-									CalcX(0) = (.X-AbsMin)/MapSize*766
-									CalcY(0) = 767-(.Y-AbsMin)/MapSize*766
-									CalcX(1) = (Planets(CPID).X-AbsMin)/MapSize*766
-									CalcY(1) = 767-(Planets(CPID).Y-AbsMin)/MapSize*766
-									Brightness = 28*(LinePass)^2
+				for PID as short = 1 to LimitObjs
+					for CPID as short = 1 to LimitObjs
+						with Planets(PID)
+							if .X >= MinXPos AND .X < MaxXPos AND .Y >= MinYPos AND .Y < MaxYPos AND _
+								PID < CPID AND Planets(CPID).X >= MinXPos AND Planets(CPID).X < MaxXPos AND _
+								Planets(CPID).Y >= MinYPos AND Planets(CPID).Y < MaxYPos then
+								dim as short CalcX(1), CalcY(1), Brightness
+								dim as single CalcedDist
+								CalcX(0) = (.X-AbsMin)/MapSize*766
+								CalcY(0) = 767-(.Y-AbsMin)/MapSize*766
+								CalcX(1) = (Planets(CPID).X-AbsMin)/MapSize*766
+								CalcY(1) = 767-(Planets(CPID).Y-AbsMin)/MapSize*766
 
-									'Include common points in the warp well, and base calcs on those
-									for GravAngle as ubyte = 1 to 8
-										select case GravAngle
-											case 1
-												AdjustX = 3
-												AdjustY = 0
-											case 2
-												AdjustX = 2
-												AdjustY = 2
-											case 3
-												AdjustX = 0
-												AdjustY = 3
-											case 4
-												AdjustX = -2
-												AdjustY = 2
-											case 5
-												AdjustX = -3
-												AdjustY = 0
-											case 6
-												AdjustX = -2
-												AdjustY = -2
-											case 7
-												AdjustX = 0
-												AdjustY = -3
-											case 8
-												AdjustX = 2
-												AdjustY = -2
-										end select
+								'Include common points in the warp well, and base calcs on those
+								for GravAngle as ubyte = 1 to 8
+									select case GravAngle
+										case 1
+											AdjustX = 3
+											AdjustY = 0
+										case 2
+											AdjustX = 2
+											AdjustY = 2
+										case 3
+											AdjustX = 0
+											AdjustY = 3
+										case 4
+											AdjustX = -2
+											AdjustY = 2
+										case 5
+											AdjustX = -3
+											AdjustY = 0
+										case 6
+											AdjustX = -2
+											AdjustY = -2
+										case 7
+											AdjustX = 0
+											AdjustY = -3
+										case 8
+											AdjustX = 2
+											AdjustY = -2
+									end select
 
-										CalcedDist = sqr((.X - (Planets(CPID).X + AdjustX))^2 + _
-											(.Y - (Planets(CPID).Y + AdjustY))^2)
+									CalcedDist = sqr((.X - (Planets(CPID).X + AdjustX))^2 + _
+										(.Y - (Planets(CPID).Y + AdjustY))^2)
 
-										if CalcedDist < LineStr(LinePass) + 0.544 then
-											line IslandMap,(CalcX(0),CalcY(0))-_
-												(CalcX(1),CalcY(1)),_
-												rgb(Brightness,Brightness,Brightness)
-											exit for
-										end if
-									next GravAngle
-								end if
-							end with
-						next CPID
-					next PID
-				next LinePass
+									if CalcedDist < 81.544 then
+										line IslandMap,(CalcX(0),CalcY(0))-_
+											(CalcX(1),CalcY(1)),_
+											rgb(112,112,112)
+										exit for
+									end if
+								next GravAngle
+							end if
+						end with
+					next CPID
+				next PID
 			end if
 
 			loadTurnExtras
