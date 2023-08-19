@@ -614,7 +614,7 @@ sub menu
 						gfxstring(.Namee,CanvasScreen.Wideth/2+10,50*(FeaturedGame+(13-MaxMenuEntries))-5,3,3,2,rgb(255,255,255))
 						gfxstring(.GameDesc+" / Turn "+str(.LastTurn),CanvasScreen.Wideth/2+30,50*(FeaturedGame+(13-MaxMenuEntries))+15,3,3,2,rgb(255,255,255))
 
-						if MouseY > = 40 + 50*(FeaturedGame+(12-MaxMenuEntries)) AND MouseY < 85 + 50*(FeaturedGame+(12-MaxMenuEntries)) AND MouseX >= CanvasScreen.Wideth/2 then
+						if MouseY >= 40 + 50*(FeaturedGame+(12-MaxMenuEntries)) AND MouseY < 85 + 50*(FeaturedGame+(12-MaxMenuEntries)) AND MouseX >= CanvasScreen.Wideth/2 then
 							drawBox(CanvasScreen.Wideth/2,40 + 50*(FeaturedGame+(12-MaxMenuEntries)),CanvasScreen.Wideth-1,85 + 50*(FeaturedGame+(12-MaxMenuEntries)))
 							if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 								SelectedIndex = FeaturedGame
@@ -651,10 +651,10 @@ sub menu
 		if APIKey = "" then
 			gfxstring("Log in to Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+			if MouseY >= 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
 				drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-					while inkey < > "":wend
+					while inkey <> "":wend
 					if apiLogin = 0 OR APIKey = "" then
 						Username = "guest"
 						APIKey = ""
@@ -666,7 +666,7 @@ sub menu
 		else
 			gfxstring("Log out of Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+			if MouseY >= 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
 				drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					Username = "guest"
@@ -685,11 +685,11 @@ sub menu
 		if GameListAge > CooldownList then
 			gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
 	
-			if MouseY > = 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
+			if MouseY >= 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
 				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					updateGameList(1) 
-					while inkey < > "":wend
+					while inkey <> "":wend
 					while screenevent(@e):wend
 				end if
 			end if
@@ -708,7 +708,7 @@ sub menu
 		
 		#IFDEF __DOWNLOAD_TURNS__
 		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
-		if MouseY > = 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				ReplayerMode = MODE_HUB_DL
@@ -721,7 +721,7 @@ sub menu
 		
 		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(255,255,255))
 	
-		if MouseY > = 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				importPrivateGame
@@ -738,7 +738,7 @@ sub menu
 		gfxstring("Preferred quick list:",CanvasScreen.Wideth/2+10,95,3,3,2,rgb(255,255,255))
 		gfxstring(PreferType,CanvasScreen.Wideth/2+30,115,3,3,2,rgb(255,255,255))
 
-		if MouseY > = 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				if PreferType = "Seasonal Championship" then
@@ -761,7 +761,7 @@ sub menu
 				gfxstring("Disabled",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(255,255,255))
 			end if
 	
-			if MouseY > = 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
+			if MouseY >= 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
 				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
 				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 					SimpleView = 1 - SimpleView
@@ -779,7 +779,7 @@ sub menu
 			gfxstring("Disabled",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
 		end if
 
-		if MouseY > = 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				ExcludeBlitzes = 1 - ExcludeBlitzes
@@ -793,7 +793,7 @@ sub menu
 			gfxstring("Disabled",CanvasScreen.Wideth/2+30,265,3,3,2,rgb(255,255,255))
 		end if
 
-		if MouseY > = 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				ExcludeMvM = 1 - ExcludeMvM
@@ -807,7 +807,7 @@ sub menu
 			gfxstring("Disabled",CanvasScreen.Wideth/2+30,315,3,3,2,rgb(255,255,255))
 		end if
 
-		if MouseY > = 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				ExcludeNodata = 1 - ExcludeNodata
@@ -821,7 +821,7 @@ sub menu
 			gfxstring("Current names",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
 		end if
 
-		if MouseY > = 340 AND MouseY < 385 AND MouseX >= CanvasScreen.Wideth/2 then
+		if MouseY >= 340 AND MouseY < 385 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,340,CanvasScreen.Wideth-1,384)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				LegacyRaceNames = 1 - LegacyRaceNames
@@ -832,7 +832,7 @@ sub menu
 	end if
 	gfxstring("Exit",10,(MaxMenuEntries+2)*50,5,4,3,rgb(255,255,255))
 	
-	if MouseY > = 90 AND MouseY < 135 AND MouseX < CanvasScreen.Wideth/2 then
+	if MouseY >= 90 AND MouseY < 135 AND MouseX < CanvasScreen.Wideth/2 then
 		drawBox(0,90,CanvasScreen.Wideth/2-1,134)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			if ReplayerMode = MODE_QUICK then
@@ -842,13 +842,13 @@ sub menu
 				ReplayerMode = MODE_QUICK
 			end if 
 		end if
-	elseif MouseY > = 140 AND MouseY < 185 AND MouseX < CanvasScreen.Wideth/2 then
+	elseif MouseY >= 140 AND MouseY < 185 AND MouseX < CanvasScreen.Wideth/2 then
 		drawBox(0,140,CanvasScreen.Wideth/2-1,184)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			ReplayerMode = MODE_HUB_VIEW
 		end if
 	#IFNDEF __FORCE_OFFLINE__
-	elseif MouseY > = 190 AND MouseY < 235 AND MouseX < CanvasScreen.Wideth/2 AND OfflineMode = 0 then
+	elseif MouseY >= 190 AND MouseY < 235 AND MouseX < CanvasScreen.Wideth/2 AND OfflineMode = 0 then
 		drawBox(0,190,CanvasScreen.Wideth/2-1,234)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			if ReplayerMode = MODE_DOWNLOAD then
@@ -858,7 +858,7 @@ sub menu
 			end if 
 		end if
 	#ENDIF
-	elseif MouseY > = MaxMenuEntries*50 + 40 AND MouseY < (MaxMenuEntries+1)*50 + 35 AND MouseX < CanvasScreen.Wideth/2 then
+	elseif MouseY >= MaxMenuEntries*50 + 40 AND MouseY < (MaxMenuEntries+1)*50 + 35 AND MouseX < CanvasScreen.Wideth/2 then
 		drawBox(0,MaxMenuEntries*50 + 40,CanvasScreen.Wideth/2-1,(MaxMenuEntries+1)*50 + 34)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			if ReplayerMode = MODE_SETTINGS then
@@ -869,7 +869,7 @@ sub menu
 		end if
 	end if
 	
-	if MouseY > = (MaxMenuEntries+1)*50 + 40 AND MouseY < (MaxMenuEntries+2)*50 + 35 then
+	if MouseY >= (MaxMenuEntries+1)*50 + 40 AND MouseY < (MaxMenuEntries+2)*50 + 35 then
 		drawBox(0,(MaxMenuEntries+1)*50 + 40,CanvasScreen.Wideth-1,(MaxMenuEntries+2)*50 + 34)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 			ReplayerMode = MODE_EXIT
@@ -941,7 +941,7 @@ sub replayHub(DownloadMode as byte = 0)
 					exit for
 				elseif Index-SelectedIndex < ceil(MidPoint) OR _
 					-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
-					((Index < = GamesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+					((Index <= GamesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 					(abs(Index-TotalGamesLoaded) < GamesPerPage AND SelectedIndex > TotalGamesLoaded - ceil(MidPoint))) then
 					if SelectedIndex = Index then
 						if BaseScreen.Wideth < 1024 OR BaseScreen.Height < 768 then
@@ -1085,7 +1085,7 @@ sub replayHub(DownloadMode as byte = 0)
 			if (multikey(SC_ALT) AND multikey(SC_F4)) then
 				exit do
 			end if
-		loop until InType < > ""
+		loop until InType <> ""
 		
 		if InType = UpArrow AND SelectedIndex > 1 then
 			SelectedIndex -= 1

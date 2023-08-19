@@ -30,7 +30,7 @@ sub planetList
 					with Planets(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
 							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
-							((Index < = NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							((Index <= NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
@@ -127,7 +127,7 @@ sub planetList
 					with Planets(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
 							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
-							((Index < = BasesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							((Index <= BasesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 							(abs(Index-MaxObjs) < BasesPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
@@ -238,7 +238,7 @@ sub planetList
 		do
 			sleep 5
 			InType = inkey
-		loop until InType < > ""
+		loop until InType <> ""
 
 		if InType = UpArrow AND SelectedIndex > 1 then
 			SelectedIndex -= 1
@@ -346,7 +346,7 @@ sub shipList
 					with ShipListIndex(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
 							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
-							((Index < = NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							((Index <= NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ShipType > 0 then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
@@ -394,7 +394,7 @@ sub shipList
 					with ShipListIndex(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
 							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
-							((Index < = NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							((Index <= NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ShipType > 0 then
 							
 							if SelectedIndex = Index then
@@ -453,7 +453,7 @@ sub shipList
 		do
 			sleep 5
 			InType = inkey
-		loop until InType < > ""
+		loop until InType <> ""
 
 		if InType = UpArrow AND SelectedIndex > 1 then
 			SelectedIndex -= 1

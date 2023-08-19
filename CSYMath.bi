@@ -16,7 +16,7 @@ function remainder(Byval Param1 as double, Byval Param2 as double) as double
 	end if
 end function
 
-function extended_log(Byval Param1 as double, Byval Param2 as double) as double
+function exLog(Byval Param1 as double, Byval Param2 as double) as double
 	'Allows logarithms of any base to be used.
 	return (log(Param1)/log(Param2))
 end function
@@ -28,7 +28,7 @@ function commaSep(InValue as longint) as string
 	FullStr = str(InValue)
 	if InValue >= 1000 then
 		for KID as ubyte = 1 to len(str(InValue))
-			if remainder(KID,3) = remainder(len(str(InValue)),3) AND KID <= len(str(InValue)) - 3 then
+			if KID mod 3 = len(str(InValue)) mod 3 AND KID <= len(str(InValue)) - 3 then
 				FullStr = left(FullStr,KID+ExtraCommas)+","+right(FullStr,len(FullStr)-KID-ExtraCommas)
 				ExtraCommas += 1
 			end if
@@ -59,7 +59,7 @@ function min(ValueA as double, ValueB as double) as double
 end function
 #ENDIF
 
-function convert_ip(InIP as integer) as string
+function convertIP(InIP as integer) as string
 	dim as string LongString, ShortString(4), OutString
 	LongString = str(hex(InIP,8))
 
