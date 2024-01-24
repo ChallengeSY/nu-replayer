@@ -5,7 +5,7 @@
 "Engine",4,4,"SuperStarDrive 4",0,10,3,3,7
 "Engine",5,5,"Nova Drive 5",0,25,3,3,7
 "Engine",6,6,"HeavyNova Drive 6",0,53,3,3,15
-"Engine",7,7,"Quantum Drive 7",0,170,3,3,15
+"Engine",7,7,"Quantam Drive 7",0,170,3,3,15
 "Engine",8,9,"Hyper Drive 8",0,200,13,3,25
 "Engine",9,10,"Transwarp Drive",0,300,16,3,35
 "Beam",1,1,"Laser",1,1,0,1,0
@@ -19,33 +19,46 @@
 "Beam",9,8,"Heavy Disruptor",7,36,17,1,37
 "Beam",10,10,"Heavy Phaser",6,54,12,1,55
 "Tube",1,1,"Mark 1 Photon",2,1,1,1,0
-"Tube",2,2,"Proton torp",2,4,0,1,0
-"Tube",102,2,"Light Proton",2,5,0,1,0
+"Tube",2,2,"Proton Torp",2,4,0,1,0
 "Tube",3,3,"Mark 2 Photon",2,4,4,1,0
 "Tube",4,3,"Gamma Bomb",4,6,3,1,1
-"Tube",103,2,"Mark 2b Photon",2,4,4,1,0
 "Tube",5,4,"Mark 3 Photon",2,5,1,1,5
-"Tube",105,4,"Mark 3b Photon",2,5,1,1,5
 "Tube",6,5,"Mark 4 Photon",2,20,4,1,1
 "Tube",7,6,"Mark 5 Photon",3,57,7,1,14
-"Tube",107,6,"Heavy Proton",3,57,7,1,14
 "Tube",8,7,"Mark 6 Photon",2,100,2,1,7
-"Tube",108,7,"Mark 6b Photon",2,80,2,1,3
 "Tube",9,8,"Mark 7 Photon",3,120,3,1,8
 "Tube",10,10,"Mark 8 Photon",3,190,1,1,9
 "Tube",11,10,"Quantum Torp",4,250,3,3,9
+"Tube",102,2,"Light Proton",2,5,0,1,0
+"Tube",103,3,"Mark 2b Photon",2,4,4,1,0
+"Tube",105,4,"Mark 3b Photon",2,5,1,1,5
+"Tube",107,6,"Heavy Proton",3,57,7,1,14
+"Tube",108,7,"Mark 6b Photon",2,80,2,1,3
+"Tube",201,1,"Mark 1c Photon",2,1,1,1,0
+"Tube",202,2,"Light Proton+",2,4,0,1,0
+"Tube",203,3,"Mark 2c Photon",2,4,1,1,1
+"Tube",205,4,"Mark 3c Photon",2,5,1,1,3
+"Tube",207,6,"Heavy Proton+",3,57,5,1,5
+"Tube",208,7,"Mark 6c Photon",2,80,2,1,3
 "Torp",1,1,"Mark 1 Photon",1,1,1,1,1
-"Torp",2,2,"Proton torp",1,2,1,1,1
-"Torp",102,2,"Light Proton",1,2,1,1,1
+"Torp",2,2,"Proton Torp",1,2,1,1,1
 "Torp",3,3,"Mark 2 Photon",1,5,1,1,1
 "Torp",4,3,"Gamma Bomb",1,10,1,1,1
-"Torp",103,3,"Mark 2b Photon",1,3,1,1,1
 "Torp",5,4,"Mark 3 Photon",1,12,1,1,1
-"Torp",105,4,"Mark 3b Photon",1,8,1,1,1
 "Torp",6,5,"Mark 4 Photon",1,13,1,1,1
 "Torp",7,6,"Mark 5 Photon",1,31,1,1,1
-"Torp",107,6,"Heavy Proton",1,31,1,1,1
 "Torp",8,7,"Mark 6 Photon",1,35,1,1,1
 "Torp",9,8,"Mark 7 Photon",1,36,1,1,1
 "Torp",10,10,"Mark 8 Photon",1,54,1,1,1
 "Torp",11,10,"Quantum Torp",1,80,1,1,1
+"Torp",102,2,"Light Proton",1,2,1,1,1
+"Torp",103,3,"Mark 2b Photon",1,3,1,1,1
+"Torp",105,4,"Mark 3b Photon",1,8,1,1,1
+"Torp",107,6,"Heavy Proton",1,31,1,1,1
+"Torp",108,7,"Mark 6b Photon",1,35,1,1,1
+"Torp",201,1,"Mark 1c Photon",1,1,1,1,1
+"Torp",202,2,"Light Proton+",1,5,1,1,1
+"Torp",203,3,"Mark 2c Photon",1,3,1,1,1
+"Torp",205,4,"Mark 3c Photon",1,8,1,1,1
+"Torp",207,6,"Heavy Proton+",1,25,1,1,1
+"Torp",208,7,"Mark 6c Photon",1,30,1,1,1

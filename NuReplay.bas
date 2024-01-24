@@ -12,6 +12,7 @@ declare sub loadTurnTerritory(AmtDone as short)
 #include "NRClient.bas"
 
 #include "ListGames.bi"
+#include "NuStatic.bi"
 
 sub cleaning destructor
 	open "Settings.csv" for output as #1
@@ -95,6 +96,10 @@ if FileExists("Settings.csv") then
 	'The oldest 12 championship matches are now called the Zodiac Wars.
 	if PreferType = "Championship" then
 		PreferType = "Seasonal Championship"
+	end if
+	
+	if Command(1) = "--dev" then
+		DevMode = 1
 	end if
 end if
 

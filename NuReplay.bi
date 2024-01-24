@@ -259,7 +259,7 @@ dim shared as ListSpecs GameObj(1e6)
 dim shared as ShipSpecs ShiplistObj(5000)
 dim shared as StorageObj BaseStorage(MetaLimit)
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, DevMode
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, TurnNum, RecordID, Territory(767,767), GamesPerPage, NormalObjsPerPage, BasesPerPage
 dim shared as uinteger GameID, TotalGamesLoaded, SelectedIndex
@@ -575,6 +575,9 @@ end sub
 #IFDEF __API_LOGIN__
 declare function apiLogin as byte
 #ENDIF
+#IFDEF __DOWNLOAD_TURNS__
+declare sub fetchStaticData
+#ENDIF
 
 sub menu
 	dim as integer EventActive, MaxMenuEntries
@@ -585,7 +588,7 @@ sub menu
 	MouseError = getmouse(MouseX,MouseY,0,ButtonCombo)
 	gfxstring("Nu Replayer",10,10,10,9,5,rgb(128,255,255),rgb(0,255,255))
 
-	gfxstring("Copyright (C) 2012 - 2023 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
+	gfxstring("Copyright (C) 2012 - 2024 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
 	if OfflineMode = 0 then
 		NetworkStr = "Network okay"
 		Greeting = "Welcome, "+Username
@@ -712,6 +715,16 @@ sub menu
 			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				ReplayerMode = MODE_HUB_DL
+			end if
+		end if
+		
+		if DevMode then
+			gfxstring("Fetch static specs data",CanvasScreen.Wideth/2+10,300,5,4,3,rgb(255,255,255))
+			if MouseY >= 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
+				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+					fetchStaticData
+				end if
 			end if
 		end if
 
