@@ -59,7 +59,7 @@ sub renderClient
 			CutLegal = 0
 			ProcessNeeded = 0
 			ScoreFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Score.csv"
-			AuxFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Ion Storms.csv"
+			'AuxFile = "games/"+str(GameID)+"/Nebulae.csv"
 			RawFile = "raw/"+str(GameID)+"/player1-turn"+str(JumpCut)+".trn"
 			ZipFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
 			
@@ -83,7 +83,7 @@ sub renderClient
 				ProcessNeeded = 1
 				color rgb(128,255,128)
 				print "Ready for conversion"
-			elseif FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
+			elseif FileDateTime(ScoreFile) < DataFormat then
 				color rgb(255,128,128)
 				if FileExists(RawFile) then
 					CutLegal = 1
@@ -105,7 +105,7 @@ sub renderClient
 			print GameName
 			for TID as short = 1 to ViewGame.LastTurn
 				ScoreFile = "games/"+str(GameID)+"/"+str(TID)+"/Score.csv"
-				AuxFile = "games/"+str(GameID)+"/"+str(TID)+"/Ion Storms.csv"
+				'AuxFile = "games/"+str(GameID)+"/Nebulae.csv"
 				RawFile = "raw/"+str(GameID)+"/player1-turn"+str(TID)+".trn"
 
 				if FileExists("games/"+str(GameID)+"/"+str(TID)+"/Working") then
@@ -117,7 +117,7 @@ sub renderClient
 					color rgb(255,255,0)
 				elseif FileExists(ScoreFile) = 0 then
 					color rgb(128,128,128)
-				elseif FileExists(AuxFile) = 0 OR FileDateTime(AuxFile) < DataFormat then
+				elseif FileDateTime(ScoreFile) < DataFormat then
 					if FileExists(RawFile) then
 						color rgb(255,128,128)
 					else

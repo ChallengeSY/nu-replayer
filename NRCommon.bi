@@ -1,7 +1,7 @@
 #IFNDEF __NR_COMMON__
 #DEFINE __NR_COMMON__
 const LimitObjs = 9999 'Defines the maximum number of planets or ships
-const DataFormat = 44682
+const DataFormat = 45570
 
 function findReplace(BaseTxt as string, InChar as string, OutChar as string) as string
 	'Automatically replaces characters as appropriate.

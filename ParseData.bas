@@ -428,12 +428,12 @@ sub exportIonList(GameID as integer, CurTurn as short)
 	close #24
 end sub
 
-sub exportStarList(GameID as integer)
+sub exportStarList(GameID as integer, AlwaysWrite as byte = 0)
 	dim as integer ObjID
 	dim as string FileName
 	FileName = "games/"+str(GameID)+"/StarClusters.csv"
 
-	if FileExists(FileName) = 0 then
+	if FileExists(FileName) = 0 OR AlwaysWrite then
 		open FileName for output as #21
 		print #21, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
 			quote("Temp")+","+quote("Radius")+","+quote("Mass")+","+_
@@ -453,14 +453,13 @@ end sub
 
 sub exportNebList(GameID as integer, AlwaysWrite as byte = 0)
 	dim as integer ObjID
-	dim as string FileName, AuxFile
+	dim as string FileName
 	FileName = "games/"+str(GameID)+"/Nebulae.csv"
 
 	if FileExists(FileName) = 0 OR AlwaysWrite then
 		open FileName for output as #22
 		print #22, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
-			quote("Temp")+","+quote("Radius")+","+quote("Mass")+","+_
-			quote("Planets")
+			quote("Radius")+","+quote("Intensity")+","+quote("Gas")
 	
 		for ObjID = 1 to LimitObjs
 			with NebParser(ObjID)
@@ -476,7 +475,7 @@ end sub
 
 sub exportArtifactList(GameID as integer, CurTurn as short)
 	dim as integer ObjID
-	dim as string FileName, AuxFile
+	dim as string FileName
 	FileName = "games/"+str(GameID)+"/"+str(CurTurn)+"/Artifacts.csv"
 
 	open FileName for output as #24
@@ -496,7 +495,7 @@ end sub
 
 sub exportWormholeList(GameID as integer, CurTurn as short)
 	dim as integer ObjID
-	dim as string FileName, AuxFile
+	dim as string FileName
 	FileName = "games/"+str(GameID)+"/"+str(CurTurn)+"/Wormholes.csv"
 
 	open FileName for output as #25
@@ -693,12 +692,12 @@ sub exportCSVfiles(GameID as integer, CurTurn as short)
 	exportShipList(GameID,CurTurn)
 	exportBaseList(GameID,CurTurn)
 	exportMinefields(GameID,CurTurn)
-	exportNebList(GameID, FileExists("games/"+str(GameID)+"/"+str(CurTurn)+"/Ion Storms.csv") = 0)
+	exportNebList(GameID, FileDateTime("games/"+str(GameID)+"/Nebulae.csv") < DataFormat)
 	exportIonList(GameID,CurTurn)
 	exportRelationships(GameID,CurTurn)
 	exportArtifactList(GameID,CurTurn)
 	exportWormholeList(GameID,CurTurn)
 	exportSettings(GameID)
-	exportStarList(GameID)
+	exportStarList(GameID, FileDateTime("games/"+str(GameID)+"/StarClusters.csv") < DataFormat)
 	exportVCRs(GameID,CurTurn)
 end sub

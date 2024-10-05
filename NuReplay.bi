@@ -489,7 +489,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 				with GameObj(0)
 					WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
 					ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
-					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Wormholes.csv"
+					'AuxFile = "games/"+str(.ID)+"/Nebulae.csv"
 					RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
 				
 					if FileExists(WorkingFile) then
@@ -499,7 +499,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 						end if
 						.GameState = 9
 					elseif FileExists(ScoreFile) then
-						if FileExists(AuxFile) = 0 then
+						if FileDateTime(ScoreFile) < DataFormat then
 							if FileExists(RawFile) then
 								.GameState = 8
 							else
@@ -726,6 +726,8 @@ sub menu
 					fetchStaticData
 				end if
 			end if
+			
+			gfxstring("Present Date: "+commaSep(int(Now)),CanvasScreen.Wideth/2+10,350,5,4,3,rgb(128,128,128))
 		end if
 
 		#ELSE

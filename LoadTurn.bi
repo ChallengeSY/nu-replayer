@@ -631,6 +631,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							.Intense = valint(mid(InStream,SeekChar(0)+12,4))
 							SeekChar(0) = instr(BlockChar(1),InStream,quote("gas"))
 							.Gas = valint(mid(InStream,SeekChar(0)+6,3))
+							
+							.NebName = ObjName
 						end with
 						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
@@ -674,6 +676,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							.Mass = valint(mid(InStream,SeekChar(0)+7,6))
 							SeekChar(0) = instr(BlockChar(1),InStream,quote("planets"))
 							.Planets = valint(mid(InStream,SeekChar(0)+10,3))
+							
+							.ClustName = ObjName
 						end with
 						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
