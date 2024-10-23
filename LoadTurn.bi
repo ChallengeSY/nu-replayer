@@ -26,29 +26,29 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	RawPath = "raw/"+str(GameNum)
 
 	for ObjIDa = 1 to LimitObjs
-		PlanetParser(ObjIDa) = ResetPlan
-		ShipParser(ObjIDa) = ResetShip
-		BaseParser(ObjIDa) = ResetBase
+		PlanetParser(ObjIDa) = ResetPlanPar
+		ShipParser(ObjIDa) = ResetShipPar
+		BaseParser(ObjIDa) = ResetBasePar
 		
-		IonParser(ObjIDa) = ResetIon
-		StarParser(ObjIDa) = ResetStar
-		NebParser(ObjIDa) = ResetNeb
+		IonParser(ObjIDa) = ResetIonPar
+		StarParser(ObjIDa) = ResetStarPar
+		NebParser(ObjIDa) = ResetNebPar
 		
-		ArtifactParser(ObjIDa) = ResetArtifact
-		WormholeParser(ObjIDa) = ResetWormhole
-		RelateParser(ObjIDa) = ResetRelations
-		VCRParser(ObjIDa) = ResetVCR
+		ArtifactParser(ObjIDa) = ResetArtifactPar
+		WormholeParser(ObjIDa) = ResetWormholePar
+		RelateParser(ObjIDa) = ResetRelationsPar
+		VCRParser(ObjIDa) = ResetVCRPar
 	next
 	
 	for MetaID as integer = 1 to MetaLimit
-		StockParser(MetaID) = ResetStock
-		MinefParser(MetaID) = ResetMinef
+		StockParser(MetaID) = ResetStockPar
+		MinefParser(MetaID) = ResetMinefPar
 	next MetaID
 	
 	InterShip.ShipOwner = 0
 	
 	for PlrID as ubyte = 1 to 35
-		ProcessSlot(PlrID) = ResetSlot
+		ProcessSlot(PlrID) = ResetSlotPar
 	next PlrID
 
 	ParseStart = timer
@@ -64,7 +64,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	open "games/"+str(GameNum)+"/"+str(TurnNum)+"/Working" for output as #10
 	close #10 
 	
-	GameParser = ResetGame
+	GameParser = ResetGamePar
 
 	print #9, "[";Time;", ";Date;"] Data will be exported for game #"& GameNum;" turn "& TurnNum;"."
 	if FileExists("games/"+str(GameNum)+"/Settings.csv") then
@@ -358,7 +358,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("densitymolybdenum"))
 						.DMoly = valint(mid(InStream,SeekChar(0)+20,3))
 						
-						'Miscellaneous info
+						'Structural info
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("megacredits"))
 						.Megacredits = valint(mid(InStream,SeekChar(0)+14,7))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("supplies"))
@@ -374,12 +374,39 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.Asteroid = valint(mid(InStream,SeekChar(0)+13,2))
 					end with
 					
+					with InterWasp
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetmines"))
+						.WorkMine = valint(mid(InStream,SeekChar(0)+14,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetfactories"))
+						.WorkHarvest = valint(mid(InStream,SeekChar(0)+18,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetdefense"))
+						.WorkBurrow = valint(mid(InStream,SeekChar(0)+16,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("builtmines"))
+						.WorkTerraform = valint(mid(InStream,SeekChar(0)+13,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("larva"))
+						.Larva = valint(mid(InStream,SeekChar(0)+8,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("burrowsize"))
+						.BurrowSize = valint(mid(InStream,SeekChar(0)+13,8))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("podhullid"))
+						.PodHull = valint(mid(InStream,SeekChar(0)+12,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("podcargo"))
+						.PodCargo = valint(mid(InStream,SeekChar(0)+11,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
+						.PodX = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
+						.PodY = valint(mid(InStream,SeekChar(0)+10,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("podspeed"))
+						.PodWarp = valint(mid(InStream,SeekChar(0)+11,2))
+					end with
+					
 					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 					ObjIDa = valint(mid(InStream,SeekChar(0)+5,4))
 					
 					if (cmdLine("--verbose") OR cmdLine("-vp")) AND InterPlan.PlanetOwner > 0 then
 						print "Identified planet #"& ObjIDa;" as belonging to player "& InterPlan.PlanetOwner
 					end if
+					
+					WaspParser(ObjIDa) = InterWasp
 					
 					if InterPlan.PlanetOwner = PID then
 						with PlanetParser(ObjIDa)
@@ -462,6 +489,13 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				'History and Waypoints are array-ized, so ion storms is explicit for safety reasons
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose+quote("ionstorms"))
 				BlockChar(1) = BlockChar(0)
+				
+				/'
+				 ' Additionally, History and Waypoints blocks have been notorious troublemakers,
+				 ' so additional exceptions are being added on top of this.
+				 '/
+				dim as integer HistoryBlock(1), WaypointsBlock(1)
+				
 				do
 					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
 					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
@@ -470,13 +504,25 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
 					SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
 					ObjCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
+					
+					HistoryBlock(0) = instr(BlockChar(1),InStream,quote("history")+":[")
+					HistoryBlock(1) = instr(HistoryBlock(0),InStream,"]")
+					WaypointsBlock(0) = instr(BlockChar(1),InStream,quote("waypoints")+":[")
+					WaypointsBlock(1) = instr(WaypointsBlock(0),InStream,"]")
 						
 					with InterShip
 						'Coordinates
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
+						if SeekChar(0) > HistoryBlock(0) then
+							SeekChar(0) = instr(HistoryBlock(1),InStream,quote("x"))
+						end if
 						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
+						if SeekChar(0) > HistoryBlock(0) then
+							SeekChar(0) = instr(HistoryBlock(1),InStream,quote("y"))
+						end if
 						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
 						.TargetX = valint(mid(InStream,SeekChar(0)+10,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
@@ -499,6 +545,16 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.BayCount = valint(mid(InStream,SeekChar(0)+7,2))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("torps"))
 						.TubeCount = valint(mid(InStream,SeekChar(0)+8,2))
+						
+						'Mission
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission"))
+						.Mission = valint(mid(InStream,SeekChar(0)+10,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission1target"))
+						.MisnTarget(1) = valint(mid(InStream,SeekChar(0)+17,9))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission2target"))
+						.MisnTarget(2) = valint(mid(InStream,SeekChar(0)+17,9))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("enemy"))
+						.PrimEnemy = valint(mid(InStream,SeekChar(0)+8,2))
 						
 						'Cargo Hold
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
@@ -555,12 +611,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							print #9, "[";Time;", ";Date;"]  Registered ship #"& ObjIDa;" (";ObjName;")"
 						end if
 					end if
-
-					'Skip Ship History, it interferes with the converter
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("history")+":[")
-					SeekChar(1) = instr(SeekChar(0),InStream,"],")
 					
-					BlockChar(1) = instr(SeekChar(1),InStream,ObjClose)
+					BlockChar(1) = instr(max(HistoryBlock(1),WaypointsBlock(1)),InStream,ObjClose)
 					loadTurnKB(int(BlockChar(1)/1e3),PID)
 				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 			end if
@@ -609,8 +661,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				end if
 			end if
 			
-			'Nebulae data. Only read this if the data has not already been exported
-			if PID = 1 AND FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 then
+			'Nebulae data. Only read this if non-existant or outdated
+			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 OR _
+				FileDateTime("games/"+str(GameNum)+"/Nebulae.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("nebulas")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("nebulas")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
@@ -651,8 +704,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				end if
 			end if
 			
-			'Star Cluster data. Only read this if the data has not already been exported
-			if PID = 1 AND FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 then
+			'Star Cluster data. Only read this if non-existant or outdated
+			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 OR _
+				FileDateTime("games/"+str(GameNum)+"/StarClusters.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("stars")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("stars")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
@@ -770,7 +824,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						print "Identified wormhole #"& ObjIDa
 					end if
 					
-					if InterWormhole.LastScan > WormholeParser(ObjIDa).LastScan then
+					if InterWormhole.LastScan > WormholeParser(ObjIDa).LastScan OR _
+						WormholeParser(ObjIDa).XLoc = 0 OR WormholeParser(ObjIDa).TargetX = 0 then
 						print #9, "[";Time;", ";Date;"]  Updated wormhole #"& ObjIDa
 						WormholeParser(ObjIDa) = InterWormhole
 					end if
@@ -1067,7 +1122,6 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	print #9, " Done"
 	
 	createMap(GameNum,TurnNum)
-	createTerritory(GameNum,TurnNum,PrintTxt)
 
 	ParseEnd = timer
 	print #9, "[";Time;", ";Date;"] Export all done! Parsing required ";

@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.65 (Slightly more Autonomous)"
+const BROWSER_LONG = "Nu Replayer 0.90 (Beta)"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
@@ -95,73 +95,68 @@ sub updateStatistics
 end sub
 
 sub updateStarmap
-	dim as string SettingsFile, PlanetsFile, ShipsFile, MapFile, TerritoryFile, BasesFile, StorageFile
+	dim as string SettingsFile, PlanetsFile, ShipsFile, MapFile, _
+		BasesFile, StorageFile, IonFile, MineFile, StarFile, NebFile, WormFile, ArtiFile
 	dim as short LoadObjID
-	' Loads the starmap, starships, and territory
+	'Loads various files and renders their contents onto the starmap
 	
 	PlanetsFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Planetary.csv"
 	ShipsFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Starships.csv"
 	MapFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Map.csv"
-	TerritoryFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Territory.csv"
 	BasesFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Starbases.csv"
 	StorageFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Base Stock.csv"
+	MineFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Minefields.csv"
+	IonFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Ion Storms.csv"
+	StarFile = "games/"+str(GameID)+"/StarClusters.csv"
+	NebFile = "games/"+str(GameID)+"/Nebulae.csv"
+	WormFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Wormholes.csv"
+	ArtiFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Artifacts.csv"
 	
-	for PID as short = 0 to LimitObjs
-		with Planets(PID)
-			if ViewGame.DynamicMap then
-				.X = 0
-				.Y = 0
-				.ObjName = ""
+	for OID as integer = 0 to MetaLimit
+		if OID <= LimitObjs then
+			with Planets(OID)
+				if ViewGame.DynamicMap then
+					.X = 0
+					.Y = 0
+					.ObjName = ""
+				end if
+				.Ownership = 0
+				.BasePresent = 0
+				.LastScan = 0
+				.Neu = -1
+				.Dur = -1
+				.Trit = -1
+				.Moly = -1
+				.GNeu = -1
+				.GDur = -1
+				.GTrit = -1
+				.GMoly = -1
+				.DNeu = -1
+				.DDur = -1
+				.DTrit = -1
+				.DMoly = -1
+				.Megacredits = -1
+				.Supplies = -1
+				.MineralMines = -1
+				.Factories = -1
+			end with
+			
+			Starships(OID) = ResetShip
+			IonStorms(OID) = ResetStorm
+			Wormholes(OID) = ResetWorm
+			Artifacts(OID) = ResetArti
+			if ReplayerMode <> MODE_CLIENT then
+				StarClusters(OID) = ResetStar
+				Nebulae(OID) = ResetNeb
 			end if
-			.Ownership = 0
-			.BasePresent = 0
-			.LastScan = 0
-			.Neu = -1
-			.Dur = -1
-			.Trit = -1
-			.Moly = -1
-			.GNeu = -1
-			.GDur = -1
-			.GTrit = -1
-			.GMoly = -1
-			.DNeu = -1
-			.DDur = -1
-			.DTrit = -1
-			.DMoly = -1
-			.Megacredits = -1
-			.Supplies = -1
-			.MineralMines = -1
-			.Factories = -1
-		end with
-		
-		with Starships(PID)
-			.Ownership = 0
-			.ShipType = 0
-			.ShipName = ""
-			.ShipType = 0
-			.FCode = ""
-			.ClassName = ""
-		end with
-	next PID
+		end if
+			
+		Minefields(OID) = ResetMinef
+	next OID
 
 	for BID as integer = 0 to MetaLimit
 		with BaseStorage(BID)
 			erase .HullCount, .HullReference, .EngineCount, .BeamCount, .TubeCount, .TorpCount
-			/'
-			for ShipSlot as byte = 0 to 100
-				.HullCount(ShipSlot) = 0
-				.HullReference(ShipSlot) = 0
-			next ShipSlot
-
-			for PartSlot as byte = 1 to 10
-				if PartSlot < 10 then
-					.EngineCount(PartSlot) = 0
-				end if
-				.BeamCount(PartSlot) = 0
-				.TubeCount(PartSlot) = 0
-				.TorpCount(PartSlot) = 0
-			next PartSlot
-			'/
 		end with
 	next
 	
@@ -223,14 +218,25 @@ sub updateStarmap
 				input #4, .Factories
 				input #4, .DefPosts
 				
-				.TerritoryValue = 0
+				input #4, .WorkMine
+				input #4, .WorkHarvest
+				input #4, .WorkBurrow
+				input #4, .WorkTerraform
+				input #4, .Larva
+				input #4, .BurrowSize
+
+				input #4, .PodHull
+				input #4, .PodCargo
+				input #4, .PodX
+				input #4, .PodY
+				input #4, .PodCargo
 			end with
 		end if
 	next PID
 	close #4
 	
-	debugout("Opened ships file")
 	if FileExists(ShipsFile) then
+		debugout("Opened ships file")
 		dim as short ReadID
 		
 		open ShipsFile for input as #5
@@ -245,6 +251,11 @@ sub updateStarmap
 					input #5, .FCode
 					.FCode = findReplace(.FCode,"&",",")
 
+					input #5, .Mission
+					input #5, .MisnTarget(1)
+					input #5, .MisnTarget(2)
+					input #5, .PrimEnemy
+					
 					input #5, .XLoc
 					input #5, .YLoc
 					input #5, .TargetX
@@ -254,11 +265,11 @@ sub updateStarmap
 					
 					input #5, .ShipType
 					input #5, .EnginePos
-					input #5, .BeamPos
 					input #5, .BeamNum
+					input #5, .BeamPos
 					input #5, .BayNum
-					input #5, .TubePos
 					input #5, .TubeNum
+					input #5, .TubePos
 					
 					input #5, .TotalMass
 					input #5, .Ammo
@@ -335,21 +346,11 @@ sub updateStarmap
 				MinYPos = MinXPos
 				MaxYPos = MaxXPos
 			end if
-	
-			if .Academy = 0 then
-				open TerritoryFile for input as #3
-				for TerrY as short = 0 to 767		
-					for TerrX as short = 0 to 767
-						input #3, Territory(TerrX,TerrY)
-					next TerrX
-				next TerrY
-				close #3
-			end if
 		end if
 	end with
 	
-	debugout("Opened bases file")
 	if FileExists(BasesFile) then
+		debugout("Opened bases file")
 		open BasesFile for input as #7
 		for PID as short = 0 to LimitObjs
 			if eof(7) then
@@ -372,8 +373,8 @@ sub updateStarmap
 		close #7
 	end if
 	
-	debugout("Opened base storage file")
 	if FileExists(StorageFile) then
+		debugout("Opened base storage file")
 		dim as byte PartType, PartRef
 		dim as short CountFound
 		
@@ -417,20 +418,135 @@ sub updateStarmap
 		close #8
 	end if
 	
-	if ViewGame.Academy = 0 then
-		debugout("Applied territory")
-		line TerritoryMap,(0,0)-(767,767),rgb(0,0,0),bf
-		for TerrY as short = 0 to 767
-			for TerrX as short = 0 to 767
-				if Territory(TerrX,TerrY) > 0 then
-					with Coloring(Planets(Territory(TerrX,TerrY)).Ownership)
-						pset TerritoryMap,(TerrX,TerrY),rgba(.Red,.Green,.Blue,32)
-					end with
+	if FileExists(MineFile) then
+		debugout("Opened minefield file")
+		open MineFile for input as #10
+		line input #10, NullStr
+		for MFID as integer = 0 to MetaLimit
+			if eof(10) then
+				exit for
+			else
+				input #10, LoadObjID
 	
-					Planets(Territory(TerrX,TerrY)).TerritoryValue += 1
+				with Minefields(LoadObjID)
+					input #10, .Ownership
+					input #10, .Webbed, .MineUnits
+					input #10, .X, .Y
+					input #10, .Radius
+					input #10, .FCode
+					.FCode = findReplace(.FCode,"&",",")
+				end with
+			end if
+		next MFID
+		close #10
+	end if
+	
+	if FileExists(IonFile) then
+		debugout("Opened ion storms file")
+		open IonFile for input as #9
+		line input #9, NullStr
+		for IID as integer = 0 to LimitObjs
+			if eof(9) then
+				exit for
+			else
+				input #9, LoadObjID
+	
+				with IonStorms(LoadObjID)
+					input #9, .ParentID
+					input #9, .X, .Y
+					input #9, .Radius, .Voltage
+					input #9, .Warp, .Heading
+					input #9, .Growing
+				end with
+			end if
+		next IID
+		close #9
+	end if
+
+	if ReplayerMode <> MODE_CLIENT then
+		if FileExists(StarFile) then
+			debugout("Opened star clusters file")
+			open StarFile for input as #11
+			line input #11, NullStr
+			for SID as integer = 0 to LimitObjs
+				if eof(11) then
+					exit for
+				else
+					input #11, LoadObjID
+		
+					with StarClusters(LoadObjID)
+						input #11, .Namee
+						input #11, .X, .Y
+						input #11, .Temperature
+						input #11, .Radius, .Mass
+						input #11, .Planets
+					end with
 				end if
-			next TerrX
-		next TerrY
+			next SID
+			close #11
+		end if
+		
+		if FileExists(NebFile) then
+			debugout("Opened star nebulae file")
+			open NebFile for input as #12
+			line input #12, NullStr
+			for SID as integer = 0 to LimitObjs
+				if eof(12) then
+					exit for
+				else
+					input #12, LoadObjID
+		
+					with Nebulae(LoadObjID)
+						input #12, .Namee
+						input #12, .X, .Y
+						input #12, .Radius, .Intensity
+						input #12, .Gas
+					end with
+				end if
+			next SID
+			close #12
+		end if
+	end if
+	
+	if FileExists(WormFile) then
+		debugout("Opened wormholes file")
+		open WormFile for input as #13
+		line input #13, NullStr
+		for WID as integer = 0 to LimitObjs
+			if eof(13) then
+				exit for
+			else
+				input #13, LoadObjID
+	
+				with Wormholes(LoadObjID)
+					input #13, .Namee
+					input #13, .X, .Y
+					input #13, .DestX, .DestY
+					input #13, .Stability, .LastScan
+				end with
+			end if
+		next WID
+		close #13
+	end if
+	
+	if FileExists(ArtiFile) then
+		debugout("Opened artifacts file")
+		open ArtiFile for input as #14
+		line input #14, NullStr
+		for AID as integer = 0 to LimitObjs
+			if eof(14) then
+				exit for
+			else
+				input #14, LoadObjID
+	
+				with Artifacts(LoadObjID)
+					input #14, .Namee
+					input #14, .X, .Y
+					input #14, .LocationType, .LocationID
+				end with
+			end if
+		next AID
+		close #14
 	end if
 end sub
 
@@ -465,12 +581,15 @@ sub updateCommentary
 	wend
 end sub
 
+declare sub syncReport(AddCycle as byte = 0)
+
 sub loadTurnExtras
 	OldTurnFormat = 0
 	debugout("Loading game #"+str(GameID)+" turn "+str(TurnNum))
 	updateStarmap
 	updateStatistics
 	updateCommentary
+	syncReport
 end sub
 
 #IFNDEF __FORCE_OFFLINE__
@@ -609,44 +728,14 @@ end function
 	#ENDIF
 #ENDIF
 
-sub loadTurnTerritory(AmtDone as short)
-	dim as string ProgressMeter
-	line(1,749)-(1022,766),rgb(0,0,0),bf
-	line(1,749)-(1+AmtDone/767*1021,766),rgb(255-AmtDone/767*255,AmtDone/767*255,0),bf
-
-	ProgressMeter = str(int(AmtDone/767*100))+"% territory done"
-	gfxstring(ProgressMeter,513-gfxlength(ProgressMeter,3,3,2)/2,750,3,3,2,rgb(255,255,255))
-	screencopy
-	sleep 15
-end sub
-
-sub createMeter(Filling as double = LastFill, ProgressStr as string = LastProgress, PreserveEmpty as byte = 1, Condensed as byte = 0)
-	if Condensed then
-		if PreserveEmpty then
-			line(800,580)-(1174,599),rgb(0,0,0),bf
-		else
-			line(0,580)-(1174,599),rgb(0,0,0),bf
-		end if
-		line(0,580)-(799,599),rgb(255,255,255),b
-		if Filling > 0 then
-			line(1,581)-(1+Filling*797,598),rgb(255-Filling*255,Filling*255,0),bf
-		end if
-
-		gfxstring(ProgressStr,401-gfxlength(ProgressStr,3,2,2)/2,582,3,2,2,rgb(255,255,255))
-	else
-		line(0,730)-(1024,747),rgb(0,0,0),bf
-		if PreserveEmpty then
-			line(1024,748)-(1174,767),rgb(0,0,0),bf
-		else
-			line(0,748)-(1174,767),rgb(0,0,0),bf
-		end if
-		line(0,748)-(1023,767),rgb(255,255,255),b
-		if Filling > 0 then
-			line(1,749)-(1+Filling*1021,766),rgb(255-Filling*255,Filling*255,0),bf
-		end if
-
-		gfxstring(ProgressStr,513-gfxlength(ProgressStr,3,2,2)/2,750,3,2,2,rgb(255,255,255))
+sub createMeter(Filling as double = LastFill, ProgressStr as string = LastProgress)
+	line(0,CanvasScreen.Height-20)-(CanvasScreen.Wideth-1,CanvasScreen.Height-1),rgb(0,0,0),bf
+	if Filling > 0 then
+		line(1,CanvasScreen.Height-19)-(1+Filling*(CanvasScreen.Wideth-3),CanvasScreen.Height-2),rgb(255-Filling*255,Filling*255,0),bf
 	end if
+	line(0,CanvasScreen.Height-20)-(CanvasScreen.Wideth-1,CanvasScreen.Height-1),rgb(255,255,255),b
+
+	gfxstring(ProgressStr,CanvasScreen.Wideth/2+1-gfxlength(ProgressStr,3,2,2)/2,CanvasScreen.Height-18,3,2,2,rgb(255,255,255))
 	
 	LastFill = Filling
 	LastProgress = ProgressStr
@@ -662,7 +751,7 @@ sub loadTurnUI(Players as ubyte)
 	end if
 	
 	ProgressMeter = str(Players)+" / "+str(LoadTurnDetected)+" players converted"
-	createMeter(Players/LoadTurnDetected,ProgressMeter,0)
+	createMeter(Players/LoadTurnDetected,ProgressMeter)
 	screencopy
 	sleep 15
 end sub
@@ -670,7 +759,7 @@ end sub
 sub loadTurnKB(KBCount as integer, PlayerID as ubyte)
 	dim as integer FileSize, XPos
 	dim as string FileProgress
-	if 1 OR timer > KBUpdate + 0.125 then
+	if timer > KBUpdate + 0.005 then
 		KBUpdate = timer
 		FileSize = int(FileLen("raw/"+str(GameID)+"/player"+str(PlayerID)+"-turn"+str(TurnNum)+".trn")/1e3)
 
@@ -686,7 +775,7 @@ sub loadTurnKB(KBCount as integer, PlayerID as ubyte)
 
 			FileProgress = str(KBCount)+"/??? KB done for player "+str(PlayerID)
 		end if
-		gfxstring(FileProgress,1024-gfxlength(FileProgress,3,3,2),730,3,3,2,rgb(255,255,255))
+		'gfxstring(FileProgress,1024-gfxlength(FileProgress,3,3,2),730,3,3,2,rgb(255,255,255))
 		screencopy
 	end if
 end sub

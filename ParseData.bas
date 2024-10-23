@@ -63,6 +63,9 @@ type ParseShip
 	ShipName as wstring * 255
 	ShipType as short
 	FriendlyCode as string
+	Mission as short
+	MisnTarget(2) as integer
+	PrimEnemy as short
 	TotalMass as short
 	Cloaked as byte
 	Experience as short
@@ -110,6 +113,20 @@ type ParseStock
 	ItemAmt as short
 end type
 
+type ParseHorwasp
+	WorkMine as short
+	WorkHarvest as short
+	WorkBurrow as short
+	WorkTerraform as short
+	Larva as integer
+	BurrowSize as integer
+	PodHull as short
+	PodCargo as short
+	PodX as short
+	PodY as short
+	PodWarp as byte
+end type
+
 type ParseMinef
 	MineOwner as ubyte
 	Webfield as ubyte
@@ -137,7 +154,7 @@ type ParseStar
 	YLoc as short
 	Temp as integer
 	Radius as short
-	Mass as short
+	Mass as integer
 	Planets as short
 end type
 
@@ -246,30 +263,31 @@ type ParseGame
 	LastTurn as short
 end type
 
-dim shared as ParseScore ProcessSlot(35), ResetSlot
-dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan, ResetPlan
-dim shared as ParseShip ShipParser(LimitObjs), InterShip, ResetShip
-dim shared as ParseBase BaseParser(LimitObjs), InterBase, ResetBase
-dim shared as ParseStar StarParser(LimitObjs), InterStar, ResetStar
-dim shared as ParseIonStorm IonParser(LimitObjs), InterIon, ResetIon
-dim shared as ParseNebulae NebParser(LimitObjs), InterNeb, ResetNeb
-dim shared as ParseStock StockParser(MetaLimit), ResetStock
-dim shared as ParseMinef MinefParser(MetaLimit), InterMinef, ResetMinef
-dim shared as ParseWormhole WormholeParser(LimitObjs), InterWormhole, ResetWormhole
-dim shared as ParseArtifact ArtifactParser(LimitObjs), InterArtifact, ResetArtifact
-dim shared as ParseRelation RelateParser(LimitObjs), ResetRelations
-dim shared as ParseVCR VCRParser(LimitObjs), ResetVCR
-dim shared as ParseGame GameParser, ResetGame
+dim shared as ParseScore ProcessSlot(35), ResetSlotPar
+dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan, ResetPlanPar
+dim shared as ParseShip ShipParser(LimitObjs), InterShip, ResetShipPar
+dim shared as ParseBase BaseParser(LimitObjs), InterBase, ResetBasePar
+dim shared as ParseHorwasp WaspParser(LimitObjs), InterWasp, ResetWaspPar
+dim shared as ParseStar StarParser(LimitObjs), InterStar, ResetStarPar
+dim shared as ParseIonStorm IonParser(LimitObjs), InterIon, ResetIonPar
+dim shared as ParseNebulae NebParser(LimitObjs), InterNeb, ResetNebPar
+dim shared as ParseStock StockParser(MetaLimit), ResetStockPar
+dim shared as ParseMinef MinefParser(MetaLimit), InterMinef, ResetMinefPar
+dim shared as ParseWormhole WormholeParser(LimitObjs), InterWormhole, ResetWormholePar
+dim shared as ParseArtifact ArtifactParser(LimitObjs), InterArtifact, ResetArtifactPar
+dim shared as ParseRelation RelateParser(LimitObjs), ResetRelationsPar
+dim shared as ParseVCR VCRParser(LimitObjs), ResetVCRPar
+dim shared as ParseGame GameParser, ResetGamePar
 dim shared as double KBUpdate
 
 dim shared as short TerrMapping(768,768), MinXPos, MaxXPos, MinYPos, MaxYPos
 
-ResetSlot.RaceType = "Unassigned"
-ResetPlan.FriendlyCode = quote("???")
-ResetShip.FriendlyCode = quote("???")
-ResetMinef.FCode = quote("???")
-ResetGame.MapWidth = 2000
-ResetGame.MapHeight = 2000
+ResetSlotPar.RaceType = "Unassigned"
+ResetPlanPar.FriendlyCode = quote("???")
+ResetShipPar.FriendlyCode = quote("???")
+ResetMinefPar.FCode = quote("???")
+ResetGamePar.MapWidth = 2000
+ResetGamePar.MapHeight = 2000
 
 #IFNDEF __CMD_LINE__
 function cmdLine(SearchStr as string) as byte
@@ -315,7 +333,10 @@ sub exportPlanetList(GameID as integer, CurTurn as short)
 		quote("NRace")+","+quote("Gov")+","+quote("Ne")+","+quote("Du")+","+quote("Tr")+","+_
 		quote("Mo")+","+quote("GNe")+","+quote("GDu")+","+quote("GTr")+","+quote("GMo")+","+_
 		quote("DNe")+","+quote("DDu")+","+quote("DTr")+","+quote("DMo")+","+_
-		quote("Mc")+","+quote("Sp")+","+quote("Mine")+","+quote("Fact")+","+quote("Def")
+		quote("Mc")+","+quote("Sp")+","+quote("Mine")+","+quote("Fact")+","+quote("Def")+","+_
+		quote("WorkM")+","+quote("WorkH")+","+quote("WorkB")+","+quote("WorkT")+","+_
+		quote("Larva")+","+quote("Burrows")+","+quote("PodHull")+","+quote("PodCargo")+","+_
+		quote("PodX")+","+quote("PodY")+","+quote("PodWarp")
 
 	for ObjID = 1 to LimitObjs
 		with PlanetParser(ObjID)
@@ -326,9 +347,16 @@ sub exportPlanetList(GameID as integer, CurTurn as short)
 					","& .Neu;","& .Dur;","& .Trit;","& .Moly; _
 					","& .GNeu;","& .GDur;","& .GTrit;","& .GMoly; _
 					","& .DNeu;","& .DDur;","& .DTrit;","& .DMoly; _
-					","& .Megacredits;","& .Supplies;","& .MineralMines;","& .Factories;","& .DefPosts
+					","& .Megacredits;","& .Supplies;","& .MineralMines;","& .Factories;","& .DefPosts;
+					
+				with WaspParser(ObjID)
+					print #14, ","& .WorkMine;","& .WorkHarvest;","& .WorkBurrow;","& .WorkTerraform; _
+						","& .Larva;","& .BurrowSize;","& .PodHull;","& .PodCargo; _
+						","& .PodX;","& .PodY;","& .PodWarp
+				end with
 			end if
 		end with
+		
 	next
 	close #14
 end sub
@@ -337,8 +365,9 @@ sub exportShipList(GameID as integer, CurTurn as short)
 	dim as integer ObjID
 
 	open "games/"+str(GameID)+"/"+str(CurTurn)+"/Starships.csv" for output as #15
-	print #15, quote("ID")+","+quote("Ownership")+","+quote("FCode")+","+quote("X")+","+_
-		quote("Y")+","+quote("DestX")+","+quote("DestY")+","+quote("Name")+","+_
+	print #15, quote("ID")+","+quote("Ownership")+","+quote("FCode")+","+quote("Misn")+","+_
+		quote("Msn1")+","+quote("Msn2")+","+quote("Enemy")+","+_
+		quote("X")+","+quote("Y")+","+quote("DestX")+","+quote("DestY")+","+quote("Name")+","+_
 		quote("HullID")+","+quote("EngID")+","+quote("BmCt")+","+quote("BmID")+","+quote("BayCt")+","+_
 		quote("TorpCt")+","+quote("TorpID")+","+quote("Mass")+","+quote("Ammo")+","+quote("Warp")+","+_
 		quote("Colonists")+","+quote("Ne")+","+quote("Du")+","+quote("Tr")+","+quote("Mo")+","+_
@@ -347,8 +376,9 @@ sub exportShipList(GameID as integer, CurTurn as short)
 	for ObjID = 1 to LimitObjs
 		with ShipParser(ObjID)
 			if .ShipType > 0 then
-				print #15, ""& ObjID;","& .ShipOwner;","& quote(.FriendlyCode); ","& .XLoc;","& .YLoc; _
-					","& .TargetX;","& .TargetY;","& quote(.ShipName); _
+				print #15, ""& ObjID;","& .ShipOwner;","& quote(.FriendlyCode); _
+					","& .Mission;","& .MisnTarget(1);","& .MisnTarget(2);","& .PrimEnemy; _
+					","& .XLoc;","& .YLoc;","& .TargetX;","& .TargetY;","& quote(.ShipName); _
 					","& .ShipType;","& .EngineID;","& .BeamCount;","& .BeamID;","& .BayCount; _
 					","& .TubeCount;","& .TubeID;","& .TotalMass;","& .Ordnance;","& .WarpFactor; _
 					","& .Colonists;","& .Neu;","& .Dur;","& .Trit;","& .Moly; _
@@ -394,12 +424,12 @@ sub exportMinefields(GameID as integer, CurTurn as short)
 	dim as integer ObjID
 	
 	open "games/"+str(GameID)+"/"+str(CurTurn)+"/Minefields.csv" for output as #18
-	print #18, quote("Owner")+","+quote("Webbed")+","+quote("Units")+","+quote("X")+","+_
-		quote("Y")+","+quote("Radius")+","+quote("FCode")
+	print #18, quote("ID")+","+quote("Owner")+","+quote("Webbed")+","+quote("Units")+","+_
+		quote("X")+","+quote("Y")+","+quote("Radius")+","+quote("FCode")
 	for ObjID = 1 to MetaLimit
 		with MinefParser(ObjID)
 			if .MineOwner > 0 then
-				print #18, ""& .MineOwner;","& .Webfield;","& .Units;","& .XLoc;","& .YLoc;","& .Radius;","& quote(.FCode)
+				print #18, ""& ObjID;","& .MineOwner;","& .Webfield;","& .Units;","& .XLoc;","& .YLoc;","& .Radius;","& quote(.FCode)
 			end if
 		end with 
 	next ObjID
@@ -625,64 +655,6 @@ sub createMap(GameID as integer, CurTurn as short)
 		end if
 		close #4
 		print #9, " Done"
-	end if
-end sub
-
-sub createTerritory(GameID as integer, CurTurn as short, PrintTxt as byte)
-	dim as single LeastDist, CalcDist
-	dim as short MapSize, CalcX, CalcY
-	with GameParser
-		MapSize = max(.MapWidth,.MapHeight)
-	end with
-
-	if GameID >= 2972 AND GameParser.Academy < 1 AND (FileExists("games/"+str(GameID)+"/Territory.csv") = 0 OR GameParser.DynamicMap > 0 OR _
-		(FileExists("games/"+str(GameID)+"/Settings.csv") AND FileDateTime("games/"+str(GameID)+"/Settings.csv") > FileDateTime("games/"+str(GameID)+"/Territory.csv"))) then
-		print #9, "[";Time;", ";Date;"] Generating territory...";
-		if PrintTxt then
-			print "Generating territory...";
-		end if
-		if GameParser.DynamicMap then
-			open "games/"+str(GameID)+"/"+str(CurTurn)+"/Territory.csv" for output as #5
-		else
-			open "games/"+str(GameID)+"/Territory.csv" for output as #5
-		end if
-		for TerrY as short = 0 to 767
-			loadTurnTerritory(TerrY)
-			
-			for TerrX as short = 0 to 767
-				CalcX = 2000 - int(MapSize/2) + TerrX/767*MapSize
-				CalcY = 2000 - int(MapSize/2) + (767-TerrY)/767*MapSize
-				
-				if CalcX >= MinXPos AND CalcX <= MaxXPos AND CalcY >= MinYPos AND CalcY <= MaxYPos then
-					LeastDist = 1e6
-					for PID as short = 1 to LimitObjs
-						with PlanetParser(PID)
-							if .XLoc >= MinXPos AND .XLoc < MaxXPos AND _
-								.YLoc >= MinYPos AND .YLoc < MaxYPos then
-	
-								CalcDist = sqr((.XLoc - CalcX)^2 + (.YLoc - CalcY)^2)
-								if CalcDist < LeastDist AND len(.PlanName) > 0 then
-									LeastDist = CalcDist
-									TerrMapping(TerrX,TerrY) = PID
-								end if
-							end if
-						end with
-					next PID
-				else
-					TerrMapping(TerrX,TerrY) = 0
-				end if
-
-				print #5, ""& TerrMapping(TerrX,TerrY);
-				if TerrX < 767 then
-					print #5, ",";
-				else
-					print #5, ""
-				end if
-			next TerrX
-		next TerrY
-		close #5
-		print #9, " Done"
-		print " Done"
 	end if
 end sub
 

@@ -1,23 +1,18 @@
 LastProgress = ""
 #include "NRClient.bi"
+#include "NuReport.bas"
 
 sub renderClient
-	dim as short Sidebar, DiamondBase, MapSize, AbsMin, DiamH, DiamL, TotalShips, TotalPlanets
-	dim as uinteger PaintColor(2)
+	dim as short TotalShips, TotalPlanets, Results
 	dim as string TurnStr
-
-	Sidebar = CanvasScreen.Wideth - 768
-	with ViewGame
-		MapSize = max(.MapWidth,.MapHeight)
-		AbsMin = 2000 - MapSize/2
-	end with 
+	dim as ViewSpecs RelativePos, CursorPos
 
 	/'
 	 ' The client serves as a means to view the replay data
 	 '/
 
-	'Game title gets an animating rainbow color to differentiate from the rest of the text
-	with GameTitle
+	'Some objects get an animating rainbow color to differentiate from the rest
+	with Rainbow
 		if .Red = 255 AND .Green < 255 then
 			if .Blue > 0 then
 				.Blue -= 5
@@ -39,11 +34,15 @@ sub renderClient
 		end if
 	end with
 
+	DestPattern = int(DestPattern / 2)
+	if (DestPattern AND (1 SHL 8)) = 0 then
+		DestPattern += 2^16
+	end if
+
 	if InType = CtrlJ then
 		'Allows instantly jumping to any turn
 		dim as ushort JumpCut, OldTurn
 		dim as ubyte CutLegal, ProcessNeeded, ZipDLenabled = 0
-		dim as byte Results
 		dim as string ScoreFile, AuxFile, RawFile, ZipFile
 
 		do
@@ -142,14 +141,14 @@ sub renderClient
 				end if
 			end if
 			
-			if InType = chr(27) AND JumpCut > 0 then
+			if InType = EscKey AND JumpCut > 0 then
 				JumpCut = 0
 				InType = chr(255)
 			elseif InType >= "0" AND InType <= "9" then
 				JumpCut = JumpCut * 10 + valint(InType)
 			elseif InType = chr(8) then
 				JumpCut = int(JumpCut / 10)
-			elseif InType = chr(13) AND CutLegal then
+			elseif InType = EnterKey AND CutLegal then
 				OldTurn = TurnNum
 				TurnNum = JumpCut
 				if ProcessNeeded > 0 then
@@ -176,7 +175,7 @@ sub renderClient
 				loadTurnExtras
 				exit do
 			#IFDEF __DOWNLOAD_TURNS__
-			elseif InType = chr(13) AND ZipDLenabled AND FileExists(ZipFile) = 0 then
+			elseif InType = EnterKey AND ZipDLenabled AND FileExists(ZipFile) = 0 then
 				if downloadZipPackage(GameId) then
 					ZipDLenabled = 0
 				else
@@ -192,7 +191,7 @@ sub renderClient
 			screencopy
 			sleep 15
 			InType = inkey
-		loop until InType = chr(27)
+		loop until InType = EscKey
 	end if
 
 	if InType = FunctionFive then
@@ -203,65 +202,33 @@ sub renderClient
 		shipList
 	end if
 
-
-	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
-		"Avian", "Amorphou", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
-		"", "Botanical"}
-
 	windowtitle WindowStr
 	cls
 
-	if TurnNum > 1 AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Ion Storms.csv") AND _
-		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Ion Storms.csv") >= DataFormat AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Working") = 0 then
-		CanNavigate(0) = 1
-	else
-		CanNavigate(0) = 0
+	CanNavigate(0) = 0
+	CanNavigate(1) = 0
+	if TurnNum > 1 then
+		if FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Score.csv") AND _
+			FileDateTime("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Score.csv") >= DataFormat AND _
+			FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Working") = 0 then
+			CanNavigate(0) = 2
+		elseif FileExists("raw/"+str(GameID)+"/player1-turn"+str(TurnNum-1)+".trn") then
+			CanNavigate(0) = 1
+		end if
 	end if
 
-	if TurnNum < ViewGame.LastTurn AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Storms.csv") AND _
-		FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Ion Storms.csv") >= DataFormat AND _
-		FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Working") = 0 then
-		CanNavigate(1) = 1
-	else
-		CanNavigate(1) = 0
+	if TurnNum < ViewGame.LastTurn then
+		if	FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Score.csv") AND _
+			FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Score.csv") >= DataFormat AND _
+			FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Working") = 0 then
+			CanNavigate(1) = 2
+		elseif FileExists("raw/"+str(GameID)+"/player1-turn"+str(TurnNum+1)+".trn") then
+			CanNavigate(1) = 1
+		end if
 	end if
 
-	/'
-	'Fading effect for the selected player's planets
-	FadingSelect += 3
-	if FadingSelect > 255 then
-		FadingSelect = -255
-	elseif FadingSelect >= -144 AND FadingSelect < 144 then
-		FadingSelect = 144
-	end if
-	'/
-
-	' Checks mouse coordinates
-	MouseError = getmouse(MouseX,MouseY)
-
-	if ReplayerMode = MODE_CLIENT_NORMAL AND ViewGame.Academy = 0 then
-		' If in Normal mode, it applies a faint territory map
-		put (0,0),TerritoryMap,trans
-	elseif ReplayerMode = MODE_CLIENT_ISLAND then
-		' If in Island mode, it applies the island map
-		put (0,0),IslandMap,trans
-	end if
-
-	' Highlights the territory of the selected planet
-	if ViewGame.Academy = 0 then
-		for TerrY as short = 0 to 767
-			for TerrX as short = 0 to 767
-				with Coloring(Planets(Territory(TerrX,TerrY)).Ownership)
-					if Territory(TerrX,TerrY) = NearestPlan then
-						pset (TerrX,TerrY),rgba(.Red,.Green,.Blue,64)
-					end if
-				end with
-			next TerrX
-		next TerrY
-	end if
+	'Mouse handling
+	MouseError = getmouse(MouseX,MouseY,,ButtonCombo)
 
 	'Resets dynamic statistics
 	for RID as short = 1 to MaxPlayers
@@ -278,7 +245,6 @@ sub renderClient
 			end if
 			.TotalClans = 0
 			.TotalSupplies = 0
-			.TotalTerritory = 0
 			.EconomicScore = (.TotalDur + .TotalTrit + .TotalMoly) * 3 + .TotalMoney
 		end with
 	next RID
@@ -286,752 +252,445 @@ sub renderClient
 	TotalShips = 0
 	TotalPlanets = 0
 
-	'Plots the planets down, and colors them according to ownership
-	for PID as short = 1 to LimitObjs
-		with Planets(PID)
-			if .X >= MinXPos AND .X < MaxXPos AND .Y >= MinYPos AND .Y < MaxYPos then
-				dim as short CalcX, CalcY
-				CalcX = (.X-AbsMin)/MapSize*766
-				CalcY = 767-(.Y-AbsMin)/MapSize*766
-				if .Ownership = 0 then
-					if .LastScan = 0 then
-						pset(CalcX,CalcY),rgb(64,64,64)
-					else
-						pset(CalcX,CalcY),rgb(192,192,192)
-					end if
-				else
-					PlayerSlot(.Ownership).PlanetCount += 1
-					PlayerSlot(.Ownership).Starbases += sgn(.BasePresent)
-					if ReplayerMode = MODE_CLIENT_NORMAL then
-						with Coloring(.Ownership)
-							circle(CalcX,CalcY),1+sgn(Planets(PID).BasePresent),rgb(.Red,.Green,.Blue),,,,F
-						end with
-					else
-						with Coloring(.Ownership)
-							circle(CalcX,CalcY),1+sgn(Planets(PID).BasePresent),rgba(.Red,.Green,.Blue,192),,,,F
-						end with
-					end if
-
-					PlayerSlot(.Ownership).TotalNeu += .Neu
-					PlayerSlot(.Ownership).TotalDur += .Dur
-					PlayerSlot(.Ownership).TotalTrit += .Trit
-					PlayerSlot(.Ownership).TotalMoly += .Moly
-					PlayerSlot(.Ownership).TotalClans += .Colonists
-					PlayerSlot(.Ownership).TotalMoney += .Megacredits
-					PlayerSlot(.Ownership).TotalSupplies += .Supplies
-					PlayerSlot(.Ownership).TotalTerritory += .TerritoryValue
-					TotalPlanets += 1
-				end if
-			end if
-		end with
-	next PID
-	
-	'Use custom select style in Academy games
-	if (NearestPlan > 0 OR ShipsFound > 0) AND ViewGame.Academy then
-		dim as short CalcX, CalcY, SelRadius
-		CalcX = (ActualX-AbsMin)/MapSize*766
-		CalcY = 767-(ActualY-AbsMin)/MapSize*766
-		SelRadius = 5 + int((GameTitle.Red + GameTitle.Green + GameTitle.Blue + 1)/128)
-		
-		circle(CalcX,CalcY),SelRadius,rgb(255,255,255),degtorad(22.5),degtorad(67.5)
-		circle(CalcX,CalcY),SelRadius,rgb(255,255,255),degtorad(112.5),degtorad(157.5)
-		circle(CalcX,CalcY),SelRadius,rgb(255,255,255),degtorad(202.5),degtorad(247.5)
-		circle(CalcX,CalcY),SelRadius,rgb(255,255,255),degtorad(292.5),degtorad(337.5)
+	if RedrawIslands then
+		line IslandMap,(0,0)-(4095,2159),rgb(255,0,255),bf
 	end if
-
-	if ReplayerMode = MODE_CLIENT_NORMAL then
-		'In Normal mode, the ships get rendered alongside the territory
-		for SID as short = 1 to LimitObjs
-			with Starships(SID)
-				if .ShipType > 0 AND .Ownership > 0 then
-					TotalShips += 1
-				end if
-				
-				if .XLoc >= MinXPos AND .XLoc < MaxYPos AND .YLoc >= MinXPos AND .YLoc < MaxYPos AND _
-					.Ownership > 0 then
-					dim as short CalcX, CalcY, Orbiting
-					CalcX = (.XLoc-AbsMin)/MapSize*766
-					CalcY = 767-(.YLoc-AbsMin)/MapSize*766
-
-					for PID as short = 1 to LimitObjs
-						if Planets(PID).X = .XLoc AND Planets(PID).Y = .YLoc then
-							Orbiting = 1
-							exit for
-						end if
-					next PID
-
-
-					with Coloring(.Ownership)
-						if Orbiting then
-							circle(CalcX,CalcY),5,rgb(.Red,.Green,.Blue)
-						else
-							pset(CalcX,CalcY),rgb(.Red,.Green,.Blue)
-						end if
-					end with
-				end if
-			end with
-		next SID
-	end if
-
-	'Creates a game summary. It can contain the players, or a planet report
-	with GameTitle
-		gfxString(GameName, min(768 + Sidebar - gfxLength(GameName,3,2,2), 768) ,0,3,2,2,rgb(.Red,.Green,.Blue))
-	end with
-	TurnStr = "Turn "+str(TurnNum)
-
-	'Turn navigation keys
-	if CanNavigate(0) then
-		TurnStr += " [pgup]"
-	else
-		TurnStr += " [----]"
-	end if
-
-	if CanNavigate(1) then
-		TurnStr += " [pgdn]"
-	else
-		TurnStr += " [----]"
-	end if
-
-	gfxString(TurnStr,768,20,3,2,2,rgb(255,255,255))
-
-	if NearestPlan <= 0 AND ShipsFound = 0 then
-		dim as byte PlayersFound = 0
-		
-		'If no planets or ships are selected, then this provides a player list
-		for RID as short = 1 to ParticipatingPlayers
-			with PlayerSlot(RID)
-				if len(.Race) > 0 AND len(.PlayerName) > 0 AND .Race <> "Unassigned" then
-					PlayersFound += 1 
-					dim as string PrintStr = .Race + " (" + .PlayerName + ")"
-					if gfxLength(PrintStr,3,2,2) >= Sidebar then
-						PrintStr = .PlayerName
-					end if
-					with Coloring(RID)
-						PaintColor(1) = rgb(.Red,.Green,.Blue)
-						PaintColor(2) = rgb(.Red * .75,.Green * .75,.Blue * .75)
-						if PlayerSlot(RID).PlanetCount > 0 then
-							line(1024,(PlayersFound+1)*20-2)-(1024+PlayerSlot(RID).Starbases,(PlayersFound+2)*20-4),PaintColor(2),bf
-
-							DiamondBase = 1024 + PlayerSlot(RID).PlanetCount
-							for DiamSize as byte = 0 to 9
-								DiamL = (PlayersFound+1)*20-2 + DiamSize
-								DiamH = (PlayersFound+2)*20-4 - DiamSize
-								if DiamondBase-DiamSize >= 1024 then
-									line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(2)
-								end if
-								line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(2)
-							next
-						end if
-					end with
-					gfxString(PrintStr,768,(PlayersFound+1)*20,3,2,2,PaintColor(1))
-				end if
-			end with
-		next RID
-		
-		if MouseError = 0 AND ActualX >= 0 AND ActualY >= 0 then
-			gfxString("("+str(ActualX)+","+str(ActualY)+")",768,733,3,2,2,rgb(255,255,255))
-		end if
-		if ReplayerMode = MODE_CLIENT_NORMAL then
-			gfxString(str(TotalPlanets)+" planets, "+str(TotalShips)+" ships",768,753,3,2,2,rgb(255,255,255))
-		end if
-	elseif NearestPlan <= 0 then
-		dim as ushort ShipsCounted
-		gfxString("("+str(ActualX)+","+str(ActualY)+")",768,40,3,2,2,rgb(192,192,192))
-		gfxString("Deep space",768,60,3,2,2,rgb(255,255,255))
-		ShipsCounted = 0
-		for SID as short = 1 to LimitObjs
-			with Starships(SID)
-				if ViewGame.Academy then
-					if .XLoc = ActualX AND .YLoc = ActualY AND .ShipType > 0 then
-						with Coloring(.Ownership)
-							PaintColor(1) = rgb(.Red,.Green,.Blue)
-						end with
-						
-						ShipsCounted += 1
-						gfxstring(" "+str(SID)+". "+.ShipName,768,245+ShipsCounted*15,2,2,1,PaintColor(1))
-					end if
-				end if
-			end with
-		next SID
-		gfxString("Ships found: "+str(ShipsCounted),768,240,3,2,2,rgb(255,255,255))
-	else
-		dim as string FullObjName, ClimateStr, NativeStr, ResourceStr
-		dim as integer PopulationNum, UsableMetals, MinableOre, OreDensity, MiningRate, RacialMining, _
-			MaxNatives
-		dim as ushort ShipCX, ShipCY, ShipsCounted
-		dim as double MaxColonists
-
-		'With a planet selected, this provides a planet report with ships that are closest to the planet
-		with Planets(NearestPlan)
-			if ViewGame.Academy then
-				gfxString("("+str(ActualX)+","+str(ActualY)+")",768,40,3,2,2,rgb(192,192,192))
-			else
-				gfxString("Nearest Planet: "+str(NearestPlan),768,40,3,2,2,rgb(192,192,192))
-			end if
-			FullObjName = .ObjName
-			ClimateStr = "Climate: "
-			MaxColonists = sin(3.14 * (100 - .Temp)/100) * 100000
-			MaxNatives = sin(3.14 * (100 - .Temp)/100) * 150000
-			if .Temp < 15 then
-				ClimateStr += "Arctic "+str(.Temp)
-				MaxColonists = (299.9 + (200 * .Temp)) / ClimateDeathRate
-			elseif .Temp < 38 then
-				ClimateStr += "Cool   "+str(.Temp)
-			elseif .Temp < 63 then
-				ClimateStr += "Warm   "+str(.Temp)
-			elseif .Temp < 85 then
-				ClimateStr += "Tropic "+str(.Temp)
-			else
-				ClimateStr += "Desert "+str(.Temp)
-				MaxColonists = (20099.9 - (200 * .Temp)) / ClimateDeathRate
-			end if
-			
-			if .NativeType = 9 then
-				MaxNatives = .Temp * 1000
-			end if
-			
-			if .Natives > MaxNatives then
-				'Ensure that the meter remains solid. Besides, excess natives do not die
-				MaxNatives = .Natives
-			end if
-			
-			if .Ownership = 0 then
-				FullObjName += " [unowned]"
-
-				gfxString(FullObjName,768,60,3,2,2,rgb(255,255,255))
-				if .LastScan = 0 then
-					gfxString("Never scanned",768,80,3,2,2,rgb(128,128,128))
-				else
-					if .LastScan = TurnNum then
-						gfxString("Current information",768,80,3,2,2,rgb(192,192,192))
-					else
-						gfxString("Last scanned turn "+str(.LastScan),768,80,3,2,2,rgb(192,192,192))
-					end if
-					if ViewGame.Academy = 0 then
-						ClimateStr += " (FC "+str(.FCode)+")"
-					end if
-
-					gfxString(ClimateStr,768,100,3,2,2,rgb(255,255,255))
-
-					if .Natives > 0 then
-						PaintColor(1) = rgb(128,80,80)
-						line(1024,138)-(1024+int(.Natives/PopDividor),156),PaintColor(1),bf
-
-						DiamondBase = max(1024,1024+int(MaxNatives/PopDividor))
-						for DiamSize as byte = 0 to 9
-							DiamL = 138 + DiamSize
-							DiamH = 156 - DiamSize
-							if DiamondBase-DiamSize >= 1024 then
-								line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(1)
-							end if
-							line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(1)
-						next
-
-						PopulationNum = .Natives * 100
-						NativeStr = commaSep(PopulationNum)+" "
-						if (.NativeType >= 1 AND .NativeType <= 11) then
-							NativeStr += NativeRaces(.NativeType)
-						else
-							NativeStr += "Chupanoid"
-						end if
-						NativeStr += "s ("+str(.NativeGov*20)+"%)"
-						gfxString(NativeStr,768,140,3,2,2,rgb(255,255,255))
-					else
-						gfxString("No native life",768,140,3,2,2,rgb(255,255,255))
-					end if
-
-					if ViewGame.Academy then
-						for Mineral as byte = 1 to 3
-							select case Mineral
-								case 1 'Duranium
-									PaintColor(1) = rgb(128,64,128)
-									UsableMetals = .Dur
-									MinableOre = .GDur
-									OreDensity = .DDur
-									ResourceStr = "Du: "
 	
-								case 2 'Tritanium
-									PaintColor(1) = rgb(64,32,128)
-									UsableMetals = .Trit
-									MinableOre = .GTrit
-									OreDensity = .DTrit
-									ResourceStr = "Tr: "
-	
-								case 3 'Molybdenum
-									PaintColor(1) = rgb(128,128,0)
-									UsableMetals = .Moly
-									MinableOre = .GMoly
-									OreDensity = .DMoly
-									ResourceStr = "Mo: "
-	
-							end select
-							
-							if MinableOre > 0 then
-								line(1024,158+Mineral*20)-(1024+int(MinableOre/50),176+Mineral*20),PaintColor(1),bf
-							end if
-	
-							PaintColor(1) = rgb(255,255,255)
-							
-							if MinableOre >= 0 then
-								ResourceStr += str(MinableOre)+" ore ("+str(OreDensity)+"%)"
-							else
-								ResourceStr += "? ore (?%)"
-							end if
-							gfxString(ResourceStr,768,160+Mineral*20,3,2,2,PaintColor(1))
-						next Mineral
-
-						if .MineralMines = -1 then
-							ResourceStr = "Mines: ?/"
-						else
-							ResourceStr = "Mines: "+str(.MineralMines)+"/"
-						end if
-						if .Factories = -1 then
-							ResourceStr += "Factories: ?"
-						else
-							ResourceStr += "Factories: "+str(.Factories)
-						end if
-						gfxString(ResourceStr,768,240,3,2,2,rgb(255,255,255))
-					else
-						for Mineral as byte = 1 to 4
-							select case Mineral
-								case 1 'Neutronium
-									PaintColor(1) = rgb(0,128,0)
-									UsableMetals = .Neu
-									MinableOre = .GNeu
-									OreDensity = .DNeu
-									ResourceStr = "Ne: "
-	
-								case 2 'Duranium
-									PaintColor(1) = rgb(128,64,128)
-									UsableMetals = .Dur
-									MinableOre = .GDur
-									OreDensity = .DDur
-									ResourceStr = "Du: "
-	
-								case 3 'Tritanium
-									PaintColor(1) = rgb(64,32,128)
-									UsableMetals = .Trit
-									MinableOre = .GTrit
-									OreDensity = .DTrit
-									ResourceStr = "Tr: "
-	
-								case 4 'Molybdenum
-									PaintColor(1) = rgb(128,128,0)
-									UsableMetals = .Moly
-									MinableOre = .GMoly
-									OreDensity = .DMoly
-									ResourceStr = "Mo: "
-	
-							end select
-	
-							if UsableMetals > 0 then
-								line(1024,158+Mineral*20)-(1024+int(UsableMetals/50),176+Mineral*20),PaintColor(1),bf
-							end if
-	
-							DiamondBase = max(1024,1024+int((UsableMetals+MinableOre)/50))
-							for DiamSize as byte = 0 to 9
-								DiamL = 158+Mineral*20 + DiamSize
-								DiamH = 176+Mineral*20 - DiamSize
-								if DiamondBase-DiamSize >= 1024 then
-									line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(1)
-								end if
-								line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(1)
-							next
-	
-							PaintColor(1) = rgb(255,255,255)
-							if MinableOre >= 0 then
-								ResourceStr += str(UsableMetals)+"/"+str(MinableOre)+" ("+str(OreDensity)+"%)"
-							else
-								ResourceStr += "?/? (?%)"
-							end if
-							gfxString(ResourceStr,768,160+Mineral*20,3,2,2,PaintColor(1))
-						next Mineral
-	
-						if .Megacredits = -1 then
-							ResourceStr = "Cash: ?/"
-						else
-							ResourceStr = "Cash: "+str(.Megacredits)+"/"
-						end if
-						if .Supplies = -1 then
-							ResourceStr += "Supplies: ?"
-						else
-							ResourceStr += "Supplies: "+str(.Supplies)
-						end if
-						gfxString(ResourceStr,768,260,3,2,2,rgb(255,255,255))
-						if .MineralMines = -1 then
-							ResourceStr = "Mines: ?/"
-						else
-							ResourceStr = "Mines: "+str(.MineralMines)+"/"
-						end if
-						if .Factories = -1 then
-							ResourceStr += "Factories: ?"
-						else
-							ResourceStr += "Factories: "+str(.Factories)
-						end if
-						gfxString(ResourceStr,768,280,3,2,2,rgb(255,255,255))
-					end if
-				end if
-			else
-				dim as string OwnerStr
-				with PlayerSlot(.Ownership)
-					OwnerStr = .Race + " (" + .PlayerName + ")"
-					if gfxLength(OwnerStr,3,2,2) >= Sidebar then
-						OwnerStr = .PlayerName
-					end if
-				end with
-					
-				'Uses default mining rates
-				if PlayerSlot(.OwnerShip).Race = "Lizard" then
-					RacialMining = 200
-				elseif PlayerSlot(.OwnerShip).Race = "Fed" then
-					RacialMining = 70
-				else
-					RacialMining = 100
-				end if
-				
-				if PlayerSlot(.Ownership).Race = "Crystalline" then
-					MaxColonists = 1000 * .Temp
-				elseif PlayerSlot(.Ownership).Race = "Rebel" then
-					if .Temp < 20 then
-						MaxColonists = 90000
-					elseif .Temp >= 80 AND MaxColonists < 60 then
-						MaxColonists = 60
-					end if
-				elseif (PlayerSlot(.Ownership).Race = "Fascist" OR PlayerSlot(.Ownership).Race = "Fury" OR _
-					PlayerSlot(.Ownership).Race = "Robotic" OR PlayerSlot(.Ownership).Race = "Colonial") AND _
-					.Temp >= 80 AND MaxColonists < 60 then
-					MaxColonists = 60
-				end if
-				
-				'Newly discovered Botanicals allow for 50% more colonists
-				if .NativeType = 11 AND .Natives > 0 then
-					MaxColonists = int(MaxColonists * 1.5)
-				else
-					MaxColonists = int(MaxColonists)
-				end if
-				
-				if .Colonists > MaxColonists then
-					'Ensure that the meter remains solid
-					MaxColonists = .Colonists
-				end if
-
-				if .BasePresent <= 0 then
-					FullObjName += " [no base]"
-				else
-					if .DNeu = 50 AND .DDur = 15 AND .DTrit = 20 AND .DMoly = 95 then
-						FullObjName += " [homeworld]"
-					else
-						FullObjName += " [starbase]"
-					end if
-				end if
-
-				with Coloring(.Ownership)
-					PaintColor(1) = rgb(.Red,.Green,.Blue)
-				end with
-
-				gfxString(FullObjName,768,60,3,2,2,rgb(255,255,255))
-				gfxString(OwnerStr,768,80,3,2,2,PaintColor(1))
-				if ViewGame.Academy = 0 then
-					ClimateStr += " (FC "+str(.FCode)+")"
-				end if
-
-				PaintColor(1) = rgb(64,128,128)
-				line(1024,118)-(1024+int(.Colonists/PopDividor),136),PaintColor(1),bf
-
-				DiamondBase = max(1024,1024+int(MaxColonists/PopDividor))
-				for DiamSize as byte = 0 to 9
-					DiamL = 118 + DiamSize
-					DiamH = 136 - DiamSize
-					if DiamondBase-DiamSize >= 1024 then
-						line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(1)
-					end if
-					line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(1)
-				next
-
-				PopulationNum = .Colonists * 100
-				gfxString(ClimateStr,768,100,3,2,2,rgb(255,255,255))
-				gfxString(commaSep(PopulationNum)+" colonists",768,120,3,2,2,rgb(255,255,255))
-				
-				if .Natives > 0 then
-					PaintColor(1) = rgb(128,80,80)
-					line(1024,138)-(1024+int(.Natives/PopDividor),156),PaintColor(1),bf
-
-					DiamondBase = max(1024,1024+int(MaxNatives/PopDividor))
-					for DiamSize as byte = 0 to 9
-						DiamL = 138 + DiamSize
-						DiamH = 156 - DiamSize
-						if DiamondBase-DiamSize >= 1024 then
-							line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(1)
-						end if
-						line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(1)
-					next
-
-					PopulationNum = .Natives * 100
-					NativeStr = commaSep(PopulationNum)+" "
-					if (.NativeType >= 1 AND .NativeType <= 11) then
-						NativeStr += NativeRaces(.NativeType)
-					else
-						NativeStr += "Chupanoid"
-					end if
-					NativeStr += "s ("+str(.NativeGov*20)+"%)"
-					gfxString(NativeStr,768,140,3,2,2,rgb(255,255,255))
-						
-					'Reptilians double the base mining
-					if .NativeType = 3 then
-						RacialMining *= 2
-					end if
-				else
-					gfxString("No native life",768,140,3,2,2,rgb(255,255,255))
-				end if
-
-				if ViewGame.Academy then
-					for Mineral as byte = 1 to 3
-						select case Mineral
-							case 1 'Duranium
-								PaintColor(1) = rgb(128,64,128)
-								UsableMetals = .Dur
-								MinableOre = .GDur
-								OreDensity = .DDur
-								MiningRate = int(.DDur * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Du: "
-	
-							case 2 'Tritanium
-								PaintColor(1) = rgb(64,32,128)
-								UsableMetals = .Trit
-								MinableOre = .GTrit
-								OreDensity = .DTrit
-								MiningRate = int(.DTrit * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Tr: "
-	
-							case 3 'Molybdenum
-								PaintColor(1) = rgb(128,128,0)
-								UsableMetals = .Moly
-								MinableOre = .GMoly
-								OreDensity = .DMoly
-								MiningRate = int(.DMoly * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Mo: "
-	
-						end select
-	
-						if MinableOre > 0 then
-							line(1024,158+Mineral*20)-(1024+int(MinableOre/50),176+Mineral*20),PaintColor(1),bf
-						end if
-	
-						PaintColor(1) = rgb(255,255,255)
-						if MiningRate > MinableOre then
-							PaintColor(2) = rgb(255,255,0)
-							MiningRate = MinableOre
-						else
-							PaintColor(2) = 0
-						end if
-						ResourceStr += str(MinableOre)+" ore ("+str(OreDensity)+"%) +"+str(MiningRate)
-						gfxString(ResourceStr,768,160+Mineral*20,3,2,2,PaintColor(1),PaintColor(2))
-					next Mineral
-	
-					gfxString("Mines: "+str(.MineralMines)+"/Factories: "+str(.Factories),768,240,3,2,2,rgb(255,255,255))
-				else
-					for Mineral as byte = 1 to 4
-						select case Mineral
-							case 1 'Neutronium
-								PaintColor(1) = rgb(0,128,0)
-								UsableMetals = .Neu
-								MinableOre = .GNeu
-								OreDensity = .DNeu
-								MiningRate = int(.DNeu * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Ne: "
-	
-							case 2 'Duranium
-								PaintColor(1) = rgb(128,64,128)
-								UsableMetals = .Dur
-								MinableOre = .GDur
-								OreDensity = .DDur
-								MiningRate = int(.DDur * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Du: "
-	
-							case 3 'Tritanium
-								PaintColor(1) = rgb(64,32,128)
-								UsableMetals = .Trit
-								MinableOre = .GTrit
-								OreDensity = .DTrit
-								MiningRate = int(.DTrit * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Tr: "
-	
-							case 4 'Molybdenum
-								PaintColor(1) = rgb(128,128,0)
-								UsableMetals = .Moly
-								MinableOre = .GMoly
-								OreDensity = .DMoly
-								MiningRate = int(.DMoly * .MineralMines * RacialMining / (100^2) + 0.5)
-								ResourceStr = "Mo: "
-	
-						end select
-	
-						if UsableMetals > 0 then
-							line(1024,158+Mineral*20)-(1024+int(UsableMetals/50),176+Mineral*20),PaintColor(1),bf
-						end if
-	
-						DiamondBase = max(1024,1024+int((UsableMetals+MinableOre)/50))
-						for DiamSize as byte = 0 to 9
-							DiamL = 158+Mineral*20 + DiamSize
-							DiamH = 176+Mineral*20 - DiamSize
-							if DiamondBase-DiamSize >= 1024 then
-								line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(1)
-							end if
-							line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(1)
-						next
-	
-						PaintColor(1) = rgb(255,255,255)
-						if MiningRate > MinableOre then
-							PaintColor(2) = rgb(255,255,0)
-							MiningRate = MinableOre
-						else
-							PaintColor(2) = 0
-						end if
-						ResourceStr += str(UsableMetals)+"/"+str(MinableOre)+" ("+str(OreDensity)+"%) +"+str(MiningRate)
-						gfxString(ResourceStr,768,160+Mineral*20,3,2,2,PaintColor(1),PaintColor(2))
-					next Mineral
-	
-					gfxString("Cash: "+str(.Megacredits)+"/Supplies: "+str(.Supplies),768,260,3,2,2,rgb(255,255,255))
-					gfxString("Mines: "+str(.MineralMines)+"/Factories: "+str(.Factories),768,280,3,2,2,rgb(255,255,255))
-				end if
-			end if
-			
-			ShipsCounted = 0
-			for SID as short = 1 to LimitObjs
-				with Starships(SID)
-					if ViewGame.Academy then
-						if .XLoc = ActualX AND .YLoc = ActualY AND .ShipType > 0 then
-							with Coloring(.Ownership)
-								PaintColor(1) = rgb(.Red,.Green,.Blue)
-							end with
-							
-							ShipsCounted += 1
-							gfxstring("<"+str(SID)+"> "+.ShipName,768,245+ShipsCounted*15,2,2,1,PaintColor(1))
-						end if
-					else
-						if .ShipType > 0 AND .XLoc >= MinXPos AND .YLoc >= MinYPos AND _
-							.XLoc < MaxXPos AND .YLoc < MaxYPos then
-							dim as string Prefix
-							
-							ShipCX = (.XLoc-AbsMin)/MapSize*766
-							ShipCY = 767-(.YLoc-AbsMin)/MapSize*766
-	
-							if Territory(ShipCX,ShipCY) = NearestPlan then
-								with Coloring(.Ownership)
-									PaintColor(1) = rgb(.Red,.Green,.Blue)
-								end with
-								
-								ShipsCounted += 1
-								if .XLoc = Planets(NearestPlan).X AND .YLoc = Planets(NearestPlan).Y then
-									Prefix = "<"+str(SID)+"> "
-								elseif sqr(abs(.XLoc - Planets(NearestPlan).X)^2 + abs(.YLoc - Planets(NearestPlan).Y)^2) <= 3 then
-									Prefix = "["+str(SID)+"] "
-								else
-									Prefix = " "+str(SID)+". "
-								end if
-		
-								gfxstring(Prefix+.ShipName,768,285+ShipsCounted*15,2,2,1,PaintColor(1))
-								
-								gfxstring("("+str(.XLoc)+","+str(.YLoc)+")",1024,285+ShipsCounted*15,2,2,1,PaintColor(1))
-								'gfxstring(str(.Neu)+" Ne  "+str(.Dur)+" Du  "+str(.Trit)+" Tr  "+str(.Moly)+" Mo  "+str(.Supplies)+" sp  "+str(.Megacredits)+" mc",1150,285+ShipsCounted*15,2,2,1,PaintColor(1))
-								
-								/'
-								if ShipsCounted > SkipShips AND ShipsCounted - SkipShips <= ShipsPerPage then
-									with Coloring(.Ownership)
-										color rgb(.Red,.Green,.Blue)
-									end with
-									locate 34-ShipsCounted+SkipShips,97
-									if len(.ShipName) <= 27 then
-										print .ShipName;
-									else
-										print left(.ShipName,24);
-										color rgb(255,255,255)
-										print "...";
-									end if
-									if .Cloaked then
-										color rgb(128,128,128)
-									else
-										color rgb(255,255,255)
-									end if
-									locate 34-ShipsCounted+SkipShips,125
-									print "#"& SID
-								elseif ShipsCounted > SkipShips then
-									MoreShips = 1
-								end if
-								'/
-							end if
-						end if
-					end if
-				end with
-			next SID
+	'Scalable "Remastered"-style UI
+	if MouseError = 0 then
+		with CursorPos	
+			.X = (MouseX / ViewPort.Zoom + ViewPort.X) - CanvasScreen.Height/2 / ViewPort.Zoom
+			.Y = CanvasScreen.Height/2 / ViewPort.Zoom + (-MouseY / ViewPort.Zoom + ViewPort.Y)
 		end with
 	end if
-
-	/'
-	locate 2+ParticipatingPlayers,97
-	color rgb(150,150,150)
-	print string(30,"-")
-	color rgb(255,255,255)
-	'/
-
-	with ViewGame
-		if MouseError = 0 AND MouseX < 768 AND MouseY < 768 then
-			ActualX = 2000-MapSize/2 + MouseX/768*MapSize
-			ActualY = 2000+MapSize/2 - MouseY/768*MapSize
-		else
-			ActualX = -2
-			ActualY = -2
+	
+	'Paint objects as appropriate
+	for DrawLayer as byte = 1 to 3
+		if DrawLayer = 2 AND ViewGame.Sphere then
+			'Wraparound Border
+			dim as integer WrapWidth, WrapHeight
+			dim as ViewSpecs EndingPos
+			
+			WrapWidth = ViewGame.MapWidth + 20
+			WrapHeight = ViewGame.MapHeight + 20
+			
+			RelativePos = getRelativePos(2000 - WrapWidth/2, 2000 - WrapHeight/2)
+			EndingPos = getRelativePos(2000 + WrapWidth/2, 2000 + WrapHeight/2)
+			line(RelativePos.X,RelativePos.Y)-(EndingPos.X,EndingPos.Y),rgb(255,255,255),b,&b1100110011001100
 		end if
-
-		if .Academy then
-			NearestPlan = -1
-			ShipsFound = 0
-			for PID as short = 1 to LimitObjs
-				if Planets(PID).X = ActualX AND Planets(PID).Y = ActualY then
-					NearestPlan = PID
+		
+		for OID as integer = 1 to MetaLimit
+			if DrawLayer = 1 then
+				'Nebulae
+				with Nebulae(OID)
+					if .Intensity > 0 then
+						RelativePos = getRelativePos(.X, .Y)
+						circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,rgb(0,16,4),,,,F
+					end if
+				end with
+				
+				if OID >= LimitObjs then
 					exit for
+				end if 
+				
+			elseif DrawLayer = 2 then
+				if RedrawIslands = 0 AND OID = 1 then
+					put (0,0),IslandMap,trans
 				end if
-			next PID
-			
-			if ReplayerMode = MODE_CLIENT_NORMAL then
-				for SID as short = 1 to LimitObjs
-					if Starships(SID).ShipType > 0 AND Starships(SID).XLoc = ActualX AND Starships(SID).YLoc = ActualY then
-						ShipsFound = 1
+				
+				'Minefields
+				with Minefields(OID)
+					if .MineUnits > 0 then
+						RelativePos = getRelativePos(.X, .Y)
+						
+						circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,convertColor(Coloring(.Ownership))
 					end if
-				next SID
-			end if
-		else
-			ShipsFound = 0
-			if MouseError = 0 AND MouseX < 768 AND MouseY < 768 then
-				NearestPlan = Territory(MouseX,MouseY)
+				end with
+				
 			else
-				NearestPlan = -1
+				'Nebulae selection
+				with Nebulae(OID)
+					if SelectedObjType = REPORT_NEB AND SelectedID = OID then
+						RelativePos = getRelativePos(.X, .Y)
+						for Seg as short = 10 to 350 step 20
+							circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,rgb(255,255,255),degtorad(Seg),degtorad(Seg+10)
+						next Seg
+					end if
+				end with
+
+				'Star Clusters
+				with StarClusters(OID)
+					if .Mass > 0 then
+						dim as uinteger TempColor
+						RelativePos = getRelativePos(.X, .Y)
+						
+						if .Temperature <= 3000 then
+							TempColor = rgb(192,0,0)
+						elseif .Temperature <= 6000 then
+							TempColor = rgb(192,96,0)
+						elseif .Temperature <= 10000 then
+							TempColor = rgb(192,192,0)
+						elseif .Temperature <= 20000 then
+							TempColor = rgb(192,192,192)
+						else
+							TempColor = rgb(192,192,255)
+						end if
+						
+						circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,TempColor,,,,F
+						if .Mass > .Radius^2 then
+							for Seg as short = 0 to 350 step 10
+								circle(RelativePos.X,RelativePos.Y),ceil(sqr(.Mass))*ViewPort.Zoom,TempColor,degtorad(Seg+2.5),degtorad(Seg+7.5)
+							next Seg
+						end if
+					end if
+				end with
+	
+				'Ion Storms
+				with IonStorms(OID)
+					if .Voltage > 0 then
+						RelativePos = getRelativePos(.X, .Y)
+						
+						circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,convertColor(Rainbow)
+						line(RelativePos.X+cos(degtorad(90-.Heading))*.Warp^2*ViewPort.Zoom,RelativePos.Y-sin(degtorad(90-.Heading))*.Warp^2*ViewPort.Zoom)-_
+							(RelativePos.X,RelativePos.Y),convertColor(Rainbow)
+					end if
+				end with
+				
+				'Wormholes
+				with Wormholes(OID)
+					if .Stability > 0 then
+						dim as ViewSpecs EndingPos
+						
+						RelativePos = getRelativePos(.X, .Y)
+						circle(RelativePos.X,RelativePos.Y),3,rgb(128,255,240)
+						
+						if .DestX > 0 AND (.DestX > .X OR (.DestX = .X AND .DestY > .Y)) then 
+							EndingPos = getRelativePos(.DestX, .DestY)
+							line(RelativePos.X,RelativePos.Y)-(EndingPos.X,EndingPos.Y),rgb(128,255,240),,&b0011110000111100
+						end if
+					end if
+				end with
+				
+				'Artifacts
+				with Artifacts(OID)
+					if .Namee <> "" then
+						RelativePos = getRelativePos(.X, .Y)
+						
+						drawFlag(RelativePos.X,RelativePos.Y)
+					end if
+				end with
+				
+				'Planets
+				with Planets(OID)
+					if .ObjName <> "" then
+						RelativePos = getRelativePos(.X, .Y)
+						
+						'Check for connections
+						if RedrawIslands = 1 AND RelativePos.X > -85 * ViewPort.Zoom AND RelativePos.Y > -85 * ViewPort.Zoom AND _
+							RelativePos.X < CanvasScreen.Wideth + 85 * ViewPort.Zoom AND RelativePos.Y < CanvasScreen.Height + 85 * ViewPort.Zoom then
+							for PID as short = OID+1 to LimitObjs
+								if Planets(PID).ObjName <> "" AND sqr((.X - Planets(PID).X)^2 + (.Y - Planets(PID).Y)^2) <= 84.554 then
+									dim as ViewSpecs Neighbor
+									
+									Neighbor.X = (Planets(PID).X - ViewPort.X) * ViewPort.Zoom + CanvasScreen.Height/2
+									Neighbor.Y = CanvasScreen.Height/2 - (Planets(PID).Y - ViewPort.Y) * ViewPort.Zoom
+									
+									line IslandMap,(RelativePos.X,RelativePos.Y)-(Neighbor.X,Neighbor.Y),rgb(48,48,48)
+								end if 
+							next PID
+						end if
+						
+						if .Ownership = 0 then
+							dim as uinteger ScanColor = rgb(192,192,192)
+							
+							if .LastScan = 0 then
+								ScanColor = rgb(64,64,64)
+							end if
+							pset(RelativePos.X,RelativePos.Y),ScanColor
+						else
+							PlayerSlot(.Ownership).PlanetCount += 1
+							PlayerSlot(.Ownership).Starbases += sgn(.BasePresent)
+							circle(RelativePos.X,RelativePos.Y),1+sgn(Planets(OID).BasePresent),convertColor(Coloring(.Ownership)),,,,F
+			
+							PlayerSlot(.Ownership).TotalNeu += .Neu
+							PlayerSlot(.Ownership).TotalDur += .Dur
+							PlayerSlot(.Ownership).TotalTrit += .Trit
+							PlayerSlot(.Ownership).TotalMoly += .Moly
+							PlayerSlot(.Ownership).TotalClans += .Colonists
+							PlayerSlot(.Ownership).TotalMoney += .Megacredits
+							PlayerSlot(.Ownership).TotalSupplies += .Supplies
+							TotalPlanets += 1
+						end if
+					end if
+				end with
+				
+				'Ships
+				with Starships(OID)
+					if .ShipType > 0 AND .Ownership > 0 then
+						TotalShips += 1
+					end if
+					
+					if .XLoc >= MinXPos AND .XLoc < MaxYPos AND .YLoc >= MinXPos AND .YLoc < MaxYPos AND _
+						.Ownership > 0 then
+						dim as short CalcX, CalcY, Orbiting
+						RelativePos = getRelativePos(.XLoc, .YLoc)
+		
+						for PID as short = 1 to LimitObjs
+							if Planets(PID).X = .XLoc AND Planets(PID).Y = .YLoc then
+								Orbiting = 1
+								exit for
+							end if
+						next PID
+						
+						if Orbiting then
+							circle(RelativePos.X,RelativePos.Y),5,convertColor(Coloring(.Ownership))
+						else
+							pset(RelativePos.X,RelativePos.Y),convertColor(Coloring(.Ownership))
+						end if
+						
+						if SelectedID = OID AND SelectedObjType = REPORT_SHIP AND _
+							(.XLoc <> .TargetX OR .YLoc <> .TargetY) then
+							dim as ViewSpecs EndingPos = getRelativePos(.TargetX, .TargetY)
+
+							line(RelativePos.X,RelativePos.Y)-(EndingPos.X,EndingPos.Y),rgb(255,176,240),,DestPattern
+						end if
+					end if
+				end with
+				
+				if OID >= LimitObjs then
+					exit for
+				end if 
 			end if
+		next OID
+	next DrawLayer
+	
+	'Flexible Sidebar
+	TurnStr = "Turn "+str(TurnNum)
+	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+" ",3,2,2) - gfxLength(TurnStr,3,2,2), CanvasScreen.Height)
+	line(Sidebar,0)-(CanvasScreen.Wideth-1,39),ReportBG,bf
+	
+	gfxString(GameName,Sidebar,0,3,2,2,rgb(255,215,0))
+	gfxString(TurnStr,Sidebar+gfxLength(GameName+" ",3,2,2),0,3,2,2,rgb(255,255,255))
+	
+	if SelectedObjType > 0 then
+		getReport
+	elseif MouseError = 0 then
+		with CursorPos
+			gfxString("("+str(.X)+","+str(.Y)+")",Sidebar,20,3,2,2,rgb(255,255,255))
+		end with
+		
+		'Object selection WIP
+		if (ButtonCombo AND (1 SHL 0)) then
+			dim as double MinDist = 1e6, CurDist
+			
+			for OID as integer = 1 to MetaLimit
+				if OID < LimitObjs then
+					with IonStorms(OID)
+						if .Voltage > 0 then
+							RelativePos = getRelativePos(.X, .Y)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+							
+							if CurDist < MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_ION
+								SelectedID = OID
+							end if
+						end if
+					end with
+					
+					with Starships(OID)
+						if .ShipType > 0 then
+							RelativePos = getRelativePos(.XLoc, .YLoc)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+							
+							if CurDist < MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_SHIP
+								SelectedID = OID
+							end if
+						end if
+					end with
+					
+					with StarClusters(OID)
+						if .Mass > 0 then
+							RelativePos = getRelativePos(.X, .Y)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+							
+							if CurDist < MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_STAR
+								SelectedID = OID
+							end if
+						end if
+					end with
+					
+					with Planets(OID)		
+						if .ObjName <> "" then				
+							RelativePos = getRelativePos(.X, .Y)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+							
+							if CurDist <= MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_PLAN
+								SelectedID = OID
+							end if
+						end if
+					end with
+					
+					with Nebulae(OID)
+						if .Intensity > 0 then
+							RelativePos = getRelativePos(.X, .Y)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+							
+							if CurDist < MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_NEB
+								SelectedID = OID
+							end if
+						end if
+					end with
+				
+					with Wormholes(OID)
+						if .Stability > 0 then
+							RelativePos = getRelativePos(.X, .Y)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+								
+							if CurDist < MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_WORM
+								SelectedID = OID
+							end if
+						end if
+					end with
+				end if
+				
+				with Minefields(OID)
+					if .MineUnits > 0 then
+						RelativePos = getRelativePos(.X, .Y)
+						CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+						
+						if CurDist < MinDist then
+							MinDist = CurDist
+							SelectedObjType = REPORT_MINE
+							SelectedID = OID
+						end if
+					end if
+				end with
+				
+				AuxList(OID) = ResetAux
+			next OID
+			
+			syncReport(1)
 		end if
-	end with
+	else
+		gfxString(commaSep(TotalPlanets)+" planets + "+commaSep(TotalShips)+" ships",Sidebar,20,3,2,2,rgb(255,255,255))
+	end if
+
+	RedrawIslands = max(RedrawIslands - 1, 0)
+	'Allow scrolling while no objective is selected
+	if MouseError = 0 AND SelectedObjType = 0 then
+		if MouseX <= 16 AND ViewPort.X > 2000 - ViewGame.MapWidth/2 then
+			ViewPort.X -= 8 / ViewPort.Zoom
+			RedrawIslands = 2
+		end if
+		if MouseX >= CanvasScreen.Wideth - 16 AND ViewPort.X < 2000 + ViewGame.MapWidth/2 then
+			ViewPort.X += 8 / ViewPort.Zoom
+			RedrawIslands = 2
+		end if
+
+		if MouseY >= CanvasScreen.Height - 16 AND ViewPort.Y > 2000 - ViewGame.MapHeight/2 then
+			ViewPort.Y -= 8 / ViewPort.Zoom
+			RedrawIslands = 2
+		end if
+		if MouseY <= 16 AND ViewPort.Y < 2000 + ViewGame.MapHeight/2 then
+			ViewPort.Y += 8 / ViewPort.Zoom
+			RedrawIslands = 2
+		end if
+	end if
 	
 	screencopy
 	sleep 15
 	InType = inkey
+	if left(InType,1) <> chr(255) then
+		InType = lcase(InType)
+	end if
+	for NID as byte = 1 to 10
+		if InType = right(str(NID),1) then
+			dim as short SelAux = NID + AuxPage * 10
+			if SelAux <= AuxCount then
+				with AuxList(SelAux)
+					SelectedID = .ObjID
+					SelectedObjType = .ObjType
+				end with
+			end if
+		end if
+	next NID
+	
 	select case InType
-		case PageUp
+		case "i"
 			'Goes back one turn, if possible
-			if CanNavigate(0) then
+			if CanNavigate(0) = 2 then
 				TurnNum -= 1
 				loadTurnExtras
+			elseif CanNavigate(0) = 1 then
+				Results = loadTurn(GameId,TurnNum-1,0)
+				while inkey <> "":wend
+				
+				if Results = 0 then
+					TurnNum -= 1
+					loadTurnExtras
+				end if
 			end if
-		case PageDown
+		case "o"
 			'Goes forward one turn
-			if CanNavigate(1) then
+			if CanNavigate(1) = 2 then
 				TurnNum += 1
 				loadTurnExtras
+			elseif CanNavigate(1) = 1 then
+				Results = loadTurn(GameId,TurnNum+1,0)
+				while inkey <> "":wend
+				
+				if Results = 0 then
+					TurnNum += 1
+					loadTurnExtras
+				end if
 			end if
-		case FunctionOne
-			'Switches to Normal Mode
-			ReplayerMode = MODE_CLIENT_NORMAL
-		case FunctionTwo
-			'Switches to Island Mode
-			ReplayerMode = MODE_CLIENT_ISLAND
+		case "-"
+			ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
+			RedrawIslands = 1
+		case "+"
+			ViewPort.Zoom = min(ViewPort.Zoom * 2, 8)
+			RedrawIslands = 1
+		case "b"
+			if BaseFound > 0 AND SelectedObjType <> REPORT_BASE then
+				SelectedObjType = REPORT_BASE
+				SelectedID = BaseFound
+				
+				StorePage = 0
+			end if
+		case "p"
+			if PlanetFound > 0 AND SelectedObjType <> REPORT_PLAN then
+				SelectedObjType = REPORT_PLAN
+				SelectedID = PlanetFound
+			end if
+		case HomeKey
+			if StorePage > 0 then
+				StorePage -= 1
+			end if
+		case EndKey
+			if MoreStorage then
+				StorePage += 1
+			end if
+		case PageUp
+			if AuxPage > 0 then
+				AuxPage -= 1
+			end if
+		case PageDown
+			if AuxPage < ceil(AuxCount/10) - 1 then
+				AuxPage += 1
+			end if
+		case "x"
+			clearReport
 		case CtrlR
 			'Reloads the starmap
 			updateStarmap
@@ -1041,7 +700,7 @@ sub renderClient
 		case chr(255,107)
 			'Ensures program is closed by hitting the X button
 			ReplayerMode = MODE_EXIT
-		case chr(27)
+		case EscKey
 			'If in a game and holding SHIFT, then exit. Otherwise, return to main menu
 			if multikey(SC_LSHIFT) then
 				ReplayerMode = MODE_EXIT
@@ -1050,6 +709,8 @@ sub renderClient
 					prepCanvas(1024,768)
 				end if
 				
+				resetViewport
+				SelectedObjType = 0
 				ViewGame.PlayerCount = 0
 				GameID = 0
 				ReplayerMode = MODE_MENU
@@ -1057,4 +718,3 @@ sub renderClient
 			end if
 	end select
 end sub
-

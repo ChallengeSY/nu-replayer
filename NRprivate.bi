@@ -11,7 +11,7 @@ sub importPrivateGame
 		line(CanvasScreen.Wideth/2+10,250)-(CanvasScreen.Wideth-6,274),rgb(0,0,0),bf
 		gfxstring("Enter Game ID: "+str(GameNum),CanvasScreen.Wideth/2+10,250,5,4,2,rgb(255,255,0))
 
-		if InType = chr(27) then
+		if InType = EscKey then
 			if GameNum > 0 then
 				GameNum = 0
 			else
@@ -26,7 +26,7 @@ sub importPrivateGame
 		screencopy
 		sleep 15
 		InType = inkey
-	loop until InType = chr(13)
+	loop until InType = EnterKey
 	ErrorMsg = ""
 
 	if GameNum > 0 then

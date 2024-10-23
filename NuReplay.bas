@@ -1,6 +1,5 @@
 #include "NuReplay.bi"
 declare sub loadTurnKB(KBCount as integer, Players as ubyte)
-declare sub loadTurnTerritory(AmtDone as short)
 
 #include "LoadTurn.bi"
 
@@ -27,7 +26,6 @@ sub cleaning destructor
 	print #1, quote("Borderless");",";BorderlessFS
 	close #1
 	
-	ImageDestroy(TerritoryMap)
 	ImageDestroy(IslandMap)
 	ImageDestroy(Indeterminate)
 	#IFNDEF __FORCE_OFFLINE__
@@ -145,9 +143,8 @@ if screenptr = 0 then
 	end -2
 end if
 
-'Creates the territory and island maps
-TerritoryMap = ImageCreate(768,768)
-IslandMap =  ImageCreate(768,768)
+'Creates an empty island map
+IslandMap =  ImageCreate(4096,2160)
 
 Indeterminate = ImageCreate(50,20)
 line Indeterminate,(0,0)-(49,19),rgb(0,0,0),bf
@@ -178,6 +175,7 @@ updateGameList
 if APIkey <> "" then
 	recordPersonalGames
 end if
+resetViewport
 
 'In case some people don't like the music, a command option has been provided
 #IFDEF __NR_AUDIO__

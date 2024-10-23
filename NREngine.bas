@@ -26,8 +26,7 @@ sub updateGameList(DownloadList as byte = 0)
 	dim as longint BytesDownloaded = 0	
 	
 	if DownloadList then
-		cls
-		print "Downloading a raw game list..."
+		createMeter(0,"Downloading raw game list...")
 		screencopy
 
 		dim SendBuffer as string
@@ -60,8 +59,7 @@ sub updateGameList(DownloadList as byte = 0)
 					print #7, RecvBuffer;
 					BytesDownloaded += Bytes
 
-					locate 2, 1 
-					print "    ";commaSep(BytesDownloaded);" B downloaded so far.    "
+					createMeter(0,commaSep(BytesDownloaded)+" bytes downloaded so far for the raw game list")
 					screencopy
 				loop
 				close #7
@@ -73,8 +71,7 @@ sub updateGameList(DownloadList as byte = 0)
 	#ENDIF
 
 	if FileDateTime("raw/listgames.txt") > FileDateTime("games/List.csv") then
-		cls
-		print "Converting game list...";
+		createMeter(0,"Converting game list...")
 		screencopy
 		if listGames then
 			print " Failure! Could not load game list.";
@@ -89,16 +86,11 @@ sub updateGameList(DownloadList as byte = 0)
 end sub
 
 sub loadGame(ByRef LoadID as uinteger)
-	/'
- 	 ' Loads an existing game into Nu Replayer. Networking related functions
- 	 ' will be handled seperately when they are implemented
-	 '/
+ 	'Loads an existing game into Nu Replayer.
 
 	dim as byte Result
 	if LoadID > 0 then
-		dim as string SettingsFile, MapFile, TerritoryFile, ShiplistFile
-
-		line IslandMap,(0,0)-(767,767),rgb(255,0,255),bf
+		dim as string SettingsFile, MapFile, ShiplistFile
 
 		dim as ubyte LineStr(1 to 3) => {162, 81, 49}
 		dim as short AdjustX, AdjustY, LoadObjID, MapSize, AbsMin
@@ -153,15 +145,13 @@ sub loadGame(ByRef LoadID as uinteger)
 
 				if .DynamicMap then
 					MapFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Map.csv"
-					TerritoryFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Territory.csv"
 				else
 					MapFile = "games/"+str(GameID)+"/Map.csv"
-					TerritoryFile = "games/"+str(GameID)+"/Territory.csv"
 				end if
 				ShiplistFile = "games/"+str(GameID)+"/Shiplist.csv"
 			end with
 
-			open "debugout.txt" for output as #13
+			open "debugout.txt" for output as #19
 			if FileExists(ShiplistFile) then
 				open ShiplistFile for input as #3
 				do
@@ -260,16 +250,6 @@ sub loadGame(ByRef LoadID as uinteger)
 					next PID
 					close #3
 
-					if .Academy = 0 then
-						open TerritoryFile for input as #3
-						for TerrY as short = 0 to 767
-							for TerrX as short = 0 to 767
-								input #3, Territory(TerrX,TerrY)
-							next TerrX
-						next TerrY
-						close #3
-					end if
-
 					if .MapWidth = 0 OR .MapHeight = 0 then
 						MinYPos = MinXPos
 						MaxYPos = MaxXPos
@@ -300,111 +280,15 @@ sub loadGame(ByRef LoadID as uinteger)
 					end if
 				next PID
 				close #3
-
-				open "games/Default Territory.csv" for input as #3
-				for TerrY as short = 0 to 767
-					for TerrX as short = 0 to 767
-						input #3, Territory(TerrX,TerrY)
-					next TerrX
-				next TerrY
-				close #3
-			end if
-
-			
-			if ViewGame.Academy then
-				'For academy games, all ships move 2.8 AU maximum
-				for PID as short = 1 to LimitObjs
-					for CPID as short = 1 to LimitObjs
-						with Planets(PID)
-							if .X >= MinXPos AND .X < MaxXPos AND .Y >= MinYPos AND .Y < MaxYPos AND _
-								PID < CPID AND Planets(CPID).X >= MinXPos AND Planets(CPID).X < MaxXPos AND _
-								Planets(CPID).Y >= MinYPos AND Planets(CPID).Y < MaxYPos then
-								dim as short CalcX(1), CalcY(1)
-								dim as single CalcedDist
-								CalcX(0) = (.X-AbsMin)/MapSize*766
-								CalcY(0) = 767-(.Y-AbsMin)/MapSize*766
-								CalcX(1) = (Planets(CPID).X-AbsMin)/MapSize*766
-								CalcY(1) = 767-(Planets(CPID).Y-AbsMin)/MapSize*766
-
-								CalcedDist = sqr((.X - (Planets(CPID).X))^2 + _
-									(.Y - (Planets(CPID).Y))^2)
-
-								if CalcedDist < 3 then
-									line IslandMap,(CalcX(0),CalcY(0))-_
-										(CalcX(1),CalcY(1)),_
-										rgb(112,112,112)
-								end if
-							end if
-						end with
-					next CPID
-				next PID
-			else
-				'For other games, normal ships can move 81 LY max, and gravitonics can move 162 LY max
-				for PID as short = 1 to LimitObjs
-					for CPID as short = 1 to LimitObjs
-						with Planets(PID)
-							if .X >= MinXPos AND .X < MaxXPos AND .Y >= MinYPos AND .Y < MaxYPos AND _
-								PID < CPID AND Planets(CPID).X >= MinXPos AND Planets(CPID).X < MaxXPos AND _
-								Planets(CPID).Y >= MinYPos AND Planets(CPID).Y < MaxYPos then
-								dim as short CalcX(1), CalcY(1), Brightness
-								dim as single CalcedDist
-								CalcX(0) = (.X-AbsMin)/MapSize*766
-								CalcY(0) = 767-(.Y-AbsMin)/MapSize*766
-								CalcX(1) = (Planets(CPID).X-AbsMin)/MapSize*766
-								CalcY(1) = 767-(Planets(CPID).Y-AbsMin)/MapSize*766
-
-								'Include common points in the warp well, and base calcs on those
-								for GravAngle as ubyte = 1 to 8
-									select case GravAngle
-										case 1
-											AdjustX = 3
-											AdjustY = 0
-										case 2
-											AdjustX = 2
-											AdjustY = 2
-										case 3
-											AdjustX = 0
-											AdjustY = 3
-										case 4
-											AdjustX = -2
-											AdjustY = 2
-										case 5
-											AdjustX = -3
-											AdjustY = 0
-										case 6
-											AdjustX = -2
-											AdjustY = -2
-										case 7
-											AdjustX = 0
-											AdjustY = -3
-										case 8
-											AdjustX = 2
-											AdjustY = -2
-									end select
-
-									CalcedDist = sqr((.X - (Planets(CPID).X + AdjustX))^2 + _
-										(.Y - (Planets(CPID).Y + AdjustY))^2)
-
-									if CalcedDist < 81.544 then
-										line IslandMap,(CalcX(0),CalcY(0))-_
-											(CalcX(1),CalcY(1)),_
-											rgb(112,112,112)
-										exit for
-									end if
-								next GravAngle
-							end if
-						end with
-					next CPID
-				next PID
 			end if
 
 			loadTurnExtras
 		end if
 
-		close #13
+		close #19
 	end if
 
-	ReplayerMode = MODE_CLIENT_NORMAL
+	ReplayerMode = MODE_CLIENT
 end sub
 
 sub recordPersonalGames

@@ -12,13 +12,23 @@ dim shared as integer MinTurn, MaxTurn, GameNum, TurnNum, TurnsDone, TurnsMax, T
 dim shared as string ProgressMeter, GamePath
 
 GameNum = valint(Command(1))
-MinTurn = valint(Command(2))
+MinTurn = max(valint(Command(2)),1)
 MaxTurn = valint(Command(3))
 
-if GameNum = 0 OR MinTurn = 0 OR MaxTurn = 0 OR MinTurn > MaxTurn then
+if MaxTurn = 0 then
+	GamePath = "raw/"+str(GameNum)+"/"
+	for TurnNum = 1 to 99999
+		if FileExists(GamePath+"player1-turn"+str(TurnNum)+".trn") = 0 then
+			MaxTurn = TurnNum - 1
+			exit for
+		end if
+	next TurnNum
+end if
+
+if GameNum = 0 OR MinTurn > MaxTurn then
 	open "stdout.txt" for output as #1
 	print #1, "Usage:"
-	print #1, "MassTurn {GAMENUM} {MINTURN} {MAXTURN} [optional switches]"
+	print #1, "MassTurn {GAMENUM} [MINTURN] [MAXTURN] [optional switches]"
 	print #1, ""
 	print #1, "Optional switches (may be provided in any order):"
 	print #1, "--forward: Make the mass converter go forwards, instead of the default backwards"
@@ -57,7 +67,7 @@ else
 		GamePath = "games/"+str(GameNum)+"/"+str(TurnNum)+"/"
 		
 		cls
-		if ((FileExists(GamePath+"Score.csv") = 0 OR FileExists(GamePath+"Wormholes.csv") = 0) AND FileExists(GamePath+"Working") = 0) OR _
+		if ((FileExists(GamePath+"Score.csv") = 0 OR FileDateTime(GamePath+"Score.csv") < DataFormat) AND FileExists(GamePath+"Working") = 0) OR _
 			(FileExists(GamePath+"Working") AND cmdLine("--skipPart") = 0) OR _
 			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0 then
 			
@@ -82,17 +92,6 @@ else
 		end if
 	next
 end if
-
-sub loadTurnTerritory(AmtDone as short)
-	cls
-	line(0,10)-(319,19),rgb(255,255,255),b
-	line(1,11)-(1+AmtDone/767*317,18),rgb(255-AmtDone/767*255,AmtDone/767*255,0),bf
-
-	ProgressMeter = str(int(AmtDone/767*100))+"% territory done"
-	draw string (162-len(ProgressMeter)*4,12), ProgressMeter
-	screencopy
-	sleep 15
-end sub
 
 sub loadTurnUI(Players as ubyte)
 	dim as ubyte Detected = 35

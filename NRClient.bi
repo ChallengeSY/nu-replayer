@@ -1,3 +1,37 @@
+enum ReportCollection
+	REPORT_PLAN = 1
+	REPORT_BASE
+	REPORT_SHIP
+	REPORT_MINE
+	REPORT_ION
+	REPORT_STAR
+	REPORT_NEB
+	REPORT_WORM
+	REPORT_ARTI
+end enum
+
+dim shared as integer SelectedID 
+dim shared as ReportCollection SelectedObjType
+
+function convertColor(Brush as ColorSpecs) as uinteger
+	return rgb(Brush.Red, Brush.Green, Brush.Blue)
+end function
+
+function getRelativePos(InX as short, InY as short) as ViewSpecs
+	dim as ViewSpecs WorkObj
+	
+	WorkObj.X = (InX - ViewPort.X) * ViewPort.Zoom + CanvasScreen.Height/2
+	WorkObj.Y = CanvasScreen.Height/2 - (InY - ViewPort.Y) * ViewPort.Zoom
+	
+	return WorkObj
+end function
+
+sub drawFlag(DispX as short, DispY as short, Coloring as uinteger = rgb(255,224,192))
+	line(DispX,DispY)-(DispX,DispY-12),Coloring
+	line(DispX,DispY-12)-(DispX+6,DispY-9),Coloring
+	line(DispX,DispY-6)-(DispX+6,DispY-9),Coloring
+end sub
+
 sub planetList
 	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
 	"Avian", "Amorphous", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
@@ -7,7 +41,7 @@ sub planetList
 
 	dim as byte ViewMode = 0
 	dim as short MaxObjs
-	dim as integer RefBaseObj
+	dim as integer RefBaseObj, RefID
 	dim as string PlanetOwner
 	for Index as uinteger = 1 to LimitObjs
 		if Planets(Index).ObjName = "" AND Planets(int(Index-1)).ObjName <> ""then
@@ -34,15 +68,14 @@ sub planetList
 							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
 								color ,rgb(0,0,64)
+								RefID = Index
 							else
 								color ,rgb(0,0,0)
 							end if
 							if .Ownership = 0 then
 								color rgb(128,128,128)
 							else
-								with Coloring(.Ownership)
-									color rgb(.Red,.Green,.Blue)
-								end with
+								color convertColor(Coloring(.Ownership))
 							end if
 							if .Ownership > 0 then
 								'            ID    Planet Name                 Temp   Colonists    Minerals
@@ -130,6 +163,7 @@ sub planetList
 							((Index <= BasesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 							(abs(Index-MaxObjs) < BasesPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
+								RefID = Index
 								color ,rgb(0,0,64)
 							else
 								color ,rgb(0,0,0)
@@ -142,9 +176,7 @@ sub planetList
 								with PlayerSlot(.Ownership)
 									PlanetOwner = .Race+" ("+.PlayerName+")"
 								end with 
-								with Coloring(.Ownership)
-									color rgb(.Red,.Green,.Blue)
-								end with
+								color convertColor(Coloring(.Ownership))
 							end if
 							
 							'            ID    Planet Name                 Ownership
@@ -180,13 +212,14 @@ sub planetList
 											color rgb(0,64,255)
 										end if
 										print ShiplistObj(STID).HullName;" x"& .HullCount(HID)
+										exit for
 									end if
 								next STID
 							end if	
 						next HID
 						
 						for Phase as byte = 1 to 3
-							for CID as ushort = 1 to 110
+							for CID as ushort = 1 to 310
 								select case Phase
 									case 1 'Engines
 										if CID < 10 AND len(Engines(CID).PartName) > 0 then
@@ -254,10 +287,19 @@ sub planetList
 			else
 				SelectedIndex = MaxObjs
 			end if
+		elseif InType = EnterKey then
+			SelectedID = RefID
+			if ViewMode = 1 then
+				SelectedObjType = REPORT_BASE
+			else
+				SelectedObjType = REPORT_PLAN
+			end if
+			syncReport
+			exit do
 		elseif InType = chr(9) then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0
-		elseif InType = chr(27) then
+		elseif InType = EscKey then
 			exit do
 		end if
 	loop
@@ -325,7 +367,7 @@ sub shipList
 	dim as string ShipOwner, AmmoStr
 	dim as string ClassFilter
 	
-	dim as short MaxObjs, CargoUsed
+	dim as short MaxObjs, CargoUsed, RefID
 	
 	'First, consolidate the list (to allow the list to display correctly even with holes in the ship numbers)
 	MaxObjs = searchShips
@@ -349,6 +391,7 @@ sub shipList
 							((Index <= NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
 							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ShipType > 0 then
 							if SelectedIndex = Index then
+								RefID = .LinkId
 								color ,rgb(0,0,64)
 							else
 								color ,rgb(0,0,0)
@@ -360,10 +403,8 @@ sub shipList
 							else
 								with PlayerSlot(.Ownership)
 									ShipOwner = .Race+" ("+.PlayerName+")"
-								end with 
-								with Coloring(.Ownership)
-									color rgb(.Red,.Green,.Blue)
 								end with
+								color convertColor(Coloring(.Ownership))
 							end if
 							
 							print using "####  \                            \   ";.LinkId;.ShipName;
@@ -398,6 +439,7 @@ sub shipList
 							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ShipType > 0 then
 							
 							if SelectedIndex = Index then
+								RefID = .LinkId
 								color ,rgb(0,0,64)
 							else
 								color ,rgb(0,0,0)
@@ -406,9 +448,7 @@ sub shipList
 							if .Ownership = 0 then
 								color rgb(128,128,128)
 							else
-								with Coloring(.Ownership)
-									color rgb(.Red,.Green,.Blue)
-								end with
+								color convertColor(Coloring(.Ownership))
 							end if
 							
 							CargoUsed = .Colonists + .Dur + .Trit + .Moly + .Supplies + .Ammo
@@ -477,10 +517,15 @@ sub shipList
 			ClassFilter = left(ClassFilter,len(ClassFilter)-1)
 			MaxObjs = searchShips(ClassFilter)
 			SelectedIndex = 1
+		elseif InType = EnterKey then
+			SelectedID = RefID
+			SelectedObjType = REPORT_SHIP
+			syncReport
+			exit do
 		elseif InType = chr(9) then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0
-		elseif InType = chr(27) then
+		elseif InType = EscKey then
 			exit do
 		end if
 	loop
@@ -523,9 +568,7 @@ sub playerList
 				color rgb(255,255,255)
 				print "    Empire                            Planets   Starbases   Starships     Military      Economy"
 				for PID as ubyte = 1 to ParticipatingPlayers
-					with Coloring(PID)
-						color rgb(.Red,.Green,.Blue)
-					end with
+					color convertColor(Coloring(PID))
 					with PlayerSlot(PID)
 						.EconomicScore = 3 * (.TotalDur + .TotalTrit + .TotalMoly) + _
 							.TotalSupplies + .TotalMoney
@@ -558,9 +601,7 @@ sub playerList
 				if ViewGame.Academy then
 					print "    Empire                              Duranium   Tritanium   Molybdenum   Colonists   Megacredits"
 					for PID as ubyte = 1 to ParticipatingPlayers
-						with Coloring(PID)
-							color rgb(.Red,.Green,.Blue)
-						end with
+						color convertColor(Coloring(PID))
 						with PlayerSlot(PID)
 							.EconomicScore = 3 * (.TotalDur + .TotalTrit + .TotalMoly) + _
 								.TotalSupplies + .TotalMoney
@@ -591,9 +632,7 @@ sub playerList
 				else
 					print "    Empire                            Neutronium   Duranium   Tritanium   Molybdenum    Colonists   Megacredits     Supplies"
 					for PID as ubyte = 1 to ParticipatingPlayers
-						with Coloring(PID)
-							color rgb(.Red,.Green,.Blue)
-						end with
+						color convertColor(Coloring(PID))
 						with PlayerSlot(PID)
 							.EconomicScore = 3 * (.TotalDur + .TotalTrit + .TotalMoly) + _
 								.TotalSupplies + .TotalMoney
@@ -626,17 +665,13 @@ sub playerList
 				color rgb(255,255,255)
 				print "    Empire                              ";
 				for HID as ubyte = 1 to ParticipatingPlayers
-					with Coloring(HID)
-						color rgb(.Red,.Green,.Blue)
-					end with
+					color convertColor(Coloring(HID))
 					print " ";playerCode(HID);
 				next HID
 				print
 				
 				for PID as ubyte = 1 to ParticipatingPlayers
-					with Coloring(PID)
-						color rgb(.Red,.Green,.Blue)
-					end with
+					color convertColor(Coloring(PID))
 					with PlayerSlot(PID)
 						print using "[!] \                                \  ";_
 							playerCode(PID);.Race+" ("+.PlayerName+")";
@@ -711,5 +746,14 @@ sub playerList
 			ViewMode += 1
 			if ViewMode > 2 then ViewMode = 0
 		end if
-	loop until InType = chr(27)
+	loop until InType = EscKey
+end sub
+
+sub resetViewport
+	RedrawIslands = 1
+	with ViewPort
+		.X = 2000
+		.Y = 2000
+		.Zoom = 1.0
+	end with
 end sub

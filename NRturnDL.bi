@@ -14,7 +14,7 @@ sub downloadGame(GameName as string, GameID as integer)
 		print #9, "Last downloaded game #"& GameID
 		close #9
 
-		createMeter(1,"",0,abs(CanvasScreen.Height < 768))
+		createMeter(1,"")
 		print
 		print word_wrap("Process successful. You can now use the Game Room for "+GameName+".")
 		screencopy
@@ -50,9 +50,9 @@ function downloadLastTurns(GameID as integer) as integer
 		end if
 		
 		if Player = 1 then
-			createMeter(0,"Downloading turns... (0 / ? players done)",0,abs(CanvasScreen.Height < 768))
+			createMeter(0,"Downloading turns... (0 / ? players done)")
 		else
-			createMeter((Player-1)/(GameParser.PlayerCount+2),"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)",0,abs(CanvasScreen.Height < 768))
+			createMeter((Player-1)/(GameParser.PlayerCount+2),"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)")
 		end if
 		screencopy
 		
@@ -171,7 +171,7 @@ function downloadLastTurns(GameID as integer) as integer
 		SDLNet_TCP_Close( NuSocket )
 	loop
 
-	createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"",0,abs(CanvasScreen.Height < 768))
+	createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"")
 	return ErrorMsg = ""
 end function
 
@@ -228,7 +228,7 @@ function downloadZipPackage(GameID as integer) as integer
 					BlankLines = 0
 				end if 
 				
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... (finalizing prep)",0,abs(CanvasScreen.Height < 768))
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... (finalizing prep)")
 				screencopy
 			loop until BlankLines >= 4
 			close #6
@@ -256,7 +256,7 @@ function downloadZipPackage(GameID as integer) as integer
 				put #8, , *DL_BUFFER, Bytes
 				
 				BytesDownloaded += Bytes
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... ("+commaSep(int(BytesDownloaded/1e3))+" / "+commaSep(int(TotalBytes/1e3))+" KB downloaded)",0,abs(CanvasScreen.Height < 768))
+				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... ("+commaSep(int(BytesDownloaded/1e3))+" / "+commaSep(int(TotalBytes/1e3))+" KB downloaded)")
 				screencopy
 			loop
 			close #8

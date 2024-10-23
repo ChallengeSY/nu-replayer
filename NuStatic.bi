@@ -26,6 +26,11 @@ type ParsePartDesign
 	TritaniumCost as integer
 	MolybdenumCost as integer
 	AmmoCost as integer
+	
+	WarpEfficiency(9) as integer
+	
+	WepKill as short
+	WepBlast as short
 end type
 
 sub fetchStaticData
@@ -109,6 +114,13 @@ sub fetchStaticData
 						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
 						.HullName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
 						
+						.HullName = findReplace(.HullName, "Class Torpedo ", "")
+						.HullName = findReplace(.HullName, "Class ", "")
+						.HullName = findReplace(.HullName, "Deep Space Freighter", "Freighter")
+						if .HullName = "Bloodfang" then
+							.HullName = "Bloodfang Stealth Carrier"
+						end if
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
 						.DuraniumCost = valint(mid(InStream,SeekChar(0)+11,4))
 						
@@ -170,7 +182,9 @@ sub fetchStaticData
 			TargetFile(1) = "games/Default Partlist.csv"
 			open TargetFile(1) for output as #7
 			print #7, quote("Category")+","+quote("ID")+","+quote("Tech")+","+quote("Part")+","+_
-				quote("kT")+","+quote("mc")+","+quote("Du")+","+quote("Tr")+","+quote("Mo")
+				quote("kT")+","+quote("mc")+","+quote("Du")+","+quote("Tr")+","+quote("Mo")+","+_
+				quote("Kill")+","+quote("Dmg")+","+quote("W1")+","+quote("W2")+","+quote("W3")+","+quote("W4")+","+quote("W5")+","+_
+				quote("W6")+","+quote("W7")+","+quote("W8")+","+quote("W9")
 
 			'Engines
 			BlockChar(0) = instr(InStream,quote("engines")+": [")
@@ -201,11 +215,24 @@ sub fetchStaticData
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("cost"))
 						.PartCost = valint(mid(InStream,SeekChar(0)+7,6))
 						
+						for WID as byte = 1 to 9
+							SeekChar(0) = instr(BlockChar(1),InStream,quote("warp"+str(WID)))
+							.WarpEfficiency(WID) = valint(mid(InStream,SeekChar(0)+7+len(str(WID)),6))
+						next WID
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
 						
 						print #7, quote("Engine")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
-							",0,"& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost
+							",0,"& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost;",0,0";
+						
+						for WID as byte = 1 to 9
+							if WID < 9 then
+								print #7, ","& .WarpEfficiency(WID);
+							else
+								print #7, ","& .WarpEfficiency(WID)
+							end if
+						next WID
 					end with
 					
 					ObjCount += 1
@@ -243,11 +270,18 @@ sub fetchStaticData
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("cost"))
 						.PartCost = valint(mid(InStream,SeekChar(0)+7,6))
 						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("crewkill"))
+						.WepKill = valint(mid(InStream,SeekChar(0)+11,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
+						.WepBlast = valint(mid(InStream,SeekChar(0)+9,4))
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
 						
 						print #7, quote("Beam")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
-							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost
+							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost; _
+							","& .WepKill;","& .WepBlast
 					end with
 					
 					ObjCount += 1
@@ -288,14 +322,21 @@ sub fetchStaticData
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedocost"))
 						.AmmoCost = valint(mid(InStream,SeekChar(0)+14,5))
 						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("crewkill"))
+						.WepKill = valint(mid(InStream,SeekChar(0)+11,4))
+						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
+						.WepBlast = valint(mid(InStream,SeekChar(0)+9,4))
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
 						
 						print #7, quote("Tube")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
-							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost
+							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost; _
+							","& .WepKill;","& .WepBlast
 
 						print #7, quote("Torp")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
-							",1,"& .AmmoCost;",1,1,1"
+							",1,"& .AmmoCost;",1,1,1,"& .WepKill;","& .WepBlast
 					end with
 					
 					ObjCount += 1

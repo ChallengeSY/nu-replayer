@@ -14,7 +14,6 @@ declare sub loadTurnUI(Players as ubyte)
 '#DEFINE __FORCE_OFFLINE__
 #IFNDEF __FORCE_OFFLINE__
 	'#DEFINE __USE_ZLIB__
-	'#DEFINE __USE_LIBZIP__ 
 	#DEFINE __API_LOGIN__
 	#DEFINE __DOWNLOAD_LIST__
 	#DEFINE __DOWNLOAD_TURNS__
@@ -51,19 +50,52 @@ const InsertKey = chr(255,82)
 const DeleteKey = chr(255,83)
 const PageUp = chr(255,73)
 const PageDown = chr(255,81)
+const EnterKey = chr(13)
+const EscKey = chr(27)
 const CtrlJ = chr(10)
 const CtrlR = chr(18)
 
-const MaxPlayers = 35
-
-const ClimateDeathRate = 10
-const PopDividor = 500
-
 const CooldownList = 8/24
+const MaxPlayers = 35
+#DEFINE MetaLimit 2.5e5
 
-type ScreenSpecs
-	Wideth as integer
-	Height as integer
+type ShipSpecs
+	TechLevel as byte
+	HullName as string
+	Mass as short
+	Neu as integer
+	Cargo as integer
+	Crew as short
+	Engines as short
+	Beams as short
+	Tubes as short
+	FtrBays as short
+	CostMC as short
+	CostDur as short
+	CostTrit as short
+	CostMoly as short
+	CostAdv as short
+end type
+
+type SlotSpecs
+	Race as string
+	PlayerName as string
+	PlanetCount as short
+	Starbases as short
+	Ships as short
+	Freighters as short
+	MilitaryScore as integer
+	EconomicScore as integer
+	
+	TotalNeu as integer
+	TotalDur as integer
+	TotalTrit as integer
+	TotalMoly as integer
+	TotalMoney as integer
+	TotalClans as integer
+	TotalSupplies as integer
+	
+	Relationship(35) as byte
 end type
 
 type PlanObj
@@ -103,7 +135,6 @@ type PlanObj
 	Factories as short
 	DefPosts as short
 	
-	TerritoryValue as short
 	Asteroid as byte
 	
 	'Starbase data
@@ -118,14 +149,27 @@ type PlanObj
 	UseE as byte
 	UseB as byte
 	UseT as byte
+	
+	'Horwasp data
+	WorkMine as short
+	WorkHarvest as short
+	WorkBurrow as short
+	WorkTerraform as short
+	Larva as integer
+	BurrowSize as integer
+	PodHull as short
+	PodX as short
+	PodY as short
+	PodWarp as byte
+	PodCargo as short
 end type
 
 type StorageObj
 	HullCount(100) as short
 	HullReference(100) as short
-	EngineCount(9) as short
-	BeamCount(10) as short
-	TubeCount(10) as short
+	EngineCount(110) as short
+	BeamCount(110) as short
+	TubeCount(310) as short
 	TorpCount(10) as short
 end type
 
@@ -138,6 +182,9 @@ type ShipObj
 	ShipName as wstring * 255
 	ShipType as short
 	FCode as string
+	Mission as short
+	MisnTarget(2) as integer
+	PrimEnemy as short
 	TotalMass as short
 	Experience as short
 	Cloaked as byte
@@ -170,53 +217,93 @@ type ShipObj
 	LinkId as short
 end type
 
-type ShipSpecs
-	TechLevel as byte
-	HullName as string
-	Mass as short
-	Neu as integer
-	Cargo as integer
-	Crew as short
-	Engines as short
-	Beams as short
-	Tubes as short
-	FtrBays as short
-	CostMC as short
-	CostDur as short
-	CostTrit as short
-	CostMoly as short
-	CostAdv as short
+type MineObj
+	X as short
+	Y as short
+	
+	Ownership as ubyte
+	Webbed as byte
+	MineUnits as integer
+	Radius as short
+	FCode as string
 end type
 
-type ColorSpecs
-	Red as ubyte
-	Green as ubyte
-	Blue as ubyte
+type IonObj
+	ParentID as short
+	X as short
+	Y as short
+	
+	Radius as short
+	Voltage as short
+	Warp as byte
+	Heading as short
+	Growing as byte
 end type
-type SlotSpecs
-	Race as string
-	PlayerName as string
-	PlanetCount as short
-	Starbases as short
-	Ships as short
-	Freighters as short
-	MilitaryScore as integer
-	EconomicScore as integer
+
+type StarObj
+	Namee as string
+	X as short
+	Y as short
 	
-	TotalNeu as integer
-	TotalDur as integer
-	TotalTrit as integer
-	TotalMoly as integer
-	TotalMoney as integer
-	TotalClans as integer
-	TotalSupplies as integer
-	TotalTerritory as integer
+	Temperature as integer
+	Radius as short
+	Mass as integer 
+	Planets as short 
+end type
+
+type NebObj
+	Namee as string
+	X as short
+	Y as short
 	
-	Relationship(35) as byte
+	Radius as short
+	Intensity as integer
+	Gas as short 
+end type
+
+type WormObj
+	Namee as string
+	X as short
+	Y as short
+	
+	DestX as short
+	DestY as short
+	
+	Stability as short
+	LastScan as short
+end type
+
+type ArtiObj
+	Namee as string
+	X as short
+	Y as short
+	
+	LocationType as byte
+	LocationID as short
+end type
+
+type AuxObj
+	Namee as string
+	Coloring as uinteger
+	
+	ObjType as short
+	ObjID as short
 end type
 
 type PartSpecs
+	TechLv as short
 	PartName as string
+	Mass as short
+	CostMc as integer
+	CostDu as integer
+	CostTr as integer
+	CostMo as integer
+	
+	EngineEfficiency(9) as integer
+	
+	'Weapon specs
+	CrewKill as short
+	Blast as short
 end type
 type ListSpecs
 	ID as uinteger
@@ -225,6 +312,18 @@ type ListSpecs
 	LastTurn as ushort
 	GameState as byte
 end type
+
+type ColorSpecs
+	Red as ubyte
+	Green as ubyte
+	Blue as ubyte
+end type
+
+type ScreenSpecs
+	Wideth as integer
+	Height as integer
+end type
+
 type GameSpecs
 	MapWidth as short
 	MapHeight as short
@@ -236,6 +335,13 @@ type GameSpecs
 	LastTurn as short
 end type
 
+type ViewSpecs
+	X as integer
+	Y as integer
+	Zoom as double
+end type
+
+
 enum ModalView
 	'Main menu
 	MODE_MENU
@@ -246,34 +352,38 @@ enum ModalView
 	MODE_HUB_VIEW
 	MODE_HUB_DL
 
-	'While inside client
-	MODE_CLIENT_NORMAL
-	MODE_CLIENT_ISLAND
-
+	'Other modes
+	MODE_CLIENT
 	MODE_EXIT
 end enum
-
-#DEFINE MetaLimit 2.5e5
 
 dim shared as ListSpecs GameObj(1e6)
 dim shared as ShipSpecs ShiplistObj(5000)
 dim shared as StorageObj BaseStorage(MetaLimit)
-dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, DevMode
-dim shared as ModalView ReplayerMode = MODE_MENU
-dim shared as ushort ParticipatingPlayers, TurnNum, RecordID, Territory(767,767), GamesPerPage, NormalObjsPerPage, BasesPerPage
-dim shared as uinteger GameID, TotalGamesLoaded, SelectedIndex
-dim shared as integer MouseX, MouseY, MouseError, ButtonCombo, ActualX, ActualY
-dim shared as short FadingSelect, NearestPlan, SelectedShip, BoxGlow
-dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
 dim shared as ScreenSpecs BaseScreen, CanvasScreen
-dim shared as PlanObj Planets(LimitObjs)
-dim shared as ShipObj Starships(LimitObjs), ShipListIndex(LimitObjs)
-dim shared as SlotSpecs PlayerSlot(MaxPlayers), GrandTotal
-dim shared as ColorSpecs Coloring(MaxPlayers), GameTitle
-dim shared as PartSpecs Engines(9), Beams(10), Tubes(110), TorpAmmo(110)
 dim shared as GameSpecs ViewGame
-dim shared as any ptr TerritoryMap, IslandMap, Indeterminate
+dim shared as ViewSpecs ViewPort
+dim shared as SlotSpecs PlayerSlot(MaxPlayers), GrandTotal
+dim shared as ColorSpecs Coloring(MaxPlayers), Rainbow
+dim shared as PlanObj Planets(LimitObjs)
+dim shared as ShipObj Starships(LimitObjs), ShipListIndex(LimitObjs), ResetShip
+dim shared as MineObj Minefields(MetaLimit), ResetMinef
+dim shared as IonObj IonStorms(LimitObjs), ResetStorm
+dim shared as StarObj StarClusters(LimitObjs), ResetStar
+dim shared as NebObj Nebulae(LimitObjs), ResetNeb
+dim shared as WormObj Wormholes(LimitObjs), ResetWorm
+dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
+dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), _
+	TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode
+dim shared as ModalView ReplayerMode = MODE_MENU
+dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
+dim shared as uinteger GameID, TotalGamesLoaded, SelectedIndex
+dim shared as integer MouseX, MouseY, MouseError, ButtonCombo, ActualX, ActualY, DestPattern
+dim shared as short FadingSelect, TurnNum, BoxGlow
+dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
+dim shared as PartSpecs Engines(109), Beams(110), Tubes(310), TorpAmmo(310)
+dim shared as any ptr IslandMap, Indeterminate
 dim shared as event e
 
 'Register the player colors
@@ -296,41 +406,68 @@ close #3
 open "games/Default Partlist.csv" for input as #4
 line input #4, NullStr
 
-for PartID as byte = 1 to 9
-	input #4, NullStr, RecordID, NullStr
-	with Engines(RecordID)
-		input #4, .PartName
-		line input #4, NullStr
-	end with
-next PartID
-
-for PartID as byte = 1 to 10
-	input #4, NullStr, RecordID, NullStr
-	with Beams(RecordID)
-		input #4, .PartName
-		line input #4, NullStr
-	end with
-next PartID
-
-for PartID as byte = 1 to 16
-	input #4, NullStr, RecordID, NullStr
-	with Tubes(RecordID)
-		input #4, .PartName
-		line input #4, NullStr
-	end with
-next PartID
-
-for PartID as byte = 1 to 16
-	input #4, NullStr, RecordID, NullStr
-	with TorpAmmo(RecordID)
-		input #4, .PartName
-		line input #4, NullStr
-	end with
-next PartID
+do
+	input #4, PreferType, RecordID
+	if eof(4) then
+		exit do
+	end if
+	select case PreferType
+		case "Engine"
+			with Engines(RecordID)
+				input #4, .TechLv
+				input #4, .PartName
+				input #4, .Mass
+				input #4, .CostMc
+				input #4, .CostDu
+				input #4, .CostTr
+				input #4, .CostMo
+				input #4, .CrewKill
+				input #4, .Blast
+				for WID as byte = 1 to 9
+					input #4, .EngineEfficiency(WID)
+				next WID
+			end with
+		case "Beam"
+			with Beams(RecordID)
+				input #4, .TechLv
+				input #4, .PartName
+				input #4, .Mass
+				input #4, .CostMc
+				input #4, .CostDu
+				input #4, .CostTr
+				input #4, .CostMo
+				input #4, .CrewKill
+				input #4, .Blast
+			end with
+		case "Tube"
+			with Tubes(RecordID)
+				input #4, .TechLv
+				input #4, .PartName
+				input #4, .Mass
+				input #4, .CostMc
+				input #4, .CostDu
+				input #4, .CostTr
+				input #4, .CostMo
+				input #4, .CrewKill
+				input #4, .Blast
+			end with
+		case "Torp"
+			with TorpAmmo(RecordID)
+				input #4, .TechLv
+				input #4, .PartName
+				input #4, .Mass
+				input #4, .CostMc
+				input #4, .CostDu
+				input #4, .CostTr
+				input #4, .CostMo
+				input #4, .CrewKill
+				input #4, .Blast
+			end with
+	end select
+loop
 close #4
 
-
-GameTitle.Red = 255
+Rainbow.Red = 255
 declare sub updateGameList(DownloadList as byte = 0)
 declare sub recordPersonalGames
 declare function isPersonalGame(SearchID as integer) as integer
@@ -684,31 +821,6 @@ sub menu
 		gfxstring("Log in to Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(128,128,128))
 		#ENDIF
 		
-		#IFDEF __DOWNLOAD_LIST__
-		if GameListAge > CooldownList then
-			gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
-	
-			if MouseY >= 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
-				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
-				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-					updateGameList(1) 
-					while inkey <> "":wend
-					while screenevent(@e):wend
-				end if
-			end if
-		else
-			dim as double DaysRem = CooldownList - GameListAge
-			dim as double HoursRem = DaysRem * 24
-			dim as integer MinutesRem = remainder(ceil(HoursRem * 60),60)
-			
-			dim as string MinutesStr = str(MinutesRem)
-			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
-			gfxstring("Download a list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
-		end if
-		#ELSE
-		gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
-		#ENDIF
-		
 		#IFDEF __DOWNLOAD_TURNS__
 		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
 		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
@@ -735,6 +847,31 @@ sub menu
 		#ENDIF
 		
 		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(255,255,255))
+		
+		#IFDEF __DOWNLOAD_LIST__
+		if GameListAge > CooldownList then
+			gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
+	
+			if MouseY >= 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
+				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+					updateGameList(1) 
+					while inkey <> "":wend
+					while screenevent(@e):wend
+				end if
+			end if
+		else
+			dim as double DaysRem = CooldownList - GameListAge
+			dim as double HoursRem = DaysRem * 24
+			dim as integer MinutesRem = remainder(ceil(HoursRem * 60),60)
+			
+			dim as string MinutesStr = str(MinutesRem)
+			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
+			gfxstring("Download a list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
+		end if
+		#ELSE
+		gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
+		#ENDIF
 	
 		if MouseY >= 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
@@ -894,7 +1031,7 @@ sub menu
 	sleep 5
 	InType = inkey
 	
-	if InType = chr(27) OR InType = chr(255,107) then ReplayerMode = MODE_EXIT
+	if InType = EscKey OR InType = chr(255,107) then ReplayerMode = MODE_EXIT
 end sub
 
 declare function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as byte
@@ -1122,7 +1259,7 @@ sub replayHub(DownloadMode as byte = 0)
 		elseif InType = chr(8) then
 			GameFilter = left(GameFilter,len(GameFilter)-1)
 			loadGameList(GameFilter)
-		elseif InType = chr(13) AND Legal = 1 then
+		elseif InType = EnterKey AND Legal = 1 then
 			if DownloadMode = 0 then
 				dim as byte Results
 				with GameObj(SelectedIndex)
@@ -1132,16 +1269,7 @@ sub replayHub(DownloadMode as byte = 0)
 						prepClientScreen
 						LastProgress = ""
 						TurnWIP = 1
-						cls
-						color rgb(255,255,255)
-						print word_wrap("Now converting turn "+str(.LastTurn)+" for "+.Namee+_
-							". This may take a few minutes depending on game specifications...")
-						print
-						print word_wrap("Once conversion is complete, Nu Replayer will "+_
-							"automatically jump to the newly created turn.") 
-						
-						line(0,748)-(1023,767),rgb(255,255,255),b
-						screencopy
+						line(0,CanvasScreen.Height-32)-(CanvasScreen.Wideth-1,CanvasScreen.Height-1),rgb(0,0,0),bf
 						Results = loadTurn(.ID,.LastTurn,0)
 					end if
 					if Results = 0 then
@@ -1163,7 +1291,7 @@ sub replayHub(DownloadMode as byte = 0)
 			'Ensures program is closed by hitting the X button
 			ReplayerMode = MODE_EXIT
 			exit do
-		elseif InType = chr(27) then
+		elseif InType = EscKey then
 			GameID = 0
 			if DownloadMode then
 				ReplayerMode = MODE_DOWNLOAD
@@ -1174,4 +1302,5 @@ sub replayHub(DownloadMode as byte = 0)
 		end if
 	loop
 end sub
+
 

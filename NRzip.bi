@@ -112,7 +112,7 @@ Function unpackZipPackage(ByRef archive As String, ByVal displayMeter As Single 
 	For i As Integer = 0 To (zip_get_num_entries(zip, 0) - 1)
 		#ifdef BROWSER_LONG
 		If displayMeter >= 0 Then
-			createMeter(displayMeter,"Extracting files... ("+commaSep(i)+" / "+commaSep(zip_get_num_entries(zip, 0))+" done)",0,abs(CanvasScreen.Height < 768))
+			createMeter(displayMeter,"Extracting files... ("+commaSep(i)+" / "+commaSep(zip_get_num_entries(zip, 0))+" done)")
 			Screencopy
 		End If
 		#endif
