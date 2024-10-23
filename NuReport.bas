@@ -631,12 +631,12 @@ sub getReport
 				dim as string SecondaryOrder(2) => {"None", "Fix Ship {1}", "Recycle Ship {1}"}
 				
 				dim as string DispOrders(2)
+				ReportColor = rgb(160,160,255)
 				
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
 				gfxString("Starbase "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
-				gfxString(.ObjName,Sidebar,60,3,2,2,rgb(255,255,255))
-				ReportColor = rgb(160,160,255)
+				gfxString(.ObjName,Sidebar,60,3,2,2,ReportColor)
 				
 				PaintColor(1) = convertColor(Coloring(.Ownership))
 				with PlayerSlot(.Ownership)
