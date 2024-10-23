@@ -932,6 +932,10 @@ sub getReport
 				with AuxList(TrueItem)
 					gfxstring(space(4-len(str(TrueItem)))+str(TrueItem)+". "+.Namee,Sidebar,CanvasScreen.Height-183+AuxItem*15,2,2,1,.Coloring)
 					printgfx(str(AuxItem mod 10), Sidebar+21, CanvasScreen.Height-183+AuxItem*15, 2, rgb(255,255,192))
+					
+					if SelectedID = .ObjID AND SelectedObjType = .ObjType then
+						line(Sidebar,CanvasScreen.Height-185+AuxItem*15)-(CanvasScreen.Wideth-1,CanvasScreen.Height-171+AuxItem*15),rgb(255,255,192),b
+					end if 
 				end with
 			end if
 		next AuxItem
