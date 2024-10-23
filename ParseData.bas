@@ -94,6 +94,9 @@ type ParseBase
 	OrbitalDef as short
 	DamageLev as short
 	Fighters as short
+	
+	BaseOrders(1) as short
+	BaseTarget(1) as short
 
 	HullTech as byte
 	EngineTech as byte
@@ -394,6 +397,7 @@ sub exportBaseList(GameID as integer, CurTurn as short)
 
 	open "games/"+str(GameID)+"/"+str(CurTurn)+"/Starbases.csv" for output as #16
 	print #16, quote("ID")+","+quote("Defense")+","+quote("Fighters")+","+quote("Damage")+","+_
+		quote("Misn1")+","+quote("Misn1Target")+","+quote("Misn2")+","+quote("Misn2Target")+","+_
 		quote("TechHu")+","+quote("TechEn")+","+quote("TechBm")+","+quote("TechTp")+","+_
 		quote("UseHu")+","+quote("UseEn")+","+quote("UseBm")+","+quote("UseTp")
 
@@ -405,6 +409,7 @@ sub exportBaseList(GameID as integer, CurTurn as short)
 			with BaseParser(ObjID)
 				if .EngineTech + .HullTech + .BeamTech + .TorpTech > 0 then
 					print #16, ""& ObjID;","& .OrbitalDef;","& .Fighters;","& .DamageLev;_
+					","& .BaseOrders(1);","& .BaseTarget(1);","& .BaseOrders(2);","& .BaseTarget(2);_
 					","& .HullTech;","& .EngineTech;","& .BeamTech;","& .TorpTech;_
 					","& .UseHull;","& .UseEngine;","& .UseBeam;","& .UseTorp
 				end if

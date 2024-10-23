@@ -141,6 +141,8 @@ type PlanObj
 	OrbDefense as short
 	Fighters as short
 	Damage as short
+	BaseOrders(2) as short
+	BaseTarget(2) as short
 	TechH as byte
 	TechE as byte
 	TechB as byte

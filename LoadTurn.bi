@@ -850,6 +850,16 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("fighters"))
 						.Fighters = valint(mid(InStream,SeekChar(0)+11,4))
 						
+						'Orders
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission"))
+						.BaseOrders(1) = valint(mid(InStream,SeekChar(0)+10,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission1target"))
+						.BaseTarget(1) = valint(mid(InStream,SeekChar(0)+17,4))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("shipmission"))
+						.BaseOrders(2) = valint(mid(InStream,SeekChar(0)+14,3))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetshipid"))
+						.BaseTarget(2) = valint(mid(InStream,SeekChar(0)+15,4))
+						
 						'Tech levels
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("hulltechlevel"))
 						.HullTech = valint(mid(InStream,SeekChar(0)+16,3))

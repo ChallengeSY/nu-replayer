@@ -433,9 +433,10 @@ sub getReport
 				dim as byte HorwaspShip, CloakCost, AdvancedCloak, Gravitonic
 				
 				dim as string HullClassName
-				dim as string MisnNames(16) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
+				dim as string MisnNames(24) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
 					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {2}", "{Racial}", "Cloak", _
-					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", "(15)", "(16)"}
+					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
+					"(15)", "(16)", "(17)", "(18)", "(19)", "(20)", "(21)", "(22)", "(23)", "(24)"}
 				dim as string DispMisn, RacialMisn
 				ReportColor = rgb(128,224,192)
 				
@@ -624,6 +625,13 @@ sub getReport
 		case REPORT_BASE
 			'Starbase report
 			with Planets(SelectedID)
+				dim as string PrimaryOrder(16) => {"None", "Refuel", "Maximize Defense", _
+					"Load Torps", "Unload Freighters", "Repair Base", "Force Surrenders", _
+					"(7)", "(8)", "(9)", "(10)", "(11)", "(12)", "(13)", "(14)", "(15)", "(16)"}
+				dim as string SecondaryOrder(2) => {"None", "Fix Ship {1}", "Recycle Ship {1}"}
+				
+				dim as string DispOrders(2)
+				
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
 				gfxString("Starbase "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
@@ -647,15 +655,22 @@ sub getReport
 					PaintColor(1) = rgb(255,64,64)
 				end if
 				gfxString("Damage  : "+str(.Damage)+"%",Sidebar,140,3,2,2,PaintColor(1))
-				gfxString("Hull   Tech: "+str(.TechH),Sidebar,180,3,2,2,ReportColor)
-				gfxString("Engine Tech: "+str(.TechE),Sidebar,200,3,2,2,ReportColor)
-				gfxString("Beam   Tech: "+str(.TechB),Sidebar,220,3,2,2,ReportColor)
-				gfxString("Torp   Tech: "+str(.TechT),Sidebar,240,3,2,2,ReportColor)
 				
-				dim as integer StoragePerPage = int((CanvasScreen.Height - 490)/15), StorageItems = -StorePage * StoragePerPage
+				DispOrders(1) = findReplace(PrimaryOrder(.BaseOrders(1)), "{1}", str(.BaseTarget(1)))
+				DispOrders(2) = findReplace(SecondaryOrder(.BaseOrders(2)), "{1}", str(.BaseTarget(2)))
 				
-				line(Sidebar,258)-(CanvasScreen.Wideth-1,278),BorderBG,bf
-				gfxString("Base Storage",Sidebar,260,3,2,2,rgb(255,255,255))
+				gfxString("Primary  : "+DispOrders(1),Sidebar,180,3,2,2,ReportColor)
+				gfxString("Secondary: "+DispOrders(2),Sidebar,200,3,2,2,ReportColor)
+				
+				gfxString("Hull   Tech: "+str(.TechH),Sidebar,240,3,2,2,ReportColor)
+				gfxString("Engine Tech: "+str(.TechE),Sidebar,260,3,2,2,ReportColor)
+				gfxString("Beam   Tech: "+str(.TechB),Sidebar,280,3,2,2,ReportColor)
+				gfxString("Torp   Tech: "+str(.TechT),Sidebar,300,3,2,2,ReportColor)
+				
+				dim as integer StoragePerPage = int((CanvasScreen.Height - 550)/15), StorageItems = -StorePage * StoragePerPage
+				
+				line(Sidebar,318)-(CanvasScreen.Wideth-1,338),BorderBG,bf
+				gfxString("Base Storage",Sidebar,320,3,2,2,rgb(255,255,255))
 				with BaseStorage(.BasePresent)
 					'Hulls
 					for HID as byte = 1 to 100
@@ -670,7 +685,7 @@ sub getReport
 									
 									StorageItems += 1
 									if StorageItems > 0 AND StorageItems <= StoragePerPage then
-										gfxString(ShiplistObj(STID).HullName+" x"+str(.HullCount(HID)),Sidebar,265+StorageItems*15,2,2,1,PaintColor(1))
+										gfxString(ShiplistObj(STID).HullName+" x"+str(.HullCount(HID)),Sidebar,325+StorageItems*15,2,2,1,PaintColor(1))
 									end if
 									exit for
 								end if
@@ -692,7 +707,7 @@ sub getReport
 											
 											StorageItems += 1
 											if StorageItems > 0 AND StorageItems <= StoragePerPage then
-												gfxString(Engines(CID).PartName+" x"+str(.EngineCount(CID)),Sidebar,265+StorageItems*15,2,2,1,PaintColor(1))
+												gfxString(Engines(CID).PartName+" x"+str(.EngineCount(CID)),Sidebar,325+StorageItems*15,2,2,1,PaintColor(1))
 											end if
 										end if
 									end if
@@ -707,7 +722,7 @@ sub getReport
 											
 											StorageItems += 1
 											if StorageItems > 0 AND StorageItems <= StoragePerPage then
-												gfxString(Beams(CID).PartName+" x"+str(.BeamCount(CID)),Sidebar,265+StorageItems*15,2,2,1,PaintColor(1))
+												gfxString(Beams(CID).PartName+" x"+str(.BeamCount(CID)),Sidebar,325+StorageItems*15,2,2,1,PaintColor(1))
 											end if
 										end if
 									end if
@@ -721,13 +736,13 @@ sub getReport
 											
 										StorageItems += 1
 										if StorageItems > 0 AND StorageItems <= StoragePerPage then
-											gfxString(Tubes(CID).PartName+" x"+str(.TubeCount(CID)),Sidebar,265+StorageItems*15,2,2,1,PaintColor(1))
+											gfxString(Tubes(CID).PartName+" x"+str(.TubeCount(CID)),Sidebar,325+StorageItems*15,2,2,1,PaintColor(1))
 										end if
 									end if
 									if .TorpCount(CID) > 0 AND len(TorpAmmo(CID).PartName) > 0 then
 										StorageItems += 1
 										if StorageItems > 0 AND StorageItems <= StoragePerPage then
-											gfxString(TorpAmmo(CID).PartName+" ammo x"+str(.TorpCount(CID)),Sidebar,265+StorageItems*15,2,2,1,ReportColor)
+											gfxString(TorpAmmo(CID).PartName+" ammo x"+str(.TorpCount(CID)),Sidebar,325+StorageItems*15,2,2,1,ReportColor)
 										end if
 									end if
 							end select

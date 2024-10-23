@@ -362,9 +362,9 @@ sub updateStarmap
 				end if
 	
 				with Planets(LoadObjID)
-					input #7, .OrbDefense
-					input #7, .Fighters
-					input #7, .Damage
+					input #7, .OrbDefense, .Fighters, .Damage
+					input #7, .BaseOrders(1), .BaseTarget(1)
+					input #7, .BaseOrders(2), .BaseTarget(2)
 					input #7, .TechH, .TechE, .TechB, .TechT
 					input #7, .UseH, .UseE, .UseB, .UseT  
 				end with
