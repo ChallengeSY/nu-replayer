@@ -10,16 +10,16 @@ The game room is a common interface, originally the default when Nu Replayer is 
 ### Starmap
 After a suitable game has been selected (either with converted or raw files present), then the game opens into the starmap interface, converting the last turn of the game to a more readable format if necessary.
 
-By default, the starmap is accessed using the entire screen. To get a smaller window (if one is using a desktop &gt;1024&times;768), simply turn on the Compressed View setting in the Engine Options.
+By default, the starmap is accessed using the entire screen. To get a smaller window (if one is using a desktop &gt;1024&times;768), simply turn on the Compressed View setting in the Engine Options. The starmap itself can be zoomed via the +/- keys.
 
-The starmap interface contains many useful features. The most notable features of Nu Replayer are currently the planet reports (given when one mouses near a planet on the map), a default mapping (which includes starships, along with a faint territory map, bound to F1) and island mapping (bound to F2).
+The starmap interface contains many useful features. The most notable features of Nu Replayer are the detailed object reports. These are given when one clicks near such a key object, and can be closed via the X key. Supporting objects can be selected via numeric keys and also PageUp / PageDown.
 
-Turns within a game can be navigate with PageUp / PageDown, or a specific turn can be reached via Ctrl+J.
+Turns within a game can be navigate with I/O, or a specific turn can be reached via Ctrl+J.
 
 ### Object Lists
 Nu Replayer carries multiple object lists that supplement the starmap. These lists come in their own screen and, as a result, will need to be accessed with a key in order to view the list. The playerlist is currently bound to F5, the planet list to F6, and the ship list to F7.
 
 ## Networking
-Starting with version 0.60, Nu Replayer now features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).
+Nu Replayer features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).
 
 Raw game lists can be downloaded and auto-converted to CSV. Additionally, it is possible to download a complete game just by visiting the download room. The download room functions similarly to the game room, only it serves the exclusive purpose of downloading *new* games.
