@@ -153,8 +153,6 @@ sub renderClient
 				TurnNum = JumpCut
 				if ProcessNeeded > 0 then
 					TurnWIP = 1
-					line(0,748)-(1023,767),rgb(255,255,255),b
-					screencopy
 					Results = loadTurn(GameId,JumpCut,0)
 					TurnWIP = 0
 					if QueueNextSong then
