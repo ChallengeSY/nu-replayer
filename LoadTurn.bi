@@ -513,12 +513,12 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					with InterShip
 						'Coordinates
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						if SeekChar(0) > HistoryBlock(0) then
+						if HistoryBlock(0) > 0 AND SeekChar(0) > HistoryBlock(0) then
 							SeekChar(0) = instr(HistoryBlock(1),InStream,quote("x"))
 						end if
 						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						if SeekChar(0) > HistoryBlock(0) then
+						if HistoryBlock(0) > 0 AND SeekChar(0) > HistoryBlock(0) then
 							SeekChar(0) = instr(HistoryBlock(1),InStream,quote("y"))
 						end if
 						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
@@ -612,7 +612,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						end if
 					end if
 					
-					BlockChar(1) = instr(max(HistoryBlock(1),WaypointsBlock(1)),InStream,ObjClose)
+					BlockChar(1) = instr(max(HistoryBlock(1), max(WaypointsBlock(1), BlockChar(1)+len(ObjClose))) ,InStream,ObjClose)
 					loadTurnKB(int(BlockChar(1)/1e3),PID)
 				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 			end if

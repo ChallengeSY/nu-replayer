@@ -153,14 +153,6 @@ sub renderClient
 				TurnNum = JumpCut
 				if ProcessNeeded > 0 then
 					TurnWIP = 1
-					cls
-					color rgb(255,255,255)
-					print word_wrap("Now converting turn "+str(JumpCut)+" for "+GameName+_
-						". This may take a few minutes depending on game specifications...")
-					print
-					print word_wrap("Once conversion is complete, Nu Replayer will "+_
-						"automatically jump to the newly created turn.")
-
 					line(0,748)-(1023,767),rgb(255,255,255),b
 					screencopy
 					Results = loadTurn(GameId,JumpCut,0)
