@@ -135,7 +135,7 @@ type PlanObj
 	Factories as short
 	DefPosts as short
 	
-	Asteroid as byte
+	Asteroid as short
 	
 	'Starbase data
 	OrbDefense as short
@@ -385,7 +385,7 @@ dim shared as integer MouseX, MouseY, MouseError, ButtonCombo, ActualX, ActualY,
 dim shared as short FadingSelect, TurnNum, BoxGlow
 dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
 dim shared as PartSpecs Engines(109), Beams(110), Tubes(310), TorpAmmo(310)
-dim shared as any ptr IslandMap, Indeterminate
+dim shared as any ptr IslandMap, Indeterminate, Cursor
 dim shared as event e
 
 'Register the player colors
@@ -510,8 +510,9 @@ sub prepCanvas(NewWidth as short, NewHeight as short, ExtraFlags as integer = 0)
 	dim as short CalcRows = int(NewHeight/16)
 	screenres NewWidth, NewHeight,24,2,GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES OR ExtraFlags
 	
-	'Sets a fixed character width
+	'Sets a fixed character width and renders mouse invisible
 	width int(NewWidth/8), int(NewHeight/16)
+	setmouse(,,0)
 	
 	'Sets up pagination for lists
 	NormalObjsPerPage = CalcRows - 5
@@ -526,6 +527,10 @@ sub prepCanvas(NewWidth as short, NewHeight as short, ExtraFlags as integer = 0)
 		.Wideth = NewWidth
 		.Height = NewHeight
 	end with
+end sub
+
+sub drawCursor(InX as short, InY as short)
+	put(InX-10,InY-10),Cursor,trans
 end sub
 
 sub debugout(NewString as string)
@@ -1029,6 +1034,7 @@ sub menu
 			ReplayerMode = MODE_EXIT
 		end if
 	end if
+	drawCursor(MouseX,MouseY)
 	screencopy
 	sleep 5
 	InType = inkey

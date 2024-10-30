@@ -371,7 +371,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.DefPosts = valint(mid(InStream,SeekChar(0)+10,4))
 						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("debrisdisk"))
-						.Asteroid = valint(mid(InStream,SeekChar(0)+13,2))
+						.Asteroid = valint(mid(InStream,SeekChar(0)+13,3))
 					end with
 					
 					with InterWasp

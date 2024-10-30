@@ -135,7 +135,7 @@ sub renderClient
 			print
 			if ZipDLenabled then
 				if FileExists(ZipFile) then
-					print "A ZIP package has been detected alongside the raw turn files. Simply extract it to acquire the remaining turns."
+					print "A ZIP package has been detected alongside the raw turn files. Hit ENTER on an invalid turn to unpack them."
 				else
 					print "You can use Nu Replayer to download a ZIP package containing the remaining turns. Hit ENTER on an invalid turn to proceed."
 				end if
@@ -165,11 +165,23 @@ sub renderClient
 				loadTurnExtras
 				exit do
 			#IFDEF __DOWNLOAD_TURNS__
-			elseif InType = EnterKey AND ZipDLenabled AND FileExists(ZipFile) = 0 then
-				if downloadZipPackage(GameId) then
-					ZipDLenabled = 0
+			elseif InType = EnterKey AND ZipDLenabled then
+				if FileExists(ZipFile) then
+					if unpackZipPackage(ZipFile, 0) = 0 then
+						ZipDLenabled = 0
+					else
+						print word_wrap("Unpack sequence unsuccessful.")
+						screencopy
+						sleep
+					end if
 				else
-					print word_wrap(ErrorMsg)
+					if downloadZipPackage(GameId) then
+						ZipDLenabled = 0
+					else
+						print word_wrap(ErrorMsg)
+						screencopy
+						sleep
+					end if
 				end if
 				ErrorMsg = ""
 			#ENDIF
@@ -379,7 +391,8 @@ sub renderClient
 						if RedrawIslands = 1 AND RelativePos.X > -85 * ViewPort.Zoom AND RelativePos.Y > -85 * ViewPort.Zoom AND _
 							RelativePos.X < CanvasScreen.Wideth + 85 * ViewPort.Zoom AND RelativePos.Y < CanvasScreen.Height + 85 * ViewPort.Zoom then
 							for PID as short = OID+1 to LimitObjs
-								if Planets(PID).ObjName <> "" AND sqr((.X - Planets(PID).X)^2 + (.Y - Planets(PID).Y)^2) <= 84.554 then
+								if Planets(PID).ObjName <> "" AND sqr((.X - Planets(PID).X)^2 + (.Y - Planets(PID).Y)^2) <= 84.554 AND _
+									.Asteroid = 0 AND Planets(PID).Asteroid = 0 then
 									dim as ViewSpecs Neighbor
 									
 									Neighbor.X = (Planets(PID).X - ViewPort.X) * ViewPort.Zoom + CanvasScreen.Height/2
@@ -388,6 +401,12 @@ sub renderClient
 									line IslandMap,(RelativePos.X,RelativePos.Y)-(Neighbor.X,Neighbor.Y),rgb(48,48,48)
 								end if 
 							next PID
+						end if
+						
+						if .Asteroid > 1 then
+							for Seg as double = 12.5 to 357.5 step 15
+								circle(RelativePos.X,RelativePos.Y),.Asteroid*ViewPort.Zoom,rgb(128,48,0),degtorad(Seg),degtorad(Seg+5)
+							next Seg
 						end if
 						
 						if .Ownership = 0 then
@@ -409,7 +428,10 @@ sub renderClient
 							PlayerSlot(.Ownership).TotalClans += .Colonists
 							PlayerSlot(.Ownership).TotalMoney += .Megacredits
 							PlayerSlot(.Ownership).TotalSupplies += .Supplies
-							TotalPlanets += 1
+							
+							if .Asteroid = 0 then
+								TotalPlanets += 1
+							end if
 						end if
 					end if
 				end with
@@ -469,7 +491,9 @@ sub renderClient
 			gfxString("("+str(.X)+","+str(.Y)+")",Sidebar,20,3,2,2,rgb(255,255,255))
 		end with
 		
-		'Object selection WIP
+		drawCursor(MouseX,MouseY)
+		
+		'Object selection
 		if (ButtonCombo AND (1 SHL 0)) then
 			dim as double MinDist = 1e6, CurDist
 			

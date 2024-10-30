@@ -11,7 +11,7 @@ type ParsePlan
 	YLoc as short
 	PlanName as string
 	FriendlyCode as string
-	Asteroid as byte
+	Asteroid as short
 
 	'Scanning aspects
 	LastScan as short
@@ -623,7 +623,8 @@ sub exportVCRs(GameID as integer, CurTurn as short)
 end sub
 
 sub createMap(GameID as integer, CurTurn as short)
-	if GameID >= 2972 AND (FileExists("games/"+str(GameID)+"/Map.csv") = 0 OR GameParser.DynamicMap > 0) then
+	if GameID >= 2972 AND (GameParser.DynamicMap > 0 OR _
+		FileExists("games/"+str(GameID)+"/Map.csv") = 0 OR FileDateTime("games/"+str(GameID)+"/Map.csv") < DataFormat) then
 		print #9, "[";Time;", ";Date;"] Creating map... ";
 		if GameParser.DynamicMap then
 			open "games/"+str(GameID)+"/"+str(CurTurn)+"/Map.csv" for output as #4
@@ -634,7 +635,7 @@ sub createMap(GameID as integer, CurTurn as short)
 		for ObjID as short = 1 to LimitObjs
 			with PlanetParser(ObjID)
 				if len(.PlanName) > 0 then
-					print #4, ""& ObjID;","& .XLoc;","& .YLoc;","& .PlanName;","& .Asteroid
+					print #4, ""& ObjID;","& .XLoc;","& .YLoc;","& quote(.PlanName);","& .Asteroid
 				end if
 			end with
 		next

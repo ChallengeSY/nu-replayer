@@ -146,11 +146,18 @@ end if
 'Creates an empty island map
 IslandMap =  ImageCreate(4096,2160)
 
+'Additional auxillary assets
 Indeterminate = ImageCreate(50,20)
 line Indeterminate,(0,0)-(49,19),rgb(0,0,0),bf
 for Plot as byte = 0 to 24
 	line Indeterminate,(Plot,19)-(Plot+19,0),rgb(48,48,80)
 next Plot
+
+Cursor = ImageCreate(21,21)
+line Cursor,(0,10)-(7,10),rgb(224,224,224)
+line Cursor,(13,10)-(21,10),rgb(224,224,224)
+line Cursor,(10,0)-(10,7),rgb(224,224,224)
+line Cursor,(10,13)-(10,21),rgb(224,224,224)
 
 /'
  ' If Nu Replayer has online support, then it attempts to initialize

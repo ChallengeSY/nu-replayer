@@ -12,7 +12,7 @@ dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePag
 ResetAux.Coloring = rgb(192,192,192)
 
 sub getReport
-	dim as ViewSpecs ActiveReport
+	dim as ViewSpecs ActiveReport, SelectionCursor
 	line (Sidebar,40)-(CanvasScreen.Wideth-1,CanvasScreen.Height-1),ReportBG,bf
 
 	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
@@ -36,7 +36,11 @@ sub getReport
 			with Planets(SelectedID)
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
-				gfxString("Planet "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				if .Asteroid > 0 then
+					gfxString("Planetoid "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				else
+					gfxString("Planet "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				end if
 
 				FullObjName = .ObjName
 				ClimateStr = "Climate: "
@@ -56,6 +60,9 @@ sub getReport
 					MaxColonists = (20099.9 - (200 * .Temp)) / ClimateDeathRate
 				end if
 				
+				if .Asteroid > 0 then
+					MaxColonists = sgn(.BasePresent) * 500
+				end if
 				if .NativeType = 9 then
 					MaxNatives = .Temp * 1000
 				end if
@@ -66,11 +73,11 @@ sub getReport
 				end if
 			
 				if .Ownership = 0 AND .LastScan = 0 then	
-					FullObjName += " [unowned]"	
 					gfxString("Never scanned",Sidebar,80,3,2,2,rgb(128,128,128))	
+					gfxString("(No colony present)",Sidebar,120,3,2,2,rgb(128,128,128))
 				else
 					if .Ownership = 0 then
-						FullObjName += " [unowned]"	
+						gfxString("No colony present",Sidebar,120,3,2,2,rgb(128,128,128))
 						if .LastScan = TurnNum then
 							gfxString("Current information",Sidebar,80,3,2,2,rgb(192,192,192))
 						else
@@ -419,8 +426,11 @@ sub getReport
 						if .DefPosts < 15 AND (.MineralMines >= 20 OR .Factories >= 15) then
 							PaintColor(1) = rgb(255,255,0)
 						end if
-					else
+					elseif HorwaspPlanet then
 						ResourceStr = "Burrows: "+commaSep(.BurrowSize)+"  +"+str(.WorkBurrow)+"%"
+					else
+						ResourceStr = "Defense: "+str(.DefPosts)
+						PaintColor(1) = rgb(128,128,128)
 					end if
 					gfxString(ResourceStr,Sidebar,540,3,2,2,PaintColor(1))
 				end if
@@ -635,7 +645,11 @@ sub getReport
 				
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
-				gfxString("Starbase "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				if .Asteroid > 0 then
+					gfxString("Mining Station "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				else
+					gfxString("Starbase "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				end if
 				gfxString(.ObjName,Sidebar,60,3,2,2,ReportColor)
 				
 				PaintColor(1) = convertColor(Coloring(.Ownership))
@@ -662,8 +676,10 @@ sub getReport
 				gfxString("Primary  : "+DispOrders(1),Sidebar,180,3,2,2,ReportColor)
 				gfxString("Secondary: "+DispOrders(2),Sidebar,200,3,2,2,ReportColor)
 				
-				gfxString("Hull   Tech: "+str(.TechH),Sidebar,240,3,2,2,ReportColor)
-				gfxString("Engine Tech: "+str(.TechE),Sidebar,260,3,2,2,ReportColor)
+				if .Asteroid = 0 then
+					gfxString("Hull   Tech: "+str(.TechH),Sidebar,240,3,2,2,ReportColor)
+					gfxString("Engine Tech: "+str(.TechE),Sidebar,260,3,2,2,ReportColor)
+				end if
 				gfxString("Beam   Tech: "+str(.TechB),Sidebar,280,3,2,2,ReportColor)
 				gfxString("Torp   Tech: "+str(.TechT),Sidebar,300,3,2,2,ReportColor)
 				
@@ -931,6 +947,9 @@ sub getReport
 	with ActiveReport
 		gfxString("("+str(.X)+","+str(.Y)+")",Sidebar,20,3,2,2,rgb(255,255,255))
 		line(Sidebar,CanvasScreen.Height-190)-(CanvasScreen.Wideth-1,CanvasScreen.Height-171),BorderBG,bf
+		
+		SelectionCursor = getRelativePos(.X,.Y)
+		drawCursor(SelectionCursor.X,SelectionCursor.Y)
 		
 		if BaseFound AND SelectedObjType <> REPORT_BASE then
 			gfxstring("Base",Sidebar+20,CanvasScreen.Height-188,3,2,2,rgb(255,255,255))
