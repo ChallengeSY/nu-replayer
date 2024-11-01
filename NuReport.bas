@@ -7,7 +7,7 @@ const BorderBG = rgb(16,0,48)
 
 dim shared as uinteger PaintColor(2)
 dim shared as AuxObj AuxList(MetaLimit), ResetAux
-dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, DiamondBase, DiamH, DiamL
+dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, DiamondBase, DiamH, DiamL
 
 ResetAux.Coloring = rgb(192,192,192)
 
@@ -149,16 +149,22 @@ sub getReport
 						else
 							if HappyDelta > 0 then
 								HappyDelta = int(HappyDelta)
-								HappyDelStr = "+"+str(HappyDelta)
-								PaintColor(1) = ReportColor
 							else
 								HappyDelta = -int(-HappyDelta)
-								HappyDelStr = str(HappyDelta)
-								PaintColor(1) = rgb(255,64,64)
 							end if
-							if HappyDelta = 0 then
+							
+							'Apply Hiss bonus
+							HappyDelta += min(HissBonus,100 - .ColHappy) + (ArtiBonus*5)
+							
+							if HappyDelta > 0 then
+								HappyDelStr = "+"+str(HappyDelta)
+								PaintColor(1) = ReportColor
+							elseif HappyDelta = 0 then
 								HappyDelStr = "+0"
 								PaintColor(1) = rgb(255,255,0)
+							else
+								HappyDelStr = str(HappyDelta)
+								PaintColor(1) = rgb(255,64,64)
 							end if
 							gfxString("Taxes: "+str(.ColTaxRate)+"%  +"+str(TaxRevenue)+" mc",Sidebar,140,3,2,2,PaintColor(1))
 							
@@ -216,10 +222,13 @@ sub getReport
 							HappyDelta = (1000 - sqr(.Natives) - 85*.NatTaxRate - (.Factories + .MineralMines) / 2 - 50 * (10 - .NativeGov)) / 100
 							
 							if HappyDelta > 0 then
-								HappyDelta = int(HappyDelta) + NativeHappyBonus
+								HappyDelta = int(HappyDelta)
 							else
-								HappyDelta = -int(-HappyDelta) + NativeHappyBonus
+								HappyDelta = -int(-HappyDelta)
 							end if
+							
+							'Apply Hiss and other native bonuses
+							HappyDelta += NativeHappyBonus + min(HissBonus,100 - .NatHappy) + (ArtiBonus*5)
 							
 							if HappyDelta > 0 then
 								HappyDelStr = "+"+str(HappyDelta)
@@ -443,10 +452,10 @@ sub getReport
 				dim as byte HorwaspShip, CloakCost, AdvancedCloak, Gravitonic
 				
 				dim as string HullClassName
-				dim as string MisnNames(24) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
+				dim as string MisnNames(25) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
 					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {2}", "{Racial}", "Cloak", _
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
-					"(15)", "(16)", "(17)", "(18)", "(19)", "(20)", "(21)", "(22)", "(23)", "(24)"}
+					"", "", "", "", "", "", "", "", "", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}"}
 				dim as string DispMisn, RacialMisn
 				ReportColor = rgb(128,224,192)
 				
@@ -517,10 +526,18 @@ sub getReport
 					gfxString("No fighter bays",Sidebar,180,3,2,2,rgb(128,128,128))
 				end if
 				
-				DispMisn = MisnNames(.Mission)
-				DispMisn = findReplace(DispMisn,"{1}",str(.MisnTarget(1)))
-				DispMisn = findReplace(DispMisn,"{2}",str(.MisnTarget(2)))
-				DispMisn = findReplace(DispMisn,"{Racial}",RacialMisn)
+				if .Mission > ubound(MisnNames) OR MisnNames(.Mission) = "" then
+					DispMisn = "("+str(.Mission)+")"
+				else
+					DispMisn = MisnNames(.Mission)
+					if .Mission = 25 AND .MisnTarget(1) = 0 then
+						DispMisn = "Unload Artifact {2}"
+					end if
+					
+					DispMisn = findReplace(DispMisn,"{1}",str(.MisnTarget(1)))
+					DispMisn = findReplace(DispMisn,"{2}",str(.MisnTarget(2)))
+					DispMisn = findReplace(DispMisn,"{Racial}",RacialMisn)
+				end if
 				gfxString("Mission: "+DispMisn,Sidebar,220,3,2,2,ReportColor)
 				
 				if AdvancedCloak = 0 AND (.Mission = 9 OR (.Mission = 10 AND RacialMisn = "Super Spy")) then
@@ -635,9 +652,8 @@ sub getReport
 		case REPORT_BASE
 			'Starbase report
 			with Planets(SelectedID)
-				dim as string PrimaryOrder(16) => {"None", "Refuel", "Maximize Defense", _
-					"Load Torps", "Unload Freighters", "Repair Base", "Force Surrenders", _
-					"(7)", "(8)", "(9)", "(10)", "(11)", "(12)", "(13)", "(14)", "(15)", "(16)"}
+				dim as string PrimaryOrder(6) => {"None", "Refuel", "Maximize Defense", _
+					"Load Torps", "Unload Freighters", "Repair Base", "Force Surrenders"}
 				dim as string SecondaryOrder(2) => {"None", "Fix Ship {1}", "Recycle Ship {1}"}
 				
 				dim as string DispOrders(2)
@@ -670,8 +686,17 @@ sub getReport
 				end if
 				gfxString("Damage  : "+str(.Damage)+"%",Sidebar,140,3,2,2,PaintColor(1))
 				
-				DispOrders(1) = findReplace(PrimaryOrder(.BaseOrders(1)), "{1}", str(.BaseTarget(1)))
-				DispOrders(2) = findReplace(SecondaryOrder(.BaseOrders(2)), "{1}", str(.BaseTarget(2)))
+				if .BaseOrders(1) > ubound(PrimaryOrder) OR PrimaryOrder(.BaseOrders(1)) = "" then
+					DispOrders(1) = "("+str(.BaseOrders(1))+")"
+				else
+					DispOrders(1) = findReplace(PrimaryOrder(.BaseOrders(1)), "{1}", str(.BaseTarget(1)))
+				end if
+				if .BaseOrders(2) > ubound(SecondaryOrder) OR SecondaryOrder(.BaseOrders(2)) = "" then
+					DispOrders(2) = "("+str(.BaseOrders(2))+")"
+				else
+					DispOrders(2) = findReplace(SecondaryOrder(.BaseOrders(2)), "{1}", str(.BaseTarget(2)))
+				end if
+				
 				
 				gfxString("Primary  : "+DispOrders(1),Sidebar,180,3,2,2,ReportColor)
 				gfxString("Secondary: "+DispOrders(2),Sidebar,200,3,2,2,ReportColor)
@@ -908,7 +933,7 @@ sub getReport
 		case REPORT_ARTI
 			'Artifact report
 			with Artifacts(SelectedID)
-				ReportColor = rgb(255,224,192)
+				ReportColor = rgb(224,192,160)
 				
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
@@ -989,6 +1014,9 @@ sub clearReport
 end sub
 
 sub buildAuxList
+	HissBonus = 0
+	ArtiBonus = 0
+	
 	for AuxPass as byte = 1 to 4
 		for AID as integer = 1 to MetaLimit
 			if AuxPass = 1 then
@@ -1001,6 +1029,12 @@ sub buildAuxList
 							.ObjType = REPORT_SHIP
 							.ObjID = AID
 						end with
+						
+						'Record Lizard Hiss bonus
+						if .Mission = 8 AND .Neu > 0 AND .BeamNum > 0 AND _
+							PlayerSlot(.Ownership).Race = "Lizard" then
+							HissBonus += 5
+						end if
 					end if
 				end with
 				
@@ -1014,10 +1048,15 @@ sub buildAuxList
 						AuxCount += 1
 						with AuxList(AuxCount)
 							.Namee =  Artifacts(AID).Namee
-							.Coloring = rgb(255,224,192)
+							.Coloring = rgb(224,192,160)
 							.ObjType = REPORT_ARTI
 							.ObjID = AID
 						end with
+						
+						'Record Artifact bonus
+						if .LocationType = 1 then
+							ArtiBonus += 1
+						end if
 					end if
 				end with
 				
