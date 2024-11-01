@@ -235,7 +235,7 @@ sub getReport
 							gfxString("Taxes: "+str(.NatTaxRate)+"%  +"+TaxStr+" mc",Sidebar,220,3,2,2,PaintColor(1))
 							
 							if .NatHappy >= 70 then
-								PaintColor(1) = rgb(64,255,64)
+								PaintColor(1) = ReportColor
 							elseif .NatHappy >= 40 then
 								PaintColor(1) = rgb(255,255,0)
 							elseif .NatHappy >= 0 then
