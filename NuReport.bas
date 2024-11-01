@@ -7,7 +7,7 @@ const BorderBG = rgb(16,0,48)
 
 dim shared as uinteger PaintColor(2)
 dim shared as AuxObj AuxList(MetaLimit), ResetAux
-dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, DiamondBase, DiamH, DiamL
+dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, NebDensity, StarRadiation, DiamondBase, DiamH, DiamL
 
 ResetAux.Coloring = rgb(192,192,192)
 
@@ -30,7 +30,7 @@ sub getReport
 				RacialTaxes = 100, OptimalTemp = 50, NativeHappyBonus = 0, _
 				StructCap, UsableMetals, MinableOre, OreDensity, MiningRate, RacialMining = 100
 			dim as byte HorwaspPlanet
-			dim as double MaxColonists, HappyDelta
+			dim as double MaxColonists, HappyDelta, NebVis
 			ReportColor = rgb(96,255,96)
 			
 			with Planets(SelectedID)
@@ -41,7 +41,9 @@ sub getReport
 				else
 					gfxString("Planet "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
 				end if
-
+				
+				NebVis = 4000 / (NebDensity + 1)
+				
 				FullObjName = .ObjName
 				ClimateStr = "Climate: "
 				MaxColonists = sin(3.14 * (100 - .Temp)/100) * 100000
@@ -212,6 +214,11 @@ sub getReport
 								NativeHappyBonus = 10
 							end if
 							
+							'Additional native happy bonus for reduced visibility
+							if NebVis < 50.5 then
+								NativeHappyBonus += 5
+							end if
+							
 							'Colonists need to be present to collect taxes from natives
 							TaxRevenue = int(.Natives * .NatTaxRate/1000 * RacialTaxes/100 * .NativeGov/5)
 							HappyDelta = trunc((1000 - sqr(.Natives) - 85*.NatTaxRate - (.Factories + .MineralMines) / 2 - 50 * (10 - .NativeGov)) / 100) + _
@@ -321,7 +328,7 @@ sub getReport
 					else
 						ResourceStr = "Mines: "+str(.MineralMines)
 					end if
-					gfxString(ResourceStr,Sidebar,360,3,2,2,PaintColor(1))
+					gfxString(ResourceStr,Sidebar,340,3,2,2,PaintColor(1))
 
 					for Mineral as byte = 1 to 4	
 						select case Mineral
@@ -361,24 +368,24 @@ sub getReport
 						
 						if ViewGame.Academy then	
 							if MinableOre > 0 AND Mineral > 1 then
-								line(Sidebar,358+Mineral*40)-(Sidebar+int(MinableOre/50),376+Mineral*40),PaintColor(1),bf
+								line(Sidebar,338+Mineral*40)-(Sidebar+int(MinableOre/50),356+Mineral*40),PaintColor(1),bf
 							end if
 						else
 							if UsableMetals > 0 then
-								line(Sidebar,358+Mineral*40)-(Sidebar+int(UsableMetals/50),376+Mineral*40),PaintColor(1),bf
+								line(Sidebar,338+Mineral*40)-(Sidebar+int(UsableMetals/50),356+Mineral*40),PaintColor(1),bf
 							end if
 	
 							DiamondBase = max(Sidebar,Sidebar+int((UsableMetals+MinableOre)/50))
 							for DiamSize as byte = 0 to 9
-								DiamL = 358+Mineral*40 + DiamSize
-								DiamH = 376+Mineral*40 - DiamSize
+								DiamL = 338+Mineral*40 + DiamSize
+								DiamH = 356+Mineral*40 - DiamSize
 								if DiamondBase-DiamSize >= Sidebar then
 									line(DiamondBase-DiamSize,DiamL)-(DiamondBase-DiamSize,DiamH),PaintColor(1)
 								end if
 								line(DiamondBase+DiamSize,DiamL)-(DiamondBase+DiamSize,DiamH),PaintColor(1)
 							next
 						end if
-
+						
 						PaintColor(1) = ReportColor
 						if MiningRate > MinableOre then
 							PaintColor(2) = rgb(255,255,128)
@@ -386,7 +393,6 @@ sub getReport
 						else
 							PaintColor(2) = 0
 						end if
-
 						
 						if ViewGame.Academy then	
 							if Mineral > 1 then
@@ -404,7 +410,7 @@ sub getReport
 							end if
 						end if
 						
-						gfxString(ResourceStr,Sidebar,340+Mineral*40,3,2,2,PaintColor(1),PaintColor(2))
+						gfxString(ResourceStr,Sidebar,320+Mineral*40,3,2,2,PaintColor(1),PaintColor(2))
 					next Mineral
 					
 					if .Colonists <= 50 then
@@ -428,7 +434,13 @@ sub getReport
 						ResourceStr = "Defense: "+str(.DefPosts)
 						PaintColor(1) = rgb(128,128,128)
 					end if
-					gfxString(ResourceStr,Sidebar,540,3,2,2,PaintColor(1))
+					gfxString(ResourceStr,Sidebar,520,3,2,2,PaintColor(1))
+					if StarRadiation > 0 then
+						gfxString("Radiation: "+str(StarRadiation)+" MJ",Sidebar,540,3,2,2,ReportColor)
+					end if
+					if NebDensity > 0 then
+						gfxString("Visibility: "+commaSep(int(NebVis+0.5))+" LY",Sidebar,560,3,2,2,ReportColor)
+					end if
 				end if
 			end with
 		case REPORT_SHIP
@@ -1002,8 +1014,12 @@ sub clearReport
 end sub
 
 sub buildAuxList
+	dim as double ObjDist
+	
 	HissBonus = 0
 	ArtiBonus = 0
+	NebDensity = 0
+	StarRadiation = 0
 	setmouse(,,1)
 	
 	for AuxPass as byte = 1 to 4
@@ -1083,14 +1099,21 @@ sub buildAuxList
 				end with
 				
 				with Nebulae(AID)
-					if .Intensity > 0 AND .X = ViewPort.X AND .Y = ViewPort.Y then
-						AuxCount += 1
-						with AuxList(AuxCount)
-							.Namee = Nebulae(AID).Namee+" Nebula"
-							.Coloring = rgb(0,176,0)
-							.ObjType = REPORT_NEB
-							.ObjID = AID
-						end with
+					ObjDist = sqr((.X - ViewPort.X)^2 + (.Y - ViewPort.Y)^2)
+					
+					if .Intensity > 0 then
+						if .X = ViewPort.X AND .Y = ViewPort.Y then
+							NebDensity += .Intensity 
+							AuxCount += 1
+							with AuxList(AuxCount)
+								.Namee = Nebulae(AID).Namee+" Nebula"
+								.Coloring = rgb(0,176,0)
+								.ObjType = REPORT_NEB
+								.ObjID = AID
+							end with
+						elseif ObjDist <= .Radius then
+							NebDensity += ceil(.Intensity * (1 - (ObjDist / .Radius)))
+						end if
 					end if
 				end with
 					
@@ -1103,6 +1126,16 @@ sub buildAuxList
 							.ObjType = REPORT_WORM
 							.ObjID = AID
 						end with
+					end if
+				end with
+				
+				with StarClusters(AID)
+					if .Mass > 0 then
+						ObjDist = sqr((.X - ViewPort.X)^2 + (.Y - ViewPort.Y)^2)
+						
+						if ObjDist <= sqr(.Mass) then
+							StarRadiation += ceil((.Temperature/100) * (1 - (ObjDist / sqr(.Mass))))
+						end if
 					end if
 				end with
 				
