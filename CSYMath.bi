@@ -59,6 +59,14 @@ function min(ValueA as double, ValueB as double) as double
 end function
 #ENDIF
 
+function trunc(Amount as double) as integer
+	if Amount > 0 then
+		return int(Amount)
+	else
+		return -int(-Amount)
+	end if
+end function
+
 function convertIP(InIP as integer) as string
 	dim as string LongString, ShortString(4), OutString
 	LongString = str(hex(InIP,8))

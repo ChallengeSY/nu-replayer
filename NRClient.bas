@@ -601,7 +601,7 @@ sub renderClient
 	end if
 
 	RedrawIslands = max(RedrawIslands - 1, 0)
-	'Allow scrolling while no objective is selected
+	'Allow scrolling while no object is selected
 	if MouseError = 0 AND SelectedObjType = 0 then
 		if MouseX <= 16 AND ViewPort.X > 2000 - ViewGame.MapWidth/2 then
 			ViewPort.X -= 8 / ViewPort.Zoom
@@ -721,6 +721,8 @@ sub renderClient
 			else
 				if BaseScreen.Wideth > 1024 AND BaseScreen.Height > 768 AND SimpleView = 0 then
 					prepCanvas(1024,768)
+				else
+					setmouse(,,0)
 				end if
 				
 				resetViewport

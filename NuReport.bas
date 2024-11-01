@@ -96,11 +96,14 @@ sub getReport
 					gfxString(FullObjName,Sidebar,60,3,2,2,ReportColor)
 					gfxString(ClimateStr,Sidebar,100,3,2,2,ReportColor)
 					
+					'Artifact bonus inferred based on how it stacks with Reptilians
+					RacialMining *= (ArtiBonus + 1)
+					
 					'Uses default mining/tax rate modifers
 					if PlayerSlot(.OwnerShip).Race = "Lizard" then
-						RacialMining = 200
+						RacialMining *= 2
 					elseif PlayerSlot(.OwnerShip).Race = "Fed" then
-						RacialMining = 70
+						RacialMining *= 0.7
 						RacialTaxes = 200
 					end if
 
@@ -141,21 +144,13 @@ sub getReport
 						gfxString(commaSep(PopulationNum)+" colonists",Sidebar,120,3,2,2,ReportColor)
 						
 						TaxRevenue = int(.Colonists * .ColTaxRate/1000 * RacialTaxes/100)
-						HappyDelta = (1000 - sqr(.Colonists) - 80*.ColTaxRate - abs(OptimalTemp - .Temp) * 3 - (.Factories + .MineralMines) / 3) / 100
+						HappyDelta = trunc((1000 - sqr(.Colonists) - 80*.ColTaxRate - abs(OptimalTemp - .Temp) * 3 - (.Factories + .MineralMines) / 3) / 100) + _
+							min(HissBonus,100 - .ColHappy) + (ArtiBonus*5)
 						
 						if HorwaspPlanet then
 							gfxString("Liquify: "+str(.ColTaxRate)+"%",Sidebar,140,3,2,2,ReportColor)
 							gfxString("Terraform: "+str(.WorkTerraform)+"%",Sidebar,160,3,2,2,ReportColor)
 						else
-							if HappyDelta > 0 then
-								HappyDelta = int(HappyDelta)
-							else
-								HappyDelta = -int(-HappyDelta)
-							end if
-							
-							'Apply Hiss bonus
-							HappyDelta += min(HissBonus,100 - .ColHappy) + (ArtiBonus*5)
-							
 							if HappyDelta > 0 then
 								HappyDelStr = "+"+str(HappyDelta)
 								PaintColor(1) = ReportColor
@@ -219,16 +214,8 @@ sub getReport
 							
 							'Colonists need to be present to collect taxes from natives
 							TaxRevenue = int(.Natives * .NatTaxRate/1000 * RacialTaxes/100 * .NativeGov/5)
-							HappyDelta = (1000 - sqr(.Natives) - 85*.NatTaxRate - (.Factories + .MineralMines) / 2 - 50 * (10 - .NativeGov)) / 100
-							
-							if HappyDelta > 0 then
-								HappyDelta = int(HappyDelta)
-							else
-								HappyDelta = -int(-HappyDelta)
-							end if
-							
-							'Apply Hiss and other native bonuses
-							HappyDelta += NativeHappyBonus + min(HissBonus,100 - .NatHappy) + (ArtiBonus*5)
+							HappyDelta = trunc((1000 - sqr(.Natives) - 85*.NatTaxRate - (.Factories + .MineralMines) / 2 - 50 * (10 - .NativeGov)) / 100) + _
+								NativeHappyBonus + min(HissBonus,100 - .NatHappy) + (ArtiBonus*5)
 							
 							if HappyDelta > 0 then
 								HappyDelStr = "+"+str(HappyDelta)
@@ -945,9 +932,9 @@ sub getReport
 						gfxString("Bound to local planet "+str(.LocationID),Sidebar,100,3,2,2,ReportColor)
 						gfxString(Planets(.LocationID).ObjName,Sidebar,120,3,2,2,ReportColor)
 						
-						gfxString("+100% increased mining efficiency",Sidebar,160,3,2,2,ReportColor)
+						gfxString("+100% mining efficiency",Sidebar,160,3,2,2,ReportColor)
 						gfxString("Improved ground defense",Sidebar,180,3,2,2,ReportColor)
-						gfxString("+5 increased happiness",Sidebar,200,3,2,2,ReportColor)
+						gfxString("+5 to happiness",Sidebar,200,3,2,2,ReportColor)
 					case 2
 						gfxString("Bound to ship "+str(.LocationID),Sidebar,100,3,2,2,ReportColor)
 						gfxString(Starships(.LocationID).ShipName,Sidebar,120,3,2,2,ReportColor)
@@ -1010,12 +997,14 @@ sub getReport
 end sub
 
 sub clearReport
+	setmouse(,,0)
 	SelectedObjType = 0
 end sub
 
 sub buildAuxList
 	HissBonus = 0
 	ArtiBonus = 0
+	setmouse(,,1)
 	
 	for AuxPass as byte = 1 to 4
 		for AID as integer = 1 to MetaLimit
@@ -1206,7 +1195,7 @@ sub syncReport(AddCycle as byte = 0)
 
 		case REPORT_ARTI
 			with Artifacts(SelectedID)
-				if .Namee <> "" then
+				if .Namee = "" then
 					clearReport
 				else
 					ViewPort.X = .X
