@@ -456,7 +456,7 @@ sub getReport
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
 					"Repair Ship", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak and Intercept {2}", _
 					"Push Minefield", "Pull Minefield", "Enter Wormhole", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}", _
-					"Build Robots", "Hide Ship", "Lay Hidden Mines"}
+					"Build Clans", "Hide Ship", "Lay Hidden Mines"}
 				dim as string DispMisn, RacialMisn
 				ReportColor = rgb(128,224,192)
 				
