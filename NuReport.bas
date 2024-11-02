@@ -451,10 +451,12 @@ sub getReport
 				dim as byte HorwaspShip, CloakCost, AdvancedCloak, Gravitonic
 				
 				dim as string HullClassName
-				dim as string MisnNames(25) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
+				dim as string MisnNames(28) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
 					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {2}", "{Racial}", "Cloak", _
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
-					"", "", "", "", "", "", "", "", "", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}"}
+					"Repair Ship", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak and Intercept {2}", _
+					"Push Minefield", "Pull Minefield", "Enter Wormhole", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}", _
+					"Build Robots", "Hide Ship", "Lay Hidden Mines"}
 				dim as string DispMisn, RacialMisn
 				ReportColor = rgb(128,224,192)
 				
@@ -492,6 +494,7 @@ sub getReport
 						case "Rebel"
 							RacialMisn = "Rebel Ground Attack"
 						case "Horwasp"
+							RacialMisn = "Swarm"
 							HorwaspShip = 1
 						case else
 							RacialMisn = "Build Fighters"
@@ -651,8 +654,9 @@ sub getReport
 		case REPORT_BASE
 			'Starbase report
 			with Planets(SelectedID)
-				dim as string PrimaryOrder(6) => {"None", "Refuel", "Maximize Defense", _
-					"Load Torps", "Unload Freighters", "Repair Base", "Force Surrenders"}
+				dim as string PrimaryOrder(13) => {"None", "Refuel", "Maximize Defense", "Load Torps", _
+					"Unload Freighters", "Repair Base", "Force Surrenders", "Send Megacredits", "Receive Megacredits", _
+					"Lay Mines", "Lay Web Mines", "Mine Sweep", "Send Fighters", "Receive Fighters"}
 				dim as string SecondaryOrder(2) => {"None", "Fix Ship {1}", "Recycle Ship {1}"}
 				
 				dim as string DispOrders(2)
