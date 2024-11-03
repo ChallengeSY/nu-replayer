@@ -1,8 +1,10 @@
 FBC=fbc #compiler
-TARGET=NuReplay #target file
+MAINAPP=NuReplay
+CONVERTOR=MassTurn
 
 all:
-	$(FBC) -x $(TARGET) -s gui NuReplay.bas
+	$(FBC) -x $(MAINAPP) -s gui $(MAINAPP).bas
+	$(FBC) -x $(CONVERTOR) -s gui $(CONVERTOR).bas
 	
 clean:
 	rm *.o $(TARGET)
