@@ -44,6 +44,7 @@ sub renderClient
 		dim as ushort JumpCut, OldTurn
 		dim as ubyte CutLegal, ProcessNeeded, ZipDLenabled = 0
 		dim as string ScoreFile, AuxFile, RawFile, ZipFile
+		dim as short TurnsPerRow = int((CanvasScreen.Wideth-20)/48)
 
 		do
 			color rgb(255,255,255)
@@ -126,7 +127,7 @@ sub renderClient
 					color rgb(0,255,0)
 				end if
 				print space(5-len(str(TID)));TID;
-				if remainder(TID,20) = 0 then
+				if remainder(TID,TurnsPerRow) = 0 then
 					print
 				end if
 			next TID
@@ -144,6 +145,11 @@ sub renderClient
 			if InType = EscKey AND JumpCut > 0 then
 				JumpCut = 0
 				InType = chr(255)
+			elseif InType = CtrlQ then
+				'Use a dedicated thread to process any remaining incomplete turns
+				if ConvertorUse = 0 then
+					ConvertorSes = ThreadCreate(@launchConvertor)
+				end if
 			elseif InType >= "0" AND InType <= "9" then
 				JumpCut = JumpCut * 10 + valint(InType)
 			elseif InType = chr(8) then
@@ -601,8 +607,8 @@ sub renderClient
 	end if
 
 	RedrawIslands = max(RedrawIslands - 1, 0)
-	'Allow scrolling while no object is selected
-	if MouseError = 0 AND SelectedObjType = 0 then
+	'Allow scrolling while no object is selected and no slideshow is active
+	if MouseError = 0 AND SelectedObjType = 0 AND NextMapSlide = 0 then
 		if MouseX <= 16 AND ViewPort.X > 2000 - ViewGame.MapWidth/2 then
 			ViewPort.X -= 8 / ViewPort.Zoom
 			RedrawIslands = 2
@@ -628,6 +634,9 @@ sub renderClient
 	if left(InType,1) <> chr(255) then
 		InType = lcase(InType)
 	end if
+	if NextMapSlide > 0 AND (InType <> "" OR ButtonCombo > 0 OR CanNavigate(1) < 2) then
+		NextMapSlide = 0
+	end if
 	for NID as byte = 1 to 10
 		if InType = right(str(NID),1) then
 			dim as short SelAux = NID + AuxPage * 10
@@ -639,6 +648,12 @@ sub renderClient
 			end if
 		end if
 	next NID
+	
+	if NextMapSlide > 0 AND timer > NextMapSlide then
+		TurnNum += 1
+		loadTurnExtras
+		NextMapSlide = max(NextMapSlide + SlideshowDelay/1000,timer + SlideshowDelay/2000)
+	end if
 	
 	select case InType
 		case "i"
@@ -705,6 +720,13 @@ sub renderClient
 			end if
 		case "x"
 			clearReport
+		case CtrlQ
+			if ConvertorUse = 0 then
+				ConvertorSes = ThreadCreate(@launchConvertor)
+			end if
+		case CtrlW
+			NextMapSlide = timer + SlideshowDelay/500
+			InType = ""
 		case CtrlR
 			'Reloads the starmap
 			updateStarmap

@@ -10,7 +10,8 @@ enum ReportCollection
 	REPORT_ARTI
 end enum
 
-dim shared as integer SelectedID 
+dim shared as integer SelectedID
+dim shared as double NextMapSlide
 dim shared as ReportCollection SelectedObjType
 
 function convertColor(Brush as ColorSpecs) as uinteger
@@ -747,6 +748,29 @@ sub playerList
 			if ViewMode > 2 then ViewMode = 0
 		end if
 	loop until InType = EscKey
+end sub
+
+sub launchConvertor(ByVal InternalPtr as any ptr = 0)
+	#IFNDEF __FB_DOS__
+	dim as string MassTurn
+	#IFDEF __FB_WIN32__
+	MassTurn = "MassTurn.exe"
+	#ELSE
+	MassTurn = "MassTurn"
+	#ENDIF
+	
+	if ConvertorLock <> 0 AND ConvertorUse = 0 then
+		MutexLock ConvertorLock
+		ConvertorUse = 1
+		
+		exec(MassTurn,str(GameID)+" --silent --forward --skipComp")
+		InType = ""
+		while inkey <> "":wend
+		
+		MutexUnlock ConvertorLock
+		ConvertorUse = 0
+	end if
+	#ENDIF
 end sub
 
 sub resetViewport

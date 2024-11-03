@@ -1,23 +1,29 @@
 ## Overview
 Nu Replayer is a standalone add-on for Planets Nu, written in FreeBASIC. It is designed to build and view replays of completed games. Nu Replayer is currently in beta, as most core features are in place.
 
-## Interface
 The default interface that is opened up is a menu, housing access to the game list, network functions, and configuration.
 
-### Game Room
-The game room is a common interface, originally the default when Nu Replayer is first opened. It contains a list of finished games, and a filter can be applied to make it easier to find a desired game.
+## Game Room
+The game room is a common interface. It contains a list of finished games, and a filter can be applied to make it easier to find a desired game.
 
-### Starmap
+## Starmap
 After a suitable game has been selected (either with converted or raw files present), then the game opens into the starmap interface, converting the last turn of the game to a more readable format if necessary.
 
-By default, the starmap is accessed using the entire screen. To get a smaller window (if one is using a desktop &gt;1024&times;768), simply turn on the Compressed View setting in the Engine Options. The starmap itself can be zoomed via the +/- keys.
+By default, the starmap is accessed using the entire screen. To get a smaller window (if one is using a desktop &gt;1024&times;768), simply turn on the Compressed View setting in the Engine Options. The starmap interface contains many useful features. The most notable features of Nu Replayer are the detailed object reports.
 
-The starmap interface contains many useful features. The most notable features of Nu Replayer are the detailed object reports. These are given when one clicks near such a key object, and can be closed via the X key. Supporting objects can be selected via numeric keys and also PageUp / PageDown.
-
-Turns within a game can be navigate with I/O, or a specific turn can be reached via Ctrl+J.
-
-### Object Lists
-Nu Replayer carries multiple object lists that supplement the starmap. These lists come in their own screen and, as a result, will need to be accessed with a key in order to view the list. The playerlist is currently bound to F5, the planet list to F6, and the ship list to F7.
+### Controls
+* Starmap Zoom: +/-
+* Open a report: Click (closest object gets selected)
+* Select another object in the same point: B for the base / P for the planet / 1-0 for all other objects
+* Pagination navigation: PageUp/PageDn for most lists + Home/End for the starbase storage
+* Close the active report: X
+* Change turns: I/O
+* Jump to any turn: Ctrl+J
+* Quickly convert raw turns: Ctrl+Q
+* Start a slideshow from the current turn: Ctrl+W
+* Player List: F5
+* Planet List: F6
+* Ship List: F7
 
 ## Networking
 Nu Replayer features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).

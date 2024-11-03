@@ -20,6 +20,7 @@ declare sub loadTurnUI(Players as ubyte)
 #ENDIF
 
 #IFNDEF __FB_DOS__
+#include "fbthread.bi"
 #DEFINE __NR_AUDIO__
 #ENDIF
 
@@ -52,6 +53,8 @@ const PageUp = chr(255,73)
 const PageDown = chr(255,81)
 const EnterKey = chr(13)
 const EscKey = chr(27)
+const CtrlQ = chr(17)
+const CtrlW = chr(23)
 const CtrlJ = chr(10)
 const CtrlR = chr(18)
 
@@ -377,15 +380,15 @@ dim shared as WormObj Wormholes(LimitObjs), ResetWorm
 dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
 dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), _
-	TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode
+	TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
-dim shared as uinteger GameID, TotalGamesLoaded, SelectedIndex
-dim shared as integer MouseX, MouseY, MouseError, ButtonCombo, ActualX, ActualY, DestPattern
+dim shared as uinteger GameID, TotalGamesLoaded, SlideshowDelay
+dim shared as integer MouseX, MouseY, MouseError, SelectedIndex, ButtonCombo, ActualX, ActualY, DestPattern
 dim shared as short FadingSelect, TurnNum, BoxGlow
 dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
 dim shared as PartSpecs Engines(109), Beams(110), Tubes(310), TorpAmmo(310)
-dim shared as any ptr IslandMap, Indeterminate, Cursor
+dim shared as any ptr IslandMap, Indeterminate, Cursor, ConvertorLock, ConvertorSes
 dim shared as event e
 
 'Register the player colors
@@ -986,6 +989,41 @@ sub menu
 				LegacyRaceNames = 1 - LegacyRaceNames
 			end if
 		end if
+
+		gfxstring("Slideshow Delay:",CanvasScreen.Wideth/2+10,395,3,3,2,rgb(255,255,255))
+		gfxstring(commaSep(SlideshowDelay)+" milliseconds",CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,255))
+
+		if MouseY >= 390 AND MouseY < 435 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,390,CanvasScreen.Wideth-1,434)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				dim as integer NewSlideDelay
+	
+				do
+					line(CanvasScreen.Wideth/2+5,395)-(CanvasScreen.Wideth-6,429),rgb(0,0,0),bf
+					gfxstring("Enter new delay value:",CanvasScreen.Wideth/2+10,395,3,3,2,rgb(255,255,0))
+					gfxstring(commaSep(NewSlideDelay),CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,0))
+			
+					if InType = EscKey then
+						if NewSlideDelay > 0 then
+							NewSlideDelay = 0
+						else
+							exit do
+						end if
+					elseif InType >= "0" AND InType <= "9" then
+						NewSlideDelay = NewSlideDelay * 10 + valint(InType)
+					elseif InType = chr(8) then
+						NewSlideDelay = int(NewSlideDelay / 10)
+					end if
+			
+					screencopy
+					sleep 15
+					InType = inkey
+				loop until InType = EnterKey
+				if NewSlideDelay > 0 then
+					SlideshowDelay = NewSlideDelay
+				end if
+			end if
+		end if
 	else
 		gfxstring("Engine Options",10,(MaxMenuEntries+1)*50,5,4,3,rgb(255,255,255))
 	end if
@@ -1252,16 +1290,14 @@ sub replayHub(DownloadMode as byte = 0)
 		elseif InType = DownArrow AND SelectedIndex < TotalGamesLoaded then
 			SelectedIndex += 1
 		elseif InType = PageUp then
-			if SelectedIndex > (GamesPerPage - 1) then SelectedIndex -= (GamesPerPage - 1) else SelectedIndex = 1
+			SelectedIndex = max(SelectedIndex - (GamesPerPage - 1), 1)
 		elseif InType = PageDown then
-			if TotalGamesLoaded < (GamesPerPage - 1) then
-				SelectedIndex = TotalGamesLoaded
-			elseif SelectedIndex < TotalGamesLoaded - (GamesPerPage - 1) then
-				SelectedIndex += (GamesPerPage - 1)
-			else
-				SelectedIndex = TotalGamesLoaded
-			end if
-		elseif (InType >= "a" AND InType <= "z") OR (InType >= "A" AND InType <= "Z") OR InType = chr(32) then
+			SelectedIndex = min(SelectedIndex + (GamesPerPage - 1), TotalGamesLoaded)
+		elseif InType = HomeKey then
+			SelectedIndex = 1
+		elseif InType = EndKey then
+			SelectedIndex = TotalGamesLoaded
+		elseif InType >= chr(32) AND InType < chr(127) AND InType <> "!" AND InType <> "*" AND InType <> "?" then
 			GameFilter += lcase(InType)
 			loadGameList(GameFilter)
 		elseif InType = chr(8) then

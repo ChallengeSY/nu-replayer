@@ -454,7 +454,7 @@ sub getReport
 				dim as string MisnNames(28) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
 					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {2}", "{Racial}", "Cloak", _
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
-					"Repair Ship", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak and Intercept {2}", _
+					"Repair Ship {1}", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak and Intercept {2}", _
 					"Push Minefield", "Pull Minefield", "Enter Wormhole", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}", _
 					"Build Clans", "Hide Ship", "Lay Hidden Mines"}
 				dim as string DispMisn, RacialMisn
@@ -570,10 +570,10 @@ sub getReport
 					gfxString("FCode: "+.FCode+" / Mass: "+commaSep(BaseMass)+" kT",Sidebar,260,3,2,2,ReportColor)
 				end if
 
-				if .WarpSpeed > .EnginePos then
-					PaintColor(1) = rgb(255,255,0)
-				elseif .WarpSpeed > int((100 - .HullDmg)/10) then
+				if .WarpSpeed > ceil((100 - .HullDmg)/10) then
 					PaintColor(1) = rgb(255,64,64)
+				elseif .WarpSpeed > .EnginePos then
+					PaintColor(1) = rgb(255,255,0)
 				else
 					PaintColor(1) = ReportColor
 				end if
@@ -600,7 +600,7 @@ sub getReport
 					gfxString("Crew  : "+commaSep(.Crew)+"/"+commaSep(ShiplistObj(.ShipType).Crew),Sidebar,340,3,2,2,PaintColor(1))
 				end if
 				
-				if .HullDmg >= 10 then
+				if .HullDmg >= 20 then
 					PaintColor(1) = rgb(255,64,64)
 				elseif .HullDmg > 0 then
 					PaintColor(1) = rgb(255,255,0)
@@ -1261,5 +1261,5 @@ sub syncReport(AddCycle as byte = 0)
 	if SelectedObjType > 0 then
 		buildAuxList
 	end if
-	RedrawIslands = 1 + AddCycle
+	RedrawIslands += AddCycle * 2
 end sub

@@ -24,10 +24,18 @@ sub cleaning destructor
 	print #1, quote("Exclude Dataless Games");",";ExcludeNodata
 	print #1, quote("Legacy Race Names");",";LegacyRaceNames
 	print #1, quote("Borderless");",";BorderlessFS
+	print #1, quote("Slideshow Delay");",";SlideshowDelay
 	close #1
+	
+	#IFNDEF __FB_DOS__
+	ThreadDetach ConvertorSes
+	MutexDestroy ConvertorLock
+	#ENDIF
 	
 	ImageDestroy(IslandMap)
 	ImageDestroy(Indeterminate)
+	ImageDestroy(Cursor)
+	
 	#IFNDEF __FORCE_OFFLINE__
 	SDLNet_Quit
 	#ENDIF
@@ -49,6 +57,7 @@ ExcludeBlitzes = 1
 ExcludeMvM = 1
 ExcludeNodata = 0
 LegacyRaceNames = 0
+SlideshowDelay = 1000
 
 if FileExists("Settings.csv") then
 	open "Settings.csv" for input as #1
@@ -73,6 +82,8 @@ if FileExists("Settings.csv") then
 				input #1, LegacyRaceNames
 			case "Borderless"
 				input #1, BorderlessFS
+			case "Slideshow Delay"
+				input #1, SlideshowDelay
 		end select
 	loop until eof(1)
 	close #1
@@ -189,6 +200,10 @@ resetViewport
 if cmdLine("-s") = 0 AND cmdLine("--silent") = 0 then
 	loadMusic("Menu")
 end if
+#ENDIF
+
+#IFNDEF __FB_DOS__
+ConvertorLock = MutexCreate
 #ENDIF
 
 #IF __FB_DEBUG__
