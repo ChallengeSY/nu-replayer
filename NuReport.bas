@@ -425,7 +425,7 @@ sub getReport
 						PaintColor(1) = rgb(128,128,128)
 					elseif .Ownership > 0 AND HorwaspPlanet = 0 then
 						ResourceStr = "Defense: "+str(.DefPosts)+"/"+str(StructCap)
-						if .DefPosts < 15 AND (.MineralMines >= 20 OR .Factories >= 15) then
+						if .DefPosts < 15 AND (.MineralMines >= 20 OR .Factories >= 15) AND NebDensity = 0 then
 							PaintColor(1) = rgb(255,255,0)
 						end if
 					elseif HorwaspPlanet then
