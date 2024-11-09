@@ -388,7 +388,7 @@ sub getReport
 						
 						PaintColor(1) = ReportColor
 						if MiningRate > MinableOre then
-							PaintColor(2) = rgb(255,255,128)
+							PaintColor(2) = rgb(255,255,0)
 							MiningRate = MinableOre
 						else
 							PaintColor(2) = 0
@@ -454,7 +454,7 @@ sub getReport
 				dim as string MisnNames(28) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
 					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {2}", "{Racial}", "Cloak", _
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
-					"Repair Ship {1}", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak and Intercept {2}", _
+					"Repair Ship {1}", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak + Intercept {1}", _
 					"Push Minefield", "Pull Minefield", "Enter Wormhole", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}", _
 					"Build Clans", "Hide Ship", "Lay Hidden Mines"}
 				dim as string DispMisn, RacialMisn
@@ -532,15 +532,19 @@ sub getReport
 					DispMisn = "("+str(.Mission)+")"
 				else
 					DispMisn = MisnNames(.Mission)
-					if .Mission = 25 AND .MisnTarget(1) = 0 then
-						DispMisn = "Unload Artifact {2}"
+					if .Mission = 25 then
+						if .MisnTarget(1) = 0 then
+							DispMisn = "Unload Artifact {2}"
+						elseif Sidebar > CanvasScreen.Wideth - 330 then
+							DispMisn = "Send relic {2} to ship {1}"
+						end if
 					end if
 					
 					DispMisn = findReplace(DispMisn,"{1}",str(.MisnTarget(1)))
 					DispMisn = findReplace(DispMisn,"{2}",str(.MisnTarget(2)))
 					DispMisn = findReplace(DispMisn,"{Racial}",RacialMisn)
 				end if
-				gfxString("Mission: "+DispMisn,Sidebar,220,3,2,2,ReportColor)
+				gfxString("Misn: "+DispMisn,Sidebar,220,3,2,2,ReportColor)
 				
 				if AdvancedCloak = 0 AND (.Mission = 9 OR (.Mission = 10 AND RacialMisn = "Super Spy")) then
 					CloakCost = max(int(.HullMass/20),5)
@@ -1152,6 +1156,7 @@ sub buildAuxList
 end sub
 
 sub syncReport(AddCycle as byte = 0)
+	dim as byte ExtraCycles
 	BaseFound = 0
 	PlanetFound = 0
 
@@ -1170,6 +1175,7 @@ sub syncReport(AddCycle as byte = 0)
 				if .ShipType <= 0 then
 					clearReport
 				else
+					ExtraCycles = 1
 					ViewPort.X = .XLoc
 					ViewPort.Y = .YLoc
 				end if
@@ -1193,6 +1199,7 @@ sub syncReport(AddCycle as byte = 0)
 				if .MineUnits <= 0 then
 					clearReport
 				else
+					ExtraCycles = 1
 					ViewPort.X = .X
 					ViewPort.Y = .Y
 				end if
@@ -1215,6 +1222,7 @@ sub syncReport(AddCycle as byte = 0)
 				if .Voltage <= 0 then
 					clearReport
 				else
+					ExtraCycles = 1
 					ViewPort.X = .X
 					ViewPort.Y = .Y
 				end if
@@ -1235,6 +1243,7 @@ sub syncReport(AddCycle as byte = 0)
 				if .Namee = "" then
 					clearReport
 				else
+					ExtraCycles = 1
 					ViewPort.X = .X
 					ViewPort.Y = .Y
 				end if
@@ -1261,5 +1270,5 @@ sub syncReport(AddCycle as byte = 0)
 	if SelectedObjType > 0 then
 		buildAuxList
 	end if
-	RedrawIslands += AddCycle * 2
+	RedrawIslands += AddCycle * 2 + ExtraCycles
 end sub

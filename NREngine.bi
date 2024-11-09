@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.93 (Beta)"
+const BROWSER_LONG = "Nu Replayer 0.94 (Beta)"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
