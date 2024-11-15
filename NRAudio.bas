@@ -1,8 +1,24 @@
+enum SoundFX
+	SFX_BEAM = 0
+	SFX_TORP
+	SFX_FIGHTER
+	SFX_EXPLODE
+	SFX_MAX
+end enum
+
 #include "SDL/SDL.bi"
 #include "SDL/SDL_mixer.bi"
 
+const clipCount = SFX_MAX - 1
+dim shared as Mix_Chunk ptr clip(clipCount)
+dim shared as integer clipChannel(clipCount)
 dim shared music as Mix_Music ptr
-music = NULL
+
+dim as string SFXNames(clipCount)
+for CID as ubyte = 0 to clipCount
+	clip(CID) = NULL
+	clipChannel(CID) = -1
+next CID
 
 dim audio_rate as integer
 dim audio_format as Uint16
@@ -16,6 +32,11 @@ audio_buffers = 4096
 
 SDL_Init(SDL_INIT_AUDIO)
 
+SFXNames(SFX_BEAM) = "beam"
+SFXNames(SFX_TORP) = "torp"
+SFXNames(SFX_FIGHTER) = "fighter"
+SFXNames(SFX_EXPLODE) = "explode"
+
 if (Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers)) then
 	print "Unable to open audio!"
 	
@@ -24,8 +45,20 @@ if (Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers)) then
 end if
 Mix_QuerySpec(@audio_rate, @audio_format, @audio_channels)
 
+for PID as short = 0 to clipCount
+	clip(PID) = Mix_LoadWAV("sfx/"+SFXNames(PID)+".wav")
+next PID
+music = NULL
+
+dim shared as byte SkipSounds = 0
 declare sub loadMusic(MusicFile as string)
 declare sub playSong
+
+sub playClip(ID as byte)
+	if SkipSounds = 0 AND ID >= 0 then
+		clipChannel(ID) = Mix_PlayChannel(-1, clip(ID), 0)
+	end if
+end sub
 
 sub cycleMusic cdecl ()
 	dim as short ActualNum, TurnRef

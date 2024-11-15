@@ -8,6 +8,7 @@ enum ReportCollection
 	REPORT_NEB
 	REPORT_WORM
 	REPORT_ARTI
+	REPORT_VCR
 end enum
 
 dim shared as integer SelectedID
@@ -455,12 +456,12 @@ sub shipList
 							CargoUsed = .Colonists + .Dur + .Trit + .Moly + .Supplies + .Ammo
 							if PlayerSlot(.Ownership).Race = "Horwasp" then
 								if .BayNum > 0 then
-									dim as integer MaxFighters = 70
+									dim as integer MaxWaspFtrs = 70
 									if .ClassName = "Soldier" then
-										MaxFighters = 40
+										MaxWaspFtrs = 40
 									end if 
 									
-									dim as integer ComputeAmmo = int(.Colonists * (MaxFighters - 10) / .MaxCargo) + 10 
+									dim as integer ComputeAmmo = int(.Colonists * (MaxWaspFtrs - 10) / .MaxCargo) + 10 
 									
 									AmmoStr = space(4-len(str(ComputeAmmo))) + str(ComputeAmmo)
 								else

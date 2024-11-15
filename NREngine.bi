@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 0.94 (Beta)"
+const BROWSER_LONG = "Nu Replayer 0.95 (Beta)"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
@@ -95,8 +95,8 @@ sub updateStatistics
 end sub
 
 sub updateStarmap
-	dim as string SettingsFile, PlanetsFile, ShipsFile, MapFile, _
-		BasesFile, StorageFile, IonFile, MineFile, StarFile, NebFile, WormFile, ArtiFile
+	dim as string SettingsFile, PlanetsFile, ShipsFile, MapFile, BasesFile, StorageFile, _
+		IonFile, MineFile, StarFile, NebFile, WormFile, ArtiFile, CombatsFile
 	dim as short LoadObjID
 	'Loads various files and renders their contents onto the starmap
 	
@@ -111,6 +111,7 @@ sub updateStarmap
 	NebFile = "games/"+str(GameID)+"/Nebulae.csv"
 	WormFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Wormholes.csv"
 	ArtiFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Artifacts.csv"
+	CombatsFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/VCRs.csv"
 	
 	for OID as integer = 0 to MetaLimit
 		if OID <= LimitObjs then
@@ -145,6 +146,7 @@ sub updateStarmap
 			IonStorms(OID) = ResetStorm
 			Wormholes(OID) = ResetWorm
 			Artifacts(OID) = ResetArti
+			VCRbattles(OID) = ResetVCR
 			if ReplayerMode <> MODE_CLIENT then
 				StarClusters(OID) = ResetStar
 				Nebulae(OID) = ResetNeb
@@ -286,6 +288,7 @@ sub updateStarmap
 					input #5, .HullDmg
 					input #5, .Experience
 					input #5, .Cloaked
+					input #5, .Infection
 					
 					for STID as short = 1 to 5000
 						if .ShipType = STID then
@@ -547,6 +550,55 @@ sub updateStarmap
 			end if
 		next AID
 		close #14
+	end if
+	
+	if FileExists(CombatsFile) then
+		debugout("Opened VCRs file")
+		open CombatsFile for input as #15
+		line input #15, NullStr
+		for VID as integer = 0 to LimitObjs
+			if eof(15) then
+				exit for
+			else
+				input #15, LoadObjID
+				
+				with VCRbattles(LoadObjID)
+					.InternalID = LoadObjID
+					input #15, .Seed
+					input #15, .XLoc, .YLoc
+					input #15, .Battletype
+					input #15, .LeftOwner, .RightOwner
+					input #15, .Turn
+					for PID as byte = 1 to 2
+						with .Combatants(PID)
+							input #15, .PieceID
+							input #15, .Namee
+							input #15, .BeamCt
+							input #15, .TubeCt
+							input #15, .BayCt
+							input #15, .HullID
+							input #15, .BeamID
+							input #15, .TorpID
+							input #15, .Shield
+							input #15, .Damage
+							input #15, .Crew
+							input #15, .Mass
+							input #15, .RaceID
+							input #15, .BeamKillX
+							input #15, .BeamChargeX
+							input #15, .TorpChargeX
+							input #15, .TorpMissChance
+							input #15, .CrewDefense
+							input #15, .TorpAmmo
+							input #15, .Fighters
+							input #15, .Temperature
+							input #15, .Starbase
+						end with
+					next PID
+				end with
+			end if
+		next VID
+		close #15
 	end if
 end sub
 

@@ -81,6 +81,7 @@ type ParseShip
 	Ordnance as short
 	Damage as short
 	Crewmen as short
+	Infection as short
 	WarpFactor as byte
 	EngineID as byte
 	BeamCount as byte
@@ -220,9 +221,9 @@ type ParseCombatPiece
 	BeamCt as byte
 	TubeCt as byte
 	BayCt as byte
-	HullID as byte
-	BeamID as byte
-	TorpID as byte
+	HullID as short
+	BeamID as short
+	TorpID as short
 	
 	Shield as short
 	Damage as short
@@ -249,7 +250,7 @@ type ParseVCR
 	Battletype as byte
 	LeftOwner as byte
 	RightOwner as byte
-	Turn as byte
+	Turn as short
 	InternalID as integer
 	Combatants(2) as ParseCombatPiece
 end type
@@ -374,7 +375,8 @@ sub exportShipList(GameID as integer, CurTurn as short)
 		quote("HullID")+","+quote("EngID")+","+quote("BmCt")+","+quote("BmID")+","+quote("BayCt")+","+_
 		quote("TorpCt")+","+quote("TorpID")+","+quote("Mass")+","+quote("Ammo")+","+quote("Warp")+","+_
 		quote("Colonists")+","+quote("Ne")+","+quote("Du")+","+quote("Tr")+","+quote("Mo")+","+_
-		quote("Mc")+","+quote("Sp")+","+quote("Crew")+","+quote("Dmg")+","+quote("XP")+","+quote("Cl")
+		quote("Mc")+","+quote("Sp")+","+quote("Crew")+","+quote("Dmg")+","+quote("XP")+","+quote("Cl")+_
+		","+quote("Inf")
 
 	for ObjID = 1 to LimitObjs
 		with ShipParser(ObjID)
@@ -384,8 +386,8 @@ sub exportShipList(GameID as integer, CurTurn as short)
 					","& .XLoc;","& .YLoc;","& .TargetX;","& .TargetY;","& quote(.ShipName); _
 					","& .ShipType;","& .EngineID;","& .BeamCount;","& .BeamID;","& .BayCount; _
 					","& .TubeCount;","& .TubeID;","& .TotalMass;","& .Ordnance;","& .WarpFactor; _
-					","& .Colonists;","& .Neu;","& .Dur;","& .Trit;","& .Moly; _
-					","& .Megacredits;","& .Supplies;","& .Crewmen;","& .Damage;","& .Experience;","& .Cloaked
+					","& .Colonists;","& .Neu;","& .Dur;","& .Trit;","& .Moly; ","& .Megacredits;_
+					","& .Supplies;","& .Crewmen;","& .Damage;","& .Experience;","& .Cloaked;","& .Infection
 			end if
 		end with
 	next
@@ -589,23 +591,30 @@ sub exportVCRs(GameID as integer, CurTurn as short)
 	dim as integer ObjID
 
 	open "games/"+str(GameID)+"/"+str(CurTurn)+"/VCRs.csv" for output as #20
-	print #20,quote("Seed")+","+quote("X")+","+quote("Y")+","+quote("BattleType")+","+_
-		quote("OwnerA")+","+quote("OwnerB")+","+quote("Turn")+","+quote("Internal")+","+_
-		quote("PieceA")+","+quote("Name")+","+quote("Beams")+","+quote("Tubes")+","+quote("Bays")+","+quote("HullType")+","+quote("BeamType")+","+quote("TorpType")+","+_
-		quote("Shields")+","+quote("Damage")+","+quote("Crew")+","+quote("Mass")+","+quote("Race")+","+quote("BeamKillX")+","+quote("BeamChargeX")+","+quote("TorpChargeX")+","+_
-		quote("TorpEvasion")+","+quote("CrewDefense")+","+quote("TorpAmmo")+","+quote("Fighters")+","+quote("Temp")+","+quote("Starbase")+","+_
-		quote("PieceB")+","+quote("Name")+","+quote("Beams")+","+quote("Tubes")+","+quote("Bays")+","+quote("HullType")+","+quote("BeamType")+","+quote("TorpType")+","+_
-		quote("Shields")+","+quote("Damage")+","+quote("Crew")+","+quote("Mass")+","+quote("Race")+","+quote("BeamKillX")+","+quote("BeamChargeX")+","+quote("TorpChargeX")+","+_
-		quote("TorpEvasion")+","+quote("CrewDefense")+","+quote("TorpAmmo")+","+quote("Fighters")+","+quote("Temp")+","+quote("Starbase")
+	print #20,quote("Internal")+","+quote("Seed")+","+quote("X")+","+quote("Y")+","+_
+		quote("BattleType")+","+quote("OwnerA")+","+quote("OwnerB")+","+quote("Turn")+",";
 		
+	for Plr as byte = 65 to 66
+		print #20, quote("Piece"+chr(Plr))+","+quote("Name")+","+quote("Beams")+","+quote("Tubes")+","+quote("Bays")+","+quote("HullType")+","+_
+			quote("BeamType")+","+quote("TorpType")+","+quote("Shields")+","+quote("Damage")+","+quote("Crew")+","+quote("Mass")+","+_
+			quote("Race")+","+quote("BeamKillX")+","+quote("BeamChargeX")+","+quote("TorpChargeX")+","+quote("TorpEvasion")+","+quote("CrewDefense")+","+_
+			quote("TorpAmmo")+","+quote("Fighters")+","+quote("Temp")+","+quote("Starbase");
+		
+		if Plr = 65 then
+			print #20, ",";
+		else
+			print #20, ""
+		end if
+	next Plr
+
 	for ObjID = 1 to LimitObjs
 		with VCRParser(ObjID)
 			if .Seed > 0 AND .InternalID <> VCRParser(ObjID-1).InternalID then
-				print #20, ""& .Seed;","& .XLoc;","& .YLoc;","& .Battletype;","& .LeftOwner;","& .RightOwner;","& .Turn;","& .InternalID;",";
+				print #20, ""& .InternalID;","& .Seed;","& .XLoc;","& .YLoc;","& .Battletype;","& .LeftOwner;","& .RightOwner;","& .Turn;",";
 				
 				for Plr as byte = 1 to 2
 					with .Combatants(Plr)
-						print #20, ""& .PieceID;",";.Namee;","& .BeamCt;","& .TubeCt;","& .BayCt;","& .HullID;","& .BeamID;","& .TorpID;","& _
+						print #20, ""& .PieceID;","; quote(.Namee);","& .BeamCt;","& .TubeCt;","& .BayCt;","& .HullID;","& .BeamID;","& .TorpID;","& _
 							.Shield;","& .Damage;","& .Crew;","& .Mass;","& .RaceID;","& .BeamKillX;","& .BeamChargeX;","& .TorpChargeX;","& _
 							.TorpMissChance;","& .CrewDefense;","& .TorpAmmo;","& .Fighters;","& .Temperature;","& .Starbase;
 					end with

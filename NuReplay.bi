@@ -205,6 +205,7 @@ type ShipObj
 	Ammo as short
 	HullDmg as short
 	Crew as short
+	Infection as short
 	WarpSpeed as byte
 	EnginePos as byte
 	BeamNum as byte
@@ -309,6 +310,7 @@ type PartSpecs
 	'Weapon specs
 	CrewKill as short
 	Blast as short
+	Range as integer
 end type
 type ListSpecs
 	ID as uinteger
@@ -345,7 +347,6 @@ type ViewSpecs
 	Y as integer
 	Zoom as double
 end type
-
 
 enum ModalView
 	'Main menu
@@ -428,6 +429,7 @@ do
 				input #4, .CostMo
 				input #4, .CrewKill
 				input #4, .Blast
+				input #4, .Range
 				for WID as byte = 1 to 9
 					input #4, .EngineEfficiency(WID)
 				next WID
@@ -443,6 +445,7 @@ do
 				input #4, .CostMo
 				input #4, .CrewKill
 				input #4, .Blast
+				input #4, .Range
 			end with
 		case "Tube"
 			with Tubes(RecordID)
@@ -455,6 +458,7 @@ do
 				input #4, .CostMo
 				input #4, .CrewKill
 				input #4, .Blast
+				input #4, .Range
 			end with
 		case "Torp"
 			with TorpAmmo(RecordID)
@@ -467,6 +471,7 @@ do
 				input #4, .CostMo
 				input #4, .CrewKill
 				input #4, .Blast
+				input #4, .Range
 			end with
 	end select
 loop
@@ -539,8 +544,8 @@ end sub
 sub debugout(NewString as string)
 	#IF __FB_DEBUG__
 	open "stdout.txt" for append as #25
-	print #25, "["+Time+"]"+NewString
-	close #25
+	print #99, "["+Time+"]"+NewString
+	close #99
 	#ENDIF
 end sub
 

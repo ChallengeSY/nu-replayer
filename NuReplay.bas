@@ -6,6 +6,7 @@ declare sub loadTurnKB(KBCount as integer, Players as ubyte)
 #IFDEF __NR_AUDIO__
 #include "NRAudio.bas"
 #ENDIF
+#include "VCRPlr.bi"
 
 #include "NREngine.bas"
 #include "NRClient.bas"

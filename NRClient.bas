@@ -388,6 +388,15 @@ sub renderClient
 					end if
 				end with
 				
+				'VCRs
+				with VCRbattles(OID)
+					if .InternalID > 0 then
+						RelativePos = getRelativePos(.XLoc, .YLoc)
+						
+						drawFlag(RelativePos.X,RelativePos.Y,rgb(208,144,80))
+					end if
+				end with
+				
 				'Planets
 				with Planets(OID)
 					if .ObjName <> "" then
@@ -523,7 +532,7 @@ sub renderClient
 							RelativePos = getRelativePos(.XLoc, .YLoc)
 							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
 							
-							if CurDist < MinDist then
+							if CurDist < MinDist OR (CurDist = MinDist AND SelectedObjType = REPORT_VCR) then
 								MinDist = CurDist
 								SelectedObjType = REPORT_SHIP
 								SelectedID = OID
@@ -592,6 +601,19 @@ sub renderClient
 						if CurDist < MinDist then
 							MinDist = CurDist
 							SelectedObjType = REPORT_MINE
+							SelectedID = OID
+						end if
+					end if
+				end with
+				
+				with VCRbattles(OID)
+					if .InternalID > 0 then
+						RelativePos = getRelativePos(.XLoc, .YLoc)
+						CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+						
+						if CurDist < MinDist then
+							MinDist = CurDist
+							SelectedObjType = REPORT_VCR
 							SelectedID = OID
 						end if
 					end if

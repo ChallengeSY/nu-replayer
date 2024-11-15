@@ -1,6 +1,7 @@
 const ClimateDeathRate = 10
 const FtrSweepRate = 20
 
+const VCRDivider = 260
 const PopDividor = 500
 const ReportBG = rgb(0,0,24)
 const BorderBG = rgb(16,0,48)
@@ -337,7 +338,7 @@ sub getReport
 								UsableMetals = .Neu
 								MinableOre = .GNeu
 								OreDensity = .DNeu
-								MiningRate = int(.DNeu * .MineralMines * RacialMining / (100^2) + 0.5)
+								MiningRate = round(.DNeu * .MineralMines * RacialMining / (100^2))
 								ResourceStr = "Ne: "
 	
 							case 2 'Duranium
@@ -345,7 +346,7 @@ sub getReport
 								UsableMetals = .Dur
 								MinableOre = .GDur
 								OreDensity = .DDur
-								MiningRate = int(.DDur * .MineralMines * RacialMining / (100^2) + 0.5)
+								MiningRate = round(.DDur * .MineralMines * RacialMining / (100^2))
 								ResourceStr = "Du: "
 	
 							case 3 'Tritanium
@@ -353,7 +354,7 @@ sub getReport
 								UsableMetals = .Trit
 								MinableOre = .GTrit
 								OreDensity = .DTrit
-								MiningRate = int(.DTrit * .MineralMines * RacialMining / (100^2) + 0.5)
+								MiningRate = round(.DTrit * .MineralMines * RacialMining / (100^2))
 								ResourceStr = "Tr: "
 	
 							case 4 'Molybdenum
@@ -361,7 +362,7 @@ sub getReport
 								UsableMetals = .Moly
 								MinableOre = .GMoly
 								OreDensity = .DMoly
-								MiningRate = int(.DMoly * .MineralMines * RacialMining / (100^2) + 0.5)
+								MiningRate = round(.DMoly * .MineralMines * RacialMining / (100^2))
 								ResourceStr = "Mo: "
 	
 						end select
@@ -439,7 +440,7 @@ sub getReport
 						gfxString("Radiation: "+str(StarRadiation)+" MJ",Sidebar,540,3,2,2,ReportColor)
 					end if
 					if NebDensity > 0 then
-						gfxString("Visibility: "+commaSep(int(NebVis+0.5))+" LY",Sidebar,560,3,2,2,ReportColor)
+						gfxString("Visibility: "+commaSep(round(NebVis))+" LY",Sidebar,560,3,2,2,ReportColor)
 					end if
 				end if
 			end with
@@ -611,7 +612,11 @@ sub getReport
 				else
 					PaintColor(1) = rgb(128,224,192)
 				end if
-				gfxString("Damage: "+commaSep(.HullDmg)+"% / XP: "+commaSep(.Experience),Sidebar,360,3,2,2,PaintColor(1))
+				if .Infection > 0 then
+					gfxString("Dmg: "+commaSep(.HullDmg)+"% / Infection: "+commaSep(.Infection),Sidebar,360,3,2,2,PaintColor(1))
+				else
+					gfxString("Damage: "+commaSep(.HullDmg)+"% / XP: "+commaSep(.Experience),Sidebar,360,3,2,2,PaintColor(1))
+				end if
 				
 				if ShiplistObj(.ShipType).Neu > 0 then
 					FuelNeeded = 0
@@ -971,7 +976,66 @@ sub getReport
 							gfxString("Gains 2X Faster Beams ability",Sidebar,160,3,2,2,ReportColor)
 						end if
 				end select
-					
+				
+			end with
+			
+		case REPORT_VCR
+			dim as byte PlrID, PlanInvolved
+			
+			'VCR report
+			with VCRbattles(SelectedID)
+				ReportColor = rgb(208,144,80)
+				
+				ActiveReport.X = .XLoc
+				ActiveReport.Y = .YLoc
+				gfxString("Combat "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				
+				PlrID = .LeftOwner
+				with PlayerSlot(PlrID)
+					gfxString(.Race+" ("+.PlayerName+")",Sidebar,80,3,2,2,convertColor(Coloring(PlrID)))
+				end with
+
+				gfxString("versus",Sidebar,60+VCRDivider,3,2,2,ReportColor)
+				PlrID = .RightOwner
+				with PlayerSlot(PlrID)
+					gfxString(.Race+" ("+.PlayerName+")",Sidebar,80+VCRDivider,3,2,2,convertColor(Coloring(PlrID)))
+				end with
+				
+				PlanInvolved = .Battletype
+				
+				for PID as byte = 1 to 2
+					with .Combatants(PID)
+						if PID = 1 OR PlanInvolved = 0 then
+							gfxString("Ship "+str(.PieceID)+" ("+ShiplistObj(.HullID).HullName+")",Sidebar,100+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						elseif .Starbase = 0 then
+							gfxString("Planet "+str(.PieceID),Sidebar,100+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						else
+							gfxString("Starbase "+str(.PieceID),Sidebar,100+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						end if
+						gfxString(.Namee,Sidebar,120+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						gfxString("Combat mass: "+str(.Mass)+" kT",Sidebar,140+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						gfxString("Shield: "+str(.Shield)+"%",Sidebar,160+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						gfxString("Damage: "+str(.Damage)+"%",Sidebar,180+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						if PID = 1 OR PlanInvolved = 0 then
+							gfxString("Crew: "+str(.Crew),Sidebar,200+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						end if
+						if .BeamCt > 0 then
+							gfxString(str(.BeamCt)+"x "+Beams(.BeamID).PartName,Sidebar,220+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						else
+							gfxString("No beam weapons",Sidebar,220+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
+						end if
+						if .TubeCt > 0 then
+							gfxString(str(.TubeCt)+"x "+Tubes(.TorpID).PartName+" /w "+str(.TorpAmmo)+"x ammo",Sidebar,240+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						else
+							gfxString("No torpedo tubes",Sidebar,240+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
+						end if
+						if .BayCt > 0 then
+							gfxString(str(.BayCt)+"x Fighter Bay /w "+str(.Fighters)+"x fighters",Sidebar,260+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						else
+							gfxString("No fighter bays",Sidebar,260+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
+						end if
+					end with
+				next PID
 			end with
 	end select
 	
@@ -1030,7 +1094,7 @@ sub buildAuxList
 	StarRadiation = 0
 	setmouse(,,1)
 	
-	for AuxPass as byte = 1 to 4
+	for AuxPass as byte = 1 to 5
 		for AID as integer = 1 to MetaLimit
 			if AuxPass = 1 then
 				with Starships(AID)
@@ -1056,11 +1120,28 @@ sub buildAuxList
 				end if
 				
 			elseif AuxPass = 2 then
+				with VCRbattles(AID)
+					if .InternalID > 0 AND .XLoc = ViewPort.X AND .YLoc = ViewPort.Y then
+						AuxCount += 1
+						with AuxList(AuxCount)
+							.Namee = "Space VCR "+str(AID)
+							if VCRbattles(AID).Battletype > 0 then
+								.Namee = "Planetary VCR "+str(AID)
+							end if
+							
+							.Coloring = rgb(208,144,80)
+							.ObjType = REPORT_VCR
+							.ObjID = AID
+						end with
+					end if
+				end with
+				
+			elseif AuxPass = 3 then
 				with Artifacts(AID)
 					if .Namee <> "" AND .X = ViewPort.X AND .Y = ViewPort.Y then
 						AuxCount += 1
 						with AuxList(AuxCount)
-							.Namee =  Artifacts(AID).Namee
+							.Namee = Artifacts(AID).Namee
 							.Coloring = rgb(224,192,160)
 							.ObjType = REPORT_ARTI
 							.ObjID = AID
@@ -1077,7 +1158,7 @@ sub buildAuxList
 					exit for
 				end if
 				
-			elseif AuxPass = 3 then
+			elseif AuxPass = 4 then
 				with Minefields(AID)
 					if .MineUnits > 0 AND .X = ViewPort.X AND .Y = ViewPort.Y then
 						AuxCount += 1
@@ -1246,6 +1327,16 @@ sub syncReport(AddCycle as byte = 0)
 					ExtraCycles = 1
 					ViewPort.X = .X
 					ViewPort.Y = .Y
+				end if
+			end with
+			
+		case REPORT_VCR
+			with VCRbattles(SelectedID)
+				if AddCycle = 0 then
+					clearReport
+				else
+					ViewPort.X = .XLoc
+					ViewPort.Y = .YLoc
 				end if
 			end with
 	end select

@@ -31,6 +31,7 @@ type ParsePartDesign
 	
 	WepKill as short
 	WepBlast as short
+	Range as integer
 end type
 
 sub fetchStaticData
@@ -183,8 +184,8 @@ sub fetchStaticData
 			open TargetFile(1) for output as #7
 			print #7, quote("Category")+","+quote("ID")+","+quote("Tech")+","+quote("Part")+","+_
 				quote("kT")+","+quote("mc")+","+quote("Du")+","+quote("Tr")+","+quote("Mo")+","+_
-				quote("Kill")+","+quote("Dmg")+","+quote("W1")+","+quote("W2")+","+quote("W3")+","+quote("W4")+","+quote("W5")+","+_
-				quote("W6")+","+quote("W7")+","+quote("W8")+","+quote("W9")
+				quote("Kill")+","+quote("Dmg")+","+quote("Range")+","+quote("W1")+","+quote("W2")+","+_
+				quote("W3")+","+quote("W4")+","+quote("W5")+","+quote("W6")+","+quote("W7")+","+quote("W8")+","+quote("W9")
 
 			'Engines
 			BlockChar(0) = instr(InStream,quote("engines")+": [")
@@ -224,7 +225,7 @@ sub fetchStaticData
 						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
 						
 						print #7, quote("Engine")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
-							",0,"& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost;",0,0";
+							",0,"& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost;",0,0,0";
 						
 						for WID as byte = 1 to 9
 							if WID < 9 then
@@ -276,12 +277,14 @@ sub fetchStaticData
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
 						.WepBlast = valint(mid(InStream,SeekChar(0)+9,4))
 						
+						.Range = 200
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
 						
 						print #7, quote("Beam")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
 							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost; _
-							","& .WepKill;","& .WepBlast
+							","& .WepKill;","& .WepBlast;","& .Range
 					end with
 					
 					ObjCount += 1
@@ -328,15 +331,18 @@ sub fetchStaticData
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
 						.WepBlast = valint(mid(InStream,SeekChar(0)+9,4))
 						
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("combatrange"))
+						.Range = valint(mid(InStream,SeekChar(0)+14,6))
+						
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
 						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
 						
 						print #7, quote("Tube")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
 							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost; _
-							","& .WepKill;","& .WepBlast
+							","& .WepKill;","& .WepBlast;","& .Range
 
 						print #7, quote("Torp")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
-							",1,"& .AmmoCost;",1,1,1,"& .WepKill;","& .WepBlast
+							",1,"& .AmmoCost;",1,1,1,"& .WepKill;","& .WepBlast;","& .Range
 					end with
 					
 					ObjCount += 1

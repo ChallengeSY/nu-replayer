@@ -59,6 +59,10 @@ function min(ValueA as double, ValueB as double) as double
 end function
 #ENDIF
 
+function round(Amount as double) as integer
+	return int(Amount + 0.5)
+end function
+
 function trunc(Amount as double) as integer
 	if Amount > 0 then
 		return int(Amount)
