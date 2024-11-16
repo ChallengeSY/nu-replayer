@@ -28,14 +28,14 @@ dim audio_buffers as integer
 audio_rate = 44100
 audio_format = AUDIO_S16
 audio_channels = 2
-audio_buffers = 4096
+audio_buffers = 4096/8
 
 SDL_Init(SDL_INIT_AUDIO)
 
 SFXNames(SFX_BEAM) = "beam"
 SFXNames(SFX_TORP) = "torp"
 SFXNames(SFX_FIGHTER) = "fighter"
-SFXNames(SFX_EXPLODE) = "explode"
+SFXNames(SFX_EXPLODE) = "explosion"
 
 if (Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers)) then
 	print "Unable to open audio!"
@@ -47,6 +47,9 @@ Mix_QuerySpec(@audio_rate, @audio_format, @audio_channels)
 
 for PID as short = 0 to clipCount
 	clip(PID) = Mix_LoadWAV("sfx/"+SFXNames(PID)+".wav")
+	if PID < SFX_EXPLODE then
+		Mix_VolumeChunk(clip(PID),24)
+	end if
 next PID
 music = NULL
 

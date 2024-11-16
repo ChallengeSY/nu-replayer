@@ -8,7 +8,7 @@ const BorderBG = rgb(16,0,48)
 
 dim shared as uinteger PaintColor(2)
 dim shared as AuxObj AuxList(MetaLimit), ResetAux
-dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, NebDensity, StarRadiation, DiamondBase, DiamH, DiamL
+dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, NebDensity, StarRadiation, SelAux, DiamondBase, DiamH, DiamL
 
 ResetAux.Coloring = rgb(192,192,192)
 
@@ -984,7 +984,7 @@ sub getReport
 			
 			'VCR report
 			with VCRbattles(SelectedID)
-				ReportColor = rgb(208,144,80)
+				ReportColor = VCRColor
 				
 				ActiveReport.X = .XLoc
 				ActiveReport.Y = .YLoc
@@ -1014,10 +1014,10 @@ sub getReport
 						end if
 						gfxString(.Namee,Sidebar,120+(PID-1)*VCRDivider,3,2,2,ReportColor)
 						gfxString("Combat mass: "+str(.Mass)+" kT",Sidebar,140+(PID-1)*VCRDivider,3,2,2,ReportColor)
-						gfxString("Shield: "+str(.Shield)+"%",Sidebar,160+(PID-1)*VCRDivider,3,2,2,ReportColor)
-						gfxString("Damage: "+str(.Damage)+"%",Sidebar,180+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						gfxString("Shield: "+str(.Shield)+"% >> "+str(.ShieldEnd)+"%",Sidebar,160+(PID-1)*VCRDivider,3,2,2,ReportColor)
+						gfxString("Damage: "+str(.Damage)+"% >> "+str(.DamageEnd)+"%",Sidebar,180+(PID-1)*VCRDivider,3,2,2,ReportColor)
 						if PID = 1 OR PlanInvolved = 0 then
-							gfxString("Crew: "+str(.Crew),Sidebar,200+(PID-1)*VCRDivider,3,2,2,ReportColor)
+							gfxString("Crew: "+str(.Crew)+" >> "+str(.CrewEnd),Sidebar,200+(PID-1)*VCRDivider,3,2,2,ReportColor)
 						end if
 						if .BeamCt > 0 then
 							gfxString(str(.BeamCt)+"x "+Beams(.BeamID).PartName,Sidebar,220+(PID-1)*VCRDivider,3,2,2,ReportColor)
@@ -1025,17 +1025,23 @@ sub getReport
 							gfxString("No beam weapons",Sidebar,220+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
 						end if
 						if .TubeCt > 0 then
-							gfxString(str(.TubeCt)+"x "+Tubes(.TorpID).PartName+" /w "+str(.TorpAmmo)+"x ammo",Sidebar,240+(PID-1)*VCRDivider,3,2,2,ReportColor)
+							gfxString(str(.TubeCt)+"x "+Tubes(.TorpID).PartName+" tubes",Sidebar,240+(PID-1)*VCRDivider,3,2,2,ReportColor)
+							gfxString(space(1)+str(.TorpAmmo)+"x ammo >> "+str(.TorpAmmoEnd),Sidebar,260+(PID-1)*VCRDivider,3,2,2,ReportColor)
 						else
 							gfxString("No torpedo tubes",Sidebar,240+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
 						end if
 						if .BayCt > 0 then
-							gfxString(str(.BayCt)+"x Fighter Bay /w "+str(.Fighters)+"x fighters",Sidebar,260+(PID-1)*VCRDivider,3,2,2,ReportColor)
+							gfxString(str(.BayCt)+"x Fighter Bays",Sidebar,280+(PID-1)*VCRDivider,3,2,2,ReportColor)
+							gfxString(space(1)+str(.Fighters)+"x fighters >> "+str(.FightersEnd),Sidebar,300+(PID-1)*VCRDivider,3,2,2,ReportColor)
 						else
-							gfxString("No fighter bays",Sidebar,260+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
+							gfxString("No fighter bays",Sidebar,280+(PID-1)*VCRDivider,3,2,2,rgb(128,128,128))
 						end if
 					end with
 				next PID
+				
+				if .QuickDone = 0 then
+					quickBattle(VCRbattles(SelectedID))
+				end if
 			end with
 	end select
 	
@@ -1051,6 +1057,10 @@ sub getReport
 			gfxstring("Base",Sidebar+20,CanvasScreen.Height-188,3,2,2,rgb(255,255,255))
 			printgfx("B",Sidebar+20,CanvasScreen.Height-188,3,rgb(255,255,0))
 		end if
+		if SelectedObjType = REPORT_VCR then
+			gfxstring("View",Sidebar+100,CanvasScreen.Height-188,3,2,2,rgb(255,255,255))
+			printgfx("V",Sidebar+100,CanvasScreen.Height-188,3,rgb(255,255,0))
+		end if
 		if PlanetFound AND SelectedObjType <> REPORT_PLAN then
 			gfxstring("Planet",Sidebar+180,CanvasScreen.Height-188,3,2,2,rgb(255,255,255))
 			printgfx("P",Sidebar+180,CanvasScreen.Height-188,3,rgb(255,255,0))
@@ -1064,6 +1074,7 @@ sub getReport
 					printgfx(str(AuxItem mod 10), Sidebar+21, CanvasScreen.Height-183+AuxItem*15, 2, rgb(255,255,192))
 					
 					if SelectedID = .ObjID AND SelectedObjType = .ObjType then
+						SelAux = TrueItem
 						line(Sidebar,CanvasScreen.Height-185+AuxItem*15)-(CanvasScreen.Wideth-1,CanvasScreen.Height-171+AuxItem*15),rgb(255,255,192),b
 					end if 
 				end with
@@ -1129,7 +1140,7 @@ sub buildAuxList
 								.Namee = "Planetary VCR "+str(AID)
 							end if
 							
-							.Coloring = rgb(208,144,80)
+							.Coloring = VCRColor
 							.ObjType = REPORT_VCR
 							.ObjID = AID
 						end with

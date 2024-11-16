@@ -21,9 +21,17 @@ By default, the starmap is accessed using the entire screen. To get a smaller wi
 * Jump to any turn: Ctrl+J
 * Quickly convert raw turns: Ctrl+Q
 * Start a slideshow from the current turn: Ctrl+W
+* View a combat: V
 * Player List: F5
 * Planet List: F6
 * Ship List: F7
+
+## VCR Player
+Nu Replayer comes with its own Visual Combat Recording (or simply VCR) player. In addition to being able to watch VCRs that have taken place, Nu Replayer also automatically computes "what ifs" for each VCR, and summarizes them as percentages that a given outcome occurs.
+
+### Controls
+* Change replay speed: 1-9
+* Enter step mode: Spacebar (any other key exits step mode
 
 ## Networking
 Nu Replayer features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).

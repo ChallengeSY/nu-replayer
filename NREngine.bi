@@ -593,8 +593,16 @@ sub updateStarmap
 							input #15, .Fighters
 							input #15, .Temperature
 							input #15, .Starbase
+							
+							.ShieldEnd = .Shield
+							.DamageEnd = .Damage
+							.CrewEnd = .Crew
+							.TorpAmmoEnd = .TorpAmmo
+							.FightersEnd = .Fighters
 						end with
 					next PID
+					
+					.QuickDone = 0
 				end with
 			end if
 		next VID
@@ -726,6 +734,35 @@ end function
 		screenset 0,1
 		return LoginSuccess
 	end function
+	#ELSE
+	sub selectAccount
+		Username = ""
+		
+		do
+			line(CanvasScreen.Wideth/2+10,100)-(CanvasScreen.Wideth-6,124),rgb(0,0,0),bf
+			gfxstring("Enter username: "+str(Username),CanvasScreen.Wideth/2+10,100,5,4,2,rgb(255,255,0))
+	
+			if InType = EscKey then
+				if Username <> "" then
+					Username = ""
+				else
+					exit do
+				end if
+			elseif InType = chr(8) then
+				Username = left(Username,len(Username)-1)
+			elseif InType <> "" then
+				Username += InType
+			end if
+	
+			screencopy
+			sleep 15
+			InType = inkey
+		loop until InType = EnterKey
+		
+		if Username = "" then
+			Username = "guest"
+		end if
+	end sub
 	#ENDIF
 
 	#IFDEF __DOWNLOAD_TURNS__

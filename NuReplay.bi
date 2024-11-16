@@ -14,7 +14,7 @@ declare sub loadTurnUI(Players as ubyte)
 '#DEFINE __FORCE_OFFLINE__
 #IFNDEF __FORCE_OFFLINE__
 	'#DEFINE __USE_ZLIB__
-	#DEFINE __API_LOGIN__
+	'#DEFINE __API_LOGIN__
 	#DEFINE __DOWNLOAD_LIST__
 	#DEFINE __DOWNLOAD_TURNS__
 #ENDIF
@@ -380,7 +380,7 @@ dim shared as NebObj Nebulae(LimitObjs), ResetNeb
 dim shared as WormObj Wormholes(LimitObjs), ResetWorm
 dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, OfflineMode, FirstRun, CanNavigate(1), _
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, OfflineMode, FirstRun, CanNavigate(1), _
 	TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
@@ -391,6 +391,8 @@ dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
 dim shared as PartSpecs Engines(109), Beams(110), Tubes(310), TorpAmmo(310)
 dim shared as any ptr IslandMap, Indeterminate, Cursor, ConvertorLock, ConvertorSes
 dim shared as event e
+
+declare function convertColor(Brush as ColorSpecs) as uinteger
 
 'Register the player colors
 open "Nu Colorset.csv" for input as #3
@@ -477,6 +479,7 @@ do
 loop
 close #4
 
+const VCRColor = rgb(208,144,80)
 Rainbow.Red = 255
 declare sub updateGameList(DownloadList as byte = 0)
 declare sub recordPersonalGames
@@ -726,6 +729,8 @@ end sub
 
 #IFDEF __API_LOGIN__
 declare function apiLogin as byte
+#ELSE
+declare sub selectAccount
 #ENDIF
 #IFDEF __DOWNLOAD_TURNS__
 declare sub fetchStaticData
@@ -749,9 +754,7 @@ sub menu
 		Greeting = "Welcome, guest"
 	end if
 	gfxstring(NetworkStr,CanvasScreen.Wideth-gfxlength(NetworkStr,3,3,2),CanvasScreen.Height-15,3,3,2,rgb(255,255,0))
-	#IFDEF __API_LOGIN__
 	gfxstring(Greeting,CanvasScreen.Wideth-gfxlength(Greeting,4,3,2),0,4,3,2,rgb(255,255,255))
-	#ENDIF
 	
 	MaxMenuEntries = 8
 	if CanvasScreen.Height >= 768 then
@@ -833,7 +836,7 @@ sub menu
 			end if
 		end if
 		#ELSE
-		gfxstring("Log in to Planets Nu",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(128,128,128))
+		gfxstring("Select an account",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(255,255,255))
 		#ENDIF
 		
 		#IFDEF __DOWNLOAD_TURNS__
@@ -865,7 +868,7 @@ sub menu
 		
 		#IFDEF __DOWNLOAD_LIST__
 		if GameListAge > CooldownList then
-			gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
+			gfxstring("Download game list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
 	
 			if MouseY >= 140 AND MouseY < 185 AND MouseX >= CanvasScreen.Wideth/2 then
 				drawBox(CanvasScreen.Wideth/2,140,CanvasScreen.Wideth-1,184)
@@ -882,10 +885,10 @@ sub menu
 			
 			dim as string MinutesStr = str(MinutesRem)
 			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
-			gfxstring("Download a list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
+			gfxstring("Download game list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
 		end if
 		#ELSE
-		gfxstring("Download a list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
+		gfxstring("Download game list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
 		#ENDIF
 	
 		if MouseY >= 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
@@ -894,6 +897,19 @@ sub menu
 				importPrivateGame
 			end if
 		end if
+		
+		#IFNDEF __API_LOGIN
+		if MouseY >= 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				while inkey <> "":wend
+				selectAccount
+				if Username <> "guest" then
+					recordPersonalGames
+				end if
+			end if
+		end if
+		#ENDIF
 	elseif OfflineMode = 0 then 
 		gfxstring("Network Mode",10,200,5,4,3,rgb(255,255,255))
 	end if
@@ -910,7 +926,7 @@ sub menu
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				if PreferType = "Seasonal Championship" then
 					PreferType = "Zodiac Wars"
-				elseif PreferType = "Zodiac Wars" AND APIKey <> "" then
+				elseif PreferType = "Zodiac Wars" AND Username <> "guest" then
 					PreferType = "Personal"
 				elseif PreferType = "Personal" OR PreferType = "Zodiac Wars" then 
 					PreferType = "Recent"
@@ -994,10 +1010,13 @@ sub menu
 				LegacyRaceNames = 1 - LegacyRaceNames
 			end if
 		end if
-
+		
 		gfxstring("Slideshow Delay:",CanvasScreen.Wideth/2+10,395,3,3,2,rgb(255,255,255))
 		gfxstring(commaSep(SlideshowDelay)+" milliseconds",CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,255))
-
+		
+		gfxstring("Default VCR Speed:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,255))
+		gfxstring(str(DefaultVCRspeed),CanvasScreen.Wideth/2+30,465,3,3,2,rgb(255,255,255))
+		
 		if MouseY >= 390 AND MouseY < 435 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,390,CanvasScreen.Wideth-1,434)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
@@ -1027,6 +1046,32 @@ sub menu
 				if NewSlideDelay > 0 then
 					SlideshowDelay = NewSlideDelay
 				end if
+			end if
+		
+		elseif MouseY >= 440 AND MouseY < 485 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,440,CanvasScreen.Wideth-1,484)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				dim as integer NewVCRspeed
+	
+				do
+					line(CanvasScreen.Wideth/2+5,445)-(CanvasScreen.Wideth-6,479),rgb(0,0,0),bf
+					gfxstring("Enter new VCR speed:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,0))
+			
+					if InType = EscKey then
+						exit do
+					elseif InType >= "1" AND InType <= "9" then
+						NewVCRspeed = valint(InType)
+						exit do
+					end if
+			
+					screencopy
+					sleep 15
+					InType = inkey
+				loop until InType = EnterKey
+				if NewVCRspeed > 0 then
+					DefaultVCRspeed = NewVCRspeed
+				end if
+				
 			end if
 		end if
 	else

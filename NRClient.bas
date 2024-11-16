@@ -661,7 +661,7 @@ sub renderClient
 	end if
 	for NID as byte = 1 to 10
 		if InType = right(str(NID),1) then
-			dim as short SelAux = NID + AuxPage * 10
+			SelAux = NID + AuxPage * 10
 			if SelAux <= AuxCount then
 				with AuxList(SelAux)
 					SelectedID = .ObjID
@@ -706,6 +706,30 @@ sub renderClient
 					loadTurnExtras
 				end if
 			end if
+		case UpArrow
+			if SelAux > 1 then
+				SelAux -= 1
+			else
+				SelAux = AuxCount
+			end if
+			
+			AuxPage = ceil(SelAux/10)-1
+			with AuxList(SelAux)
+				SelectedID = .ObjID
+				SelectedObjType = .ObjType
+			end with
+		case DownArrow
+			if SelAux < AuxCount then
+				SelAux += 1
+			else
+				SelAux = 1
+			end if
+			
+			AuxPage = ceil(SelAux/10)-1
+			with AuxList(SelAux)
+				SelectedID = .ObjID
+				SelectedObjType = .ObjType
+			end with
 		case "-"
 			ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
 			RedrawIslands = 1
@@ -739,6 +763,10 @@ sub renderClient
 		case PageDown
 			if AuxPage < ceil(AuxCount/10) - 1 then
 				AuxPage += 1
+			end if
+		case "v"
+			if SelectedObjType = REPORT_VCR then
+				watchBattle(VCRbattles(SelectedID))
 			end if
 		case "x"
 			clearReport

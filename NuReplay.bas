@@ -26,6 +26,7 @@ sub cleaning destructor
 	print #1, quote("Legacy Race Names");",";LegacyRaceNames
 	print #1, quote("Borderless");",";BorderlessFS
 	print #1, quote("Slideshow Delay");",";SlideshowDelay
+	print #1, quote("VCR Speed");",";DefaultVCRspeed
 	close #1
 	
 	#IFNDEF __FB_DOS__
@@ -36,6 +37,9 @@ sub cleaning destructor
 	ImageDestroy(IslandMap)
 	ImageDestroy(Indeterminate)
 	ImageDestroy(Cursor)
+	
+	ImageDestroy(ShipGraphic(1))
+	ImageDestroy(ShipGraphic(2))
 	
 	#IFNDEF __FORCE_OFFLINE__
 	SDLNet_Quit
@@ -58,6 +62,7 @@ ExcludeBlitzes = 1
 ExcludeMvM = 1
 ExcludeNodata = 0
 LegacyRaceNames = 0
+DefaultVCRspeed = 5
 SlideshowDelay = 1000
 
 if FileExists("Settings.csv") then
@@ -85,17 +90,24 @@ if FileExists("Settings.csv") then
 				input #1, BorderlessFS
 			case "Slideshow Delay"
 				input #1, SlideshowDelay
+			case "VCR Speed"
+				input #1, DefaultVCRspeed
 		end select
 	loop until eof(1)
 	close #1
 	
-	'Personal games are available only with an API Key
+	#IFDEF __API_LOGIN__
 	if APIKey = "" then
 		Username = "guest"
 		if PreferType = "Personal" then
 			PreferType = "Seasonal Championship"
 		end if
 	end if
+	#ELSE
+	if Username = "guest" AND PreferType = "Personal" then
+		PreferType = "Seasonal Championship"
+	end if
+	#ENDIF
 	
 	'Academy games are now deprecated - Fall back to Seasonal Championship
 	if PreferType = "Academy" then
@@ -156,7 +168,11 @@ if screenptr = 0 then
 end if
 
 'Creates an empty island map
-IslandMap =  ImageCreate(4096,2160)
+IslandMap = ImageCreate(4096,2160)
+
+'Combat assets
+ShipGraphic(1) = ImageCreate(129,129)
+ShipGraphic(2) = ImageCreate(129,129)
 
 'Additional auxillary assets
 Indeterminate = ImageCreate(50,20)
@@ -164,7 +180,6 @@ line Indeterminate,(0,0)-(49,19),rgb(0,0,0),bf
 for Plot as byte = 0 to 24
 	line Indeterminate,(Plot,19)-(Plot+19,0),rgb(48,48,80)
 next Plot
-
 Cursor = ImageCreate(21,21)
 line Cursor,(0,10)-(7,10),rgb(224,224,224)
 line Cursor,(13,10)-(21,10),rgb(224,224,224)
@@ -191,7 +206,7 @@ end if
 #ENDIF
 
 updateGameList
-if APIkey <> "" then
+if Username <> "guest" then
 	recordPersonalGames
 end if
 resetViewport
