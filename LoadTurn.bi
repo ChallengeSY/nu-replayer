@@ -577,6 +577,10 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						.Damage = valint(mid(InStream,SeekChar(0)+9,4))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("crew"))
 						.Crewmen = valint(mid(InStream,SeekChar(0)+7,6))
+						SeekChar(0) = instr(BlockChar(1),InStream,quote("podcargo"))
+						if SeekChar(0) > 0 then
+							.Infection = valint(mid(InStream,SeekChar(0)+11,6))
+						end if
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("ammo"))
 						.Ordnance = valint(mid(InStream,SeekChar(0)+7,6))
 						SeekChar(0) = instr(BlockChar(1),InStream,quote("experience"))
@@ -1045,9 +1049,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 								.Namee = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
 								
 								'Functional weapons
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("launchercount"))
-								.BeamCt = valint(mid(InStream,SeekChar(0)+12,3))
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamcount"))
+								.BeamCt = valint(mid(InStream,SeekChar(0)+12,3))
+								SeekChar(0) = instr(BlockChar(1),InStream,quote("launchercount"))
 								.TubeCt = valint(mid(InStream,SeekChar(0)+16,3))
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("baycount"))
 								.BayCt = valint(mid(InStream,SeekChar(0)+11,3))
@@ -1078,9 +1082,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpchargerate"))
 								.TorpChargeX = valint(mid(InStream,SeekChar(0)+17,2))
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpmisspercent"))
-								.TorpMissChance = valint(mid(InStream,SeekChar(0)+18,2))
+								.TorpMissChance = valint(mid(InStream,SeekChar(0)+18,3))
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("crewdefensepercent"))
-								.CrewDefense = valint(mid(InStream,SeekChar(0)+21,2))
+								.CrewDefense = valint(mid(InStream,SeekChar(0)+21,3))
 								
 								'Miscellaneous
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("raceid"))
