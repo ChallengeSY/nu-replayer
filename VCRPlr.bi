@@ -159,24 +159,26 @@ sub setupBattle(ByRef BattleSetup as VCRobj)
 			ShipSize = min(.Mass/10,128)
 		end with
 		
-		if PID = 1 then
-			ShipColor = convertColor(Coloring(ActiveVCR.LeftOwner))
-			
-			for XID as short = 128 to 128-ceil(ShipSize/2) step -1
-				line ShipGraphic(1),(XID,64)-(128-ShipSize,64-ceil(ShipSize/2)),ShipColor
-				line ShipGraphic(1),(XID,64)-(128-ShipSize,64+ceil(ShipSize/2)),ShipColor
-			next XID
-		else
-			ShipColor = convertColor(Coloring(ActiveVCR.RightOwner))
-			
-			if PlanBattle = 0 then
-				for XID as short = 0 to ceil(ShipSize/2)
-					line ShipGraphic(2),(XID,64)-(ShipSize,64-ceil(ShipSize/2)),ShipColor
-					line ShipGraphic(2),(XID,64)-(ShipSize,64+ceil(ShipSize/2)),ShipColor
+		if SkipSounds = 0 then 
+			if PID = 1 then
+				ShipColor = convertColor(Coloring(ActiveVCR.LeftOwner))
+				
+				for XID as short = 128 to 128-ceil(ShipSize/2) step -1
+					line ShipGraphic(1),(XID,64)-(128-ShipSize,64-ceil(ShipSize/2)),ShipColor
+					line ShipGraphic(1),(XID,64)-(128-ShipSize,64+ceil(ShipSize/2)),ShipColor
 				next XID
 			else
-				ShipSize = min(ShipSize,32)
-				circle ShipGraphic(2),(ShipSize*2,64),ShipSize,ShipColor,,,,F
+				ShipColor = convertColor(Coloring(ActiveVCR.RightOwner))
+				
+				if PlanBattle = 0 then
+					for XID as short = 0 to ceil(ShipSize/2)
+						line ShipGraphic(2),(XID,64)-(ShipSize,64-ceil(ShipSize/2)),ShipColor
+						line ShipGraphic(2),(XID,64)-(ShipSize,64+ceil(ShipSize/2)),ShipColor
+					next XID
+				else
+					ShipSize = min(ShipSize,64)
+					circle ShipGraphic(2),(ShipSize,64),ShipSize,ShipColor,,,,F
+				end if
 			end if
 		end if
 	next PID
@@ -894,11 +896,11 @@ function quickBattle(ByRef ActiveBattle as VCRobj, SeedOverride as short = 0) as
 	dim as byte VCRspeed = DefaultVCRspeed
 	dim as short OutcomeCode = 0
 	
+	SkipSounds = 1
 	setupBattle(ActiveBattle)
 	if SeedOverride > 0 then
 		ActiveSeed = SeedOverride
 	end if
-	SkipSounds = 1
 	
 	do
 		playVCRcycle
@@ -934,8 +936,8 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	dim as double OddsChance
 	dim as string OddsDisp
 	
-	setupBattle(ActiveBattle)
 	SkipSounds = 0
+	setupBattle(ActiveBattle)
 	
 	do
 		cls
