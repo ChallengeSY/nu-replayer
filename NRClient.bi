@@ -45,11 +45,13 @@ sub planetList
 	dim as short MaxObjs
 	dim as integer RefBaseObj, RefID
 	dim as string PlanetOwner
-	for Index as uinteger = 1 to LimitObjs
-		if Planets(Index).ObjName = "" AND Planets(int(Index-1)).ObjName <> ""then
-			MaxObjs = Index - 1
+	for Index as integer = LimitObjs to 1 step -1
+		if Planets(Index).ObjName <> "" then
+			MaxObjs = Index
+			exit for
 		end if
 	next Index
+	Midpoint = NormalObjsPerPage/2 
 
 	do
 		color rgb(255,255,255),rgb(0,0,0)
@@ -58,8 +60,6 @@ sub planetList
 		color rgb(192,192,255)
 		select case ViewMode
 			case 0
-				Midpoint = NormalObjsPerPage/2 
-				
 				print "Planet List for ";GameName;" (turn "& TurnNum;")"
 				print "ID    Planet Name                 Temp   Colonists    Minerals                    Natives"
 				for Index as uinteger = 1 to LimitObjs
@@ -162,11 +162,11 @@ sub planetList
 					with Planets(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
 							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
-							((Index <= BasesPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
-							(abs(Index-MaxObjs) < BasesPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
+							((Index <= NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .ObjName <> "" then
 							if SelectedIndex = Index then
-								RefID = Index
 								color ,rgb(0,0,64)
+								RefID = Index
 							else
 								color ,rgb(0,0,0)
 							end if
@@ -196,79 +196,10 @@ sub planetList
 						end if
 					end with
 				next Index
-
-				RefBaseObj = Planets(SelectedIndex).BasePresent
-				locate 3+BasesPerPage,1
-				color rgb(192,192,255),rgb(0,0,0)
-				if RefBaseObj > 0 then
-					'Outline all parts. Highlight parts in use by the starbase's construction
-					print "--- Base Storage for "& Planets(SelectedIndex).ObjName;" ---"
-					with BaseStorage(RefBaseObj)
-						for HID as byte = 1 to 100
-							if .HullCount(HID) > 0 then
-								for STID as short = 1 to 5000	
-									if .HullReference(HID) = STID then	
-										if Planets(SelectedIndex).UseH = STID then
-											color rgb(255,255,0)
-										else
-											color rgb(0,64,255)
-										end if
-										print ShiplistObj(STID).HullName;" x"& .HullCount(HID)
-										exit for
-									end if
-								next STID
-							end if	
-						next HID
-						
-						for Phase as byte = 1 to 3
-							for CID as ushort = 1 to 310
-								select case Phase
-									case 1 'Engines
-										if CID < 10 AND len(Engines(CID).PartName) > 0 then
-											if .EngineCount(CID) > 0 then
-												if Planets(SelectedIndex).UseE = CID then
-													color rgb(255,255,0)
-												else
-													color rgb(0,64,255)
-												end if
-												print Engines(CID).PartName;" x"& .EngineCount(CID)
-											end if
-										end if
-									case 2 'Beams
-										if CID <= 10 AND len(Beams(CID).PartName) > 0 then
-											if .BeamCount(CID) > 0 then
-												if Planets(SelectedIndex).UseB = CID then
-													color rgb(255,255,0)
-												else
-													color rgb(0,64,255)
-												end if
-												print Beams(CID).PartName;" x"& .BeamCount(CID)
-											end if
-										end if
-									case 3 'Torps and ammo
-										if .TubeCount(CID) > 0 AND len(Tubes(CID).PartName) > 0 then
-											if Planets(SelectedIndex).UseT = CID then
-												color rgb(255,255,0)
-											else
-												color rgb(0,64,255)
-											end if
-											print Tubes(CID).PartName;" tubes x"& .TubeCount(CID)
-										end if
-										if .TorpCount(CID) > 0 AND len(TorpAmmo(CID).PartName) > 0 then
-											color rgb(0,64,255)
-											print TorpAmmo(CID).PartName;" ammo x"& .TorpCount(CID)
-										end if
-								end select
-							next
-						next Phase
-					end with
-				else
-					print "--- Planet "& Planets(SelectedIndex).ObjName;" does not have a starbase ---"
-				end if
 		end select
 		locate 3+NormalObjsPerPage,1
 		color rgb(255,255,255),rgb(0,0,0)
-		print "Press TAB to cycle lists. Press ESC to return to the starmap"
+		print "Press TAB to cycle lists. Press ENTER to jump to the selected planet or base"
 		screencopy
 		do
 			sleep 5
@@ -308,42 +239,9 @@ sub planetList
 end sub
 
 sub copyShipEntry(ShipA as short, ShipB as short)
-	with ShipListIndex(ShipB)
-		.Ownership = Starships(ShipA).Ownership
-		.XLoc = Starships(ShipA).XLoc
-		.YLoc = Starships(ShipA).YLoc
-		.TargetX = Starships(ShipA).TargetX
-		.TargetY = Starships(ShipA).TargetY
-		.ShipName = Starships(ShipA).ShipName
-		.ShipType = Starships(ShipA).ShipType
-		.FCode = Starships(ShipA).FCode
-		.TotalMass = Starships(ShipA).TotalMass
-		.Cloaked = Starships(ShipA).Cloaked
-		.Neu = Starships(ShipA).Neu
-		.Dur = Starships(ShipA).Dur
-		.Trit = Starships(ShipA).Trit
-		.Moly = Starships(ShipA).Moly
-		.Megacredits = Starships(ShipA).Megacredits
-		.Supplies = Starships(ShipA).Supplies
-		.Colonists = Starships(ShipA).Colonists
-		.Ammo = Starships(ShipA).Ammo
-		.HullDmg = Starships(ShipA).HullDmg
-		.Crew = Starships(ShipA).Crew
-		.Experience = Starships(ShipA).Experience
-		.WarpSpeed = Starships(ShipA).WarpSpeed
-		.EnginePos = Starships(ShipA).EnginePos
-		.BeamNum = Starships(ShipA).BeamNum
-		.BeamPos = Starships(ShipA).BeamPos
-		.TubeNum = Starships(ShipA).TubeNum
-		.TubePos = Starships(ShipA).TubePos
-		.BayNum = Starships(ShipA).BayNum
-		.ClassName = Starships(ShipA).ClassName
-		.MaxCargo = Starships(ShipA).MaxCargo
-		.OrbitingPlan = Starships(ShipA).OrbitingPlan
-		.HullMass = Starships(ShipA).HullMass
-		.MaxFuel = Starships(ShipA).MaxFuel
-		.LinkId = ShipA
-	end with
+	ShipListIndex(ShipB) = Starships(ShipA)
+	
+	ShipListIndex(ShipB).LinkId = ShipA
 end sub
 
 function searchShips(Filter as string = "") as integer
@@ -488,7 +386,7 @@ sub shipList
 		end select
 		color rgb(255,255,255),rgb(0,0,0)
 		locate 3+NormalObjsPerPage,1
-		print "Press TAB to cycle lists. Press ESC to return to the starmap. Type in letters to narrow ship list by class"
+		print "Press TAB to cycle lists. Press ENTER to jump to the selected ship. Type in letters to narrow ship list by class"
 		color rgb(255,192,192)
 		print ""& MaxObjs;" ships found. Current class filter: "+ClassFilter+"*"
 		screencopy
@@ -524,6 +422,116 @@ sub shipList
 			SelectedObjType = REPORT_SHIP
 			syncReport
 			exit do
+		elseif InType = chr(9) then
+			ViewMode += 1
+			if ViewMode > 1 then ViewMode = 0
+		elseif InType = EscKey then
+			exit do
+		end if
+	loop
+end sub
+
+dim shared as VCRobj VCRindex(LimitObjs)
+
+sub copyVCRentry(VCRa as short, VCRb as short)
+	VCRindex(VCRb) = VCRbattles(VCRa)
+	
+	VCRindex(VCRb).InternalID = VCRa
+end sub
+
+function compileVCRs as integer
+	dim as short ObjId = 0
+	'Null out the VCRs first
+	for Index as uinteger = 1 to LimitObjs
+		VCRindex(Index).InternalID = 0
+	next Index
+
+	'Fill the list with fresh VCRs
+	for Index as uinteger = 1 to MetaLimit
+		ObjId += 1
+		copyVCRentry(Index,ObjId)
+	next Index
+	
+	return ObjId
+end function
+
+sub VCRlist
+	dim as byte ViewMode = 0
+	dim as string ShipOwner, AmmoStr
+	dim as string ClassFilter
+	
+	dim as short MaxObjs, CargoUsed, RefID
+	
+	'First, consolidate the list (to allow the list to display correctly even with holes in the VCR numbers)
+	MaxObjs = compileVCRs
+	SelectedIndex = 1
+	Midpoint = NormalObjsPerPage/2 
+
+	do
+		color rgb(255,255,255),rgb(0,0,0)
+		windowtitle WindowStr
+		cls
+		color rgb(192,192,255)
+		select case ViewMode
+			case 0
+				print "VCR Status for ";GameName;" (turn "& TurnNum;")"
+				locate 2,1
+				print "ID    Combatant Left                    Combatant Right                  Location"
+				for Index as uinteger = 1 to LimitObjs
+					with VCRindex(Index)
+						if (Index-SelectedIndex < ceil(MidPoint) OR _
+							-1*(Index-SelectedIndex) < int(MidPoint + 1) OR _
+							((Index <= NormalObjsPerPage AND SelectedIndex < ceil(MidPoint + 0.5)) OR _
+							(abs(Index-MaxObjs) < NormalObjsPerPage AND SelectedIndex > MaxObjs - ceil(MidPoint)))) AND .InternalID > 0 then
+							if SelectedIndex = Index then
+								RefID = .InternalID
+								color ,rgb(0,0,64)
+							else
+								color ,rgb(0,0,0)
+							end if
+							
+							color rgb(255,255,255)
+							'            ID    Combatant Left                    Combatant Right                  Location
+							print using "####";.InternalID;
+							color convertColor(Coloring(.LeftOwner))
+							print using "\                            \";.Combatants(1).Namee
+							color rgb(255,255,255)
+							print " vs ";
+							color convertColor(Coloring(.RightOwner))
+							print using "\                            \";.Combatants(2).Namee
+							color rgb(255,255,255)
+							print using "(####_,####)";.XLoc;.YLoc
+						end if
+					end with
+				next Index
+		end select
+		color rgb(255,255,255),rgb(0,0,0)
+		locate 3+NormalObjsPerPage,1
+		print "Press ENTER to watxh the selected VCR. Press ESC to return to the starmap"
+		color rgb(255,192,192)
+		print ""& MaxObjs;" VCRs found"
+		screencopy
+		do
+			sleep 5
+			InType = inkey
+		loop until InType <> ""
+
+		if InType = UpArrow AND SelectedIndex > 1 then
+			SelectedIndex -= 1
+		elseif InType = DownArrow AND SelectedIndex < MaxObjs then
+			SelectedIndex += 1
+		elseif InType = PageUp then
+			if SelectedIndex > (NormalObjsPerPage - 1) then SelectedIndex -= (NormalObjsPerPage - 1) else SelectedIndex = 1
+		elseif InType = PageDown then
+			if MaxObjs < (NormalObjsPerPage - 1) then
+				SelectedIndex = MaxObjs
+			elseif SelectedIndex < MaxObjs - (NormalObjsPerPage - 1) then
+				SelectedIndex += (NormalObjsPerPage - 1)
+			else
+				SelectedIndex = MaxObjs
+			end if
+		elseif InType = EnterKey then
+			watchBattle(VCRindex(SelectedIndex))
 		elseif InType = chr(9) then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0

@@ -225,18 +225,19 @@ sub drawBeam(FromPosX as integer, FromPosY as integer, ToPosX as integer, ToPosY
 end sub
 
 sub shootDownFighter(HostPiece as byte, HostBeam as byte)
-	dim as short ClosestFtr, ClosestDist = 999, CurrDist
+	dim as short PeerPiece, ClosestFtr, ClosestDist = 999, CurrDist
 	dim as uinteger OriginColor
 	if HostPiece = 1 then
 		OriginColor = convertColor(Coloring(ActiveVCR.LeftOwner))
 	else
 		OriginColor = convertColor(Coloring(ActiveVCR.RightOwner))
 	end if
+	PeerPiece = 3 - HostPiece
 	
 	with ActiveVCR
 		for FID as byte = 1 to MaxFighters
-			if .Combatants(int(3-HostPiece)).FtrCraft(FID).Position <> DeadAmmo then
-				CurrDist = abs(.Combatants(HostPiece).ShipPos - .Combatants(int(3-HostPiece)).FtrCraft(FID).Position)
+			if .Combatants(PeerPiece).FtrCraft(FID).Position <> DeadAmmo then
+				CurrDist = abs(.Combatants(HostPiece).ShipPos - .Combatants(PeerPiece).FtrCraft(FID).Position)
 				if CurrDist < ClosestDist then
 					'Closest fighter gets priority
 					ClosestDist = CurrDist
@@ -247,9 +248,9 @@ sub shootDownFighter(HostPiece as byte, HostBeam as byte)
 	
 		if ClosestFtr > 0 then
 			'Beam shoots down fighter, discharging it
-			drawBeam(.Combatants(HostPiece).ShipPos,164,.Combatants(int(3-HostPiece)).FtrCraft(ClosestFtr).Position,(6.9+ClosestFtr)*10,OriginColor)
+			drawBeam(.Combatants(HostPiece).ShipPos,164,.Combatants(PeerPiece).FtrCraft(ClosestFtr).Position,(6.9+ClosestFtr)*10,OriginColor)
 			.Combatants(HostPiece).BeamBanks(HostBeam) = 0
-			.Combatants(int(3-HostPiece)).FtrCraft(ClosestFtr).Position = DeadAmmo
+			.Combatants(PeerPiece).FtrCraft(ClosestFtr).Position = DeadAmmo
 			
 			playClip(SFX_BEAM)
 		end if
@@ -450,7 +451,7 @@ sub moveFighters
 					.FtrCraft(FID).Position += 4
 					
 					if abs(.FtrCraft(FID).Position - PeerPiece.ShipPos) < 20 then
-						'Damage the opposing ship
+						'Damage the opposing ship, assuming no resistance
 						if PeerPiece.CrewDefense <= 100 ORELSE rollSeededDice(100) > PeerPiece.CrewDefense - 100 then
 							drawBeam(.FtrCraft(FID).Position,(6.9+FID)*10,PeerPiece.ShipPos+irandom(0,4),164,OriginColor(1))
 							damageShip(2,2,2)
@@ -481,7 +482,7 @@ sub moveFighters
 					.FtrCraft(FID).Position -= 4
 					
 					if abs(.FtrCraft(FID).Position - PeerPiece.ShipPos) < 20 then
-						'Damage the opposing ship
+						'Damage the opposing ship, assuming no resistance
 						if PeerPiece.CrewDefense <= 100 ORELSE rollSeededDice(100) > PeerPiece.CrewDefense - 100 then
 							drawBeam(.FtrCraft(FID).Position,(6.9+FID)*10,PeerPiece.ShipPos-irandom(0,4),164,OriginColor(2))
 							damageShip(1,2,2)
@@ -514,7 +515,7 @@ sub fighterDogfighting
 							if DogfightRoll >= 50 then
 								drawBeam(.Combatants(1).FtrCraft(LFtr).Position,(6.9+LFtr)*10,.Combatants(2).FtrCraft(RFtr).Position,(6.9+RFtr)*10,OriginColor(1))
 								.Combatants(2).FtrCraft(RFtr).Reverse = -1
-							elseif .Combatants(2).FtrCraft(RFtr).Reverse = 0 then
+							elseif .Combatants(2).FtrCraft(RFtr).Reverse <> -1 then
 								/'
 								 ' Left side fighters get a huge advantage,
 								 ' because they can still shoot even when destroyed in the very same tick.
@@ -556,10 +557,14 @@ sub rechargeBeams
 	next PID
 end sub
 
+function combatOver as byte
+	return BattleTicks >= 2000 OR ActiveVCR.Combatants(1).Defeated OR ActiveVCR.Combatants(2).Defeated
+end function
+
 sub checkPieces
 	dim as short DamageThresh(1 to 2) => {100, 100}
 	
-	for PID as byte = 1 to 2
+	for PID as byte = 2 to 1 step -1
 		with ActiveVCR.Combatants(PID)
 			if .RaceID = 2 AND PID + PlanBattle < 3 then
 				'Lizard Crew Bonus
@@ -571,8 +576,8 @@ sub checkPieces
 				.Defeated = 2
 			end if
 			
-			if .Damage >= DamageThresh(PID) OR (.Damage >= 100 AND .Crew <= 0) OR _
-				(PlanBattle AND (.Damage >= 100 OR .Crew <= 0)) then
+			if .Damage >= DamageThresh(PID) OR (PlanBattle AND combatOver AND (.Damage >= 100 OR .Crew <= 0)) OR _
+				((.Damage >= 100 OR ActiveVCR.Combatants(int(3-PID)).RaceID = 12) AND .Crew <= 0) then
 				'Ship has been destroyed
 				.Defeated = 1
 			end if
@@ -606,10 +611,6 @@ sub playVCRcycle
 	rechargeBeams
 	checkPieces
 end sub
-
-function combatOver as byte
-	return BattleTicks >= 2000 OR ActiveVCR.Combatants(1).Defeated OR ActiveVCR.Combatants(2).Defeated
-end function
 
 
 sub drawFighter(XPos as short, YPos as short, Direction as byte, FtrColor as uinteger)
@@ -703,9 +704,9 @@ sub drawOverlay
 	gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,3,2,2)/2,5,3,2,2,rgb(255,255,255))
 	
 	if BattleTicks >= 1000 then
-		TotalDist = int(BattleTicks/2000*100)
+		dim as double TimePassed = BattleTicks/20+1e-6
 		
-		CombatStr = "Time: "+str(TotalDist)+"%"
+		CombatStr = "Time: "+left(str(TimePassed),len(str(int(TimePassed)))+2)+"%"
 		gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,rgb(255,255,255))
 	else
 		TotalDist = Distance * 100
@@ -721,10 +722,12 @@ sub drawOverlay
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
 		gfxString(CombatStr,CanvasScreen.Wideth/2-325,330,4,3,3,rgb(255,255,255))
-		CombatStr = "Shield: "+str(.Shield)+"%"
-		gfxString(CombatStr,CanvasScreen.Wideth/2-325,360,4,3,3,rgb(255,255,255))
-		if .Shield > 0 then
-			line(CanvasScreen.Wideth/2-150,360)-(CanvasScreen.Wideth/2-151+min(.Shield,100),379),rgb(0,128,255),bf
+		if .RaceID <> 12 then 
+			CombatStr = "Shield: "+str(.Shield)+"%"
+			gfxString(CombatStr,CanvasScreen.Wideth/2-325,360,4,3,3,rgb(255,255,255))
+			if .Shield > 0 then
+				line(CanvasScreen.Wideth/2-150,360)-(CanvasScreen.Wideth/2-151+min(.Shield,100),379),rgb(0,128,255),bf
+			end if
 		end if
 		CombatStr = "Damage: "+str(.Damage)+"%"
 		if .Damage >= 151 then
@@ -738,14 +741,16 @@ sub drawOverlay
 		if .Damage > 0 then
 			line(CanvasScreen.Wideth/2-150,390)-(CanvasScreen.Wideth/2-151+min(.Damage,100),409),rgb(255,64,64),bf
 		end if
-		CombatStr = "Crew  : "+commaSep(.Crew)
-		if .Crew <= 0 then
-			CombatColor = rgb(255,255,0)
-		else
-			CombatColor = rgb(255,255,255)
-			line(CanvasScreen.Wideth/2-150,420)-(CanvasScreen.Wideth/2-151+min(.Crew,100),439),rgb(128,255,0),bf
+		if .RaceID <> 12 then 
+			CombatStr = "Crew  : "+commaSep(.Crew)
+			if .Crew <= 0 then
+				CombatColor = rgb(255,255,0)
+			else
+				CombatColor = rgb(255,255,255)
+				line(CanvasScreen.Wideth/2-150,420)-(CanvasScreen.Wideth/2-151+min(.Crew,100),439),rgb(128,255,0),bf
+			end if
+			gfxString(CombatStr,CanvasScreen.Wideth/2-325,420,4,3,3,CombatColor)
 		end if
-		gfxString(CombatStr,CanvasScreen.Wideth/2-325,420,4,3,3,CombatColor)
 		if .BayCt > 0 then
 			dim as short FtrCount = .Fighters+countFighters(1)
 			
@@ -771,7 +776,7 @@ sub drawOverlay
 			
 			for TID as byte = 1 to .TubeCt
 				if .TorpTubes(TID) < 16 then
-					CombatColor = rgb(255,0,0)
+					CombatColor = rgb(255,64,64)
 				elseif .TorpTubes(TID) < 31 then
 					CombatColor = rgb(255,255,0)
 				else
@@ -788,7 +793,7 @@ sub drawOverlay
 			
 			for BID as byte = 1 to .BeamCt
 				if .BeamBanks(BID) <= 40 then
-					CombatColor = rgb(255,0,0)
+					CombatColor = rgb(255,64,64)
 				elseif .BeamBanks(BID) <= 50 then
 					CombatColor = rgb(255,255,0)
 				else
@@ -808,10 +813,12 @@ sub drawOverlay
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
 		gfxString(CombatStr,CanvasScreen.Wideth/2+160,330,4,3,3,rgb(255,255,255))
-		CombatStr = "Shield: "+str(.Shield)+"%"
-		gfxString(CombatStr,CanvasScreen.Wideth/2+160,360,4,3,3,rgb(255,255,255))
-		if .Shield > 0 then
-			line(CanvasScreen.Wideth/2+151-min(.Shield,100),360)-(CanvasScreen.Wideth/2+150,379),rgb(0,128,255),bf
+		if .RaceID <> 12 then 
+			CombatStr = "Shield: "+str(.Shield)+"%"
+			gfxString(CombatStr,CanvasScreen.Wideth/2+160,360,4,3,3,rgb(255,255,255))
+			if .Shield > 0 then
+				line(CanvasScreen.Wideth/2+151-min(.Shield,100),360)-(CanvasScreen.Wideth/2+150,379),rgb(0,128,255),bf
+			end if
 		end if
 		CombatStr = "Damage: "+str(.Damage)+"%"
 		if .Damage >= 151 then
@@ -825,7 +832,7 @@ sub drawOverlay
 		if .Damage > 0 then
 			line(CanvasScreen.Wideth/2+151-min(.Damage,100),390)-(CanvasScreen.Wideth/2+150,409),rgb(255,64,64),bf
 		end if
-		if PlanBattle = 0 then
+		if PlanBattle = 0 AND .RaceID <> 12 then
 			CombatStr = "Crew  : "+commaSep(.Crew)
 			if .Crew <= 0 then
 				CombatColor = rgb(255,255,0)
@@ -860,7 +867,7 @@ sub drawOverlay
 			
 			for TID as byte = 1 to .TubeCt
 				if .TorpTubes(TID) < 16 then
-					CombatColor = rgb(255,0,0)
+					CombatColor = rgb(255,64,64)
 				elseif .TorpTubes(TID) < 31 then
 					CombatColor = rgb(255,255,0)
 				else
@@ -877,7 +884,7 @@ sub drawOverlay
 			
 			for BID as byte = 1 to .BeamCt
 				if .BeamBanks(BID) <= 40 then
-					CombatColor = rgb(255,0,0)
+					CombatColor = rgb(255,64,64)
 				elseif .BeamBanks(BID) <= 50 then
 					CombatColor = rgb(255,255,0)
 				else
@@ -962,6 +969,10 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		end if
 	loop until combatOver
 	
+	if BattleTicks >= 2000 then
+		dim as string CombatStr = "Time: 100.0%"
+		gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,rgb(255,255,0))
+	end if
 	if ActiveVCR.Combatants(1).Defeated = 1 then
 		playClip(SFX_EXPLODE)
 	end if

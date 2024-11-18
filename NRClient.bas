@@ -208,6 +208,8 @@ sub renderClient
 		planetList
 	elseif InType = FunctionSeven then
 		shipList
+	elseif InType = FunctionEight then
+		VCRlist
 	end if
 
 	windowtitle WindowStr

@@ -25,6 +25,7 @@ By default, the starmap is accessed using the entire screen. To get a smaller wi
 * Player List: F5
 * Planet List: F6
 * Ship List: F7
+* VCR List: F8
 
 ## VCR Player
 Nu Replayer comes with its own Visual Combat Recording (or simply VCR) player. In addition to being able to watch VCRs that have taken place, Nu Replayer also automatically computes "what ifs" for each VCR, and summarizes them as percentages that a given outcome occurs.

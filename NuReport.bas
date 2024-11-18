@@ -1134,12 +1134,13 @@ sub buildAuxList
 				with VCRbattles(AID)
 					if .InternalID > 0 AND .XLoc = ViewPort.X AND .YLoc = ViewPort.Y then
 						AuxCount += 1
-						with AuxList(AuxCount)
-							.Namee = "Space VCR "+str(AID)
-							if VCRbattles(AID).Battletype > 0 then
-								.Namee = "Planetary VCR "+str(AID)
-							end if
+						if .Battletype = 0 then
+							AuxList(AuxCount).Namee = "Ship "+str(.Combatants(1).PieceID)+" vs Ship "+str(.Combatants(2).PieceID) 
+						else
+							AuxList(AuxCount).Namee = "Ship "+str(.Combatants(1).PieceID)+" vs Planet "+str(.Combatants(2).PieceID) 
+						end if
 							
+						with AuxList(AuxCount)
 							.Coloring = VCRColor
 							.ObjType = REPORT_VCR
 							.ObjID = AID
@@ -1374,3 +1375,4 @@ sub syncReport(AddCycle as byte = 0)
 	end if
 	RedrawIslands += AddCycle * 2 + ExtraCycles
 end sub
+

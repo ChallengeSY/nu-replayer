@@ -753,8 +753,10 @@ sub menu
 		NetworkStr = "Network off"
 		Greeting = "Welcome, guest"
 	end if
-	gfxstring(NetworkStr,CanvasScreen.Wideth-gfxlength(NetworkStr,3,3,2),CanvasScreen.Height-15,3,3,2,rgb(255,255,0))
-	gfxstring(Greeting,CanvasScreen.Wideth-gfxlength(Greeting,4,3,2),0,4,3,2,rgb(255,255,255))
+	gfxstring(NetworkStr,CanvasScreen.Wideth-1-gfxlength(NetworkStr,3,3,2),CanvasScreen.Height-15,3,3,2,rgb(255,255,0))
+	#IFDEF __API_LOGIN__
+	gfxstring(Greeting,CanvasScreen.Wideth-1-gfxlength(Greeting,4,3,2),0,4,3,2,rgb(255,255,255))
+	#ENDIF
 	
 	MaxMenuEntries = 8
 	if CanvasScreen.Height >= 768 then
@@ -764,6 +766,13 @@ sub menu
 	EventActive = screenevent(@e)
 
 	if ReplayerMode = MODE_QUICK then
+		#IFNDEF __API_LOGIN__
+		if PreferType = "Personal" then
+			Greeting = "(Browsing "+Username+"'s games)"
+			gfxstring(Greeting,CanvasScreen.Wideth-1-gfxlength(Greeting,4,3,2),0,4,3,2,rgb(255,255,255))
+		end if
+		#ENDIF
+		
 		gfxstring("Quick Watch",10,100,5,4,3,rgb(255,255,0))
 		for FeaturedGame as byte = 1 to min(TotalGamesLoaded,MaxMenuEntries)
 			with GameObj(FeaturedGame)
