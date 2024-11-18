@@ -448,8 +448,10 @@ function compileVCRs as integer
 
 	'Fill the list with fresh VCRs
 	for Index as uinteger = 1 to MetaLimit
-		ObjId += 1
-		copyVCRentry(Index,ObjId)
+		if VCRbattles(Index).InternalID > 0 then
+			ObjId += 1
+			copyVCRentry(Index,ObjId)
+		end if
 	next Index
 	
 	return ObjId
@@ -492,22 +494,22 @@ sub VCRlist
 							
 							color rgb(255,255,255)
 							'            ID    Combatant Left                    Combatant Right                  Location
-							print using "####";.InternalID;
+							print using "####  ";.InternalID;
 							color convertColor(Coloring(.LeftOwner))
-							print using "\                            \";.Combatants(1).Namee
+							print using "\                            \";.Combatants(1).Namee;
 							color rgb(255,255,255)
 							print " vs ";
 							color convertColor(Coloring(.RightOwner))
-							print using "\                            \";.Combatants(2).Namee
+							print using "\                            \";.Combatants(2).Namee;
 							color rgb(255,255,255)
-							print using "(####_,####)";.XLoc;.YLoc
+							print using "   (####_,####)";.XLoc;.YLoc
 						end if
 					end with
 				next Index
 		end select
 		color rgb(255,255,255),rgb(0,0,0)
 		locate 3+NormalObjsPerPage,1
-		print "Press ENTER to watxh the selected VCR. Press ESC to return to the starmap"
+		print "Press ENTER to watch the selected VCR. Press ESC to return to the starmap"
 		color rgb(255,192,192)
 		print ""& MaxObjs;" VCRs found"
 		screencopy
