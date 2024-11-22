@@ -72,7 +72,7 @@ dim shared as VCRobj VCRbattles(MetaLimit), ActiveVCR, ResetVCR
 const NumSeeds = 119
 const DeadAmmo = -9999
 
-dim shared as byte PlanBattle
+dim shared as byte PlanBattle, SkipBeams
 dim shared as short ActiveSeed, BattleTicks, Distance
 dim shared as any ptr ShipGraphic(2)
 
@@ -129,6 +129,7 @@ sub setupBattle(ByRef BattleSetup as VCRobj)
 	'Copy the selected battle to a working object
 	ActiveVCR = BattleSetup
 	BattleTicks = 0
+	SkipBeams = SkipSounds
 	
 	'Battles start at 54000/58000 km, depending on whether a planet is involved
 	PlanBattle = abs(sgn(ActiveVCR.Battletype))
@@ -157,30 +158,32 @@ sub setupBattle(ByRef BattleSetup as VCRobj)
 		
 			line ShipGraphic(PID),(0,0)-(128,128),rgb(255,0,255),bf
 			ShipSize = min(.Mass/10,128)
-		end with
 		
-		if SkipSounds = 0 then 
-			if PID = 1 then
-				ShipColor = convertColor(Coloring(ActiveVCR.LeftOwner))
-				
-				for XID as short = 128 to 128-ceil(ShipSize/2) step -1
-					line ShipGraphic(1),(XID,64)-(128-ShipSize,64-ceil(ShipSize/2)),ShipColor
-					line ShipGraphic(1),(XID,64)-(128-ShipSize,64+ceil(ShipSize/2)),ShipColor
-				next XID
-			else
-				ShipColor = convertColor(Coloring(ActiveVCR.RightOwner))
-				
-				if PlanBattle = 0 then
-					for XID as short = 0 to ceil(ShipSize/2)
-						line ShipGraphic(2),(XID,64)-(ShipSize,64-ceil(ShipSize/2)),ShipColor
-						line ShipGraphic(2),(XID,64)-(ShipSize,64+ceil(ShipSize/2)),ShipColor
+			if SkipSounds = 0 then 
+				if PID = 1 then
+					ShipColor = convertColor(Coloring(ActiveVCR.LeftOwner))
+					
+					for XID as short = 128 to 128-ceil(ShipSize/2) step -1
+						line ShipGraphic(1),(XID,64)-(128-ShipSize,64-ceil(ShipSize/2)),ShipColor
+						line ShipGraphic(1),(XID,64)-(128-ShipSize,64+ceil(ShipSize/2)),ShipColor
 					next XID
 				else
-					ShipSize = min(ShipSize,64)
-					circle ShipGraphic(2),(ShipSize,64),ShipSize,ShipColor,,,,F
+					ShipColor = convertColor(Coloring(ActiveVCR.RightOwner))
+					
+					if PlanBattle = 0 then
+						for XID as short = 0 to ceil(ShipSize/2)
+							line ShipGraphic(2),(XID,64)-(ShipSize,64-ceil(ShipSize/2)),ShipColor
+							line ShipGraphic(2),(XID,64)-(ShipSize,64+ceil(ShipSize/2)),ShipColor
+						next XID
+					else
+						ShipSize = min(ShipSize,64)
+						circle ShipGraphic(2),(ShipSize,64),ShipSize,ShipColor,,,,F
+						circle ShipGraphic(2),(ShipSize,64),ShipSize-2,rgb(255,0,255),,,,F
+						circle ShipGraphic(2),(ShipSize,64),ShipSize-9,ShipColor,,,,F
+					end if
 				end if
 			end if
-		end if
+		end with
 	next PID
 	
 	ActiveSeed = BattleSetup.Seed + 1 'Throw in a "penalty" seed
@@ -219,7 +222,7 @@ sub damageShip(VictimID as byte, DmgBlast as short, CrewKill as short)
 end sub
 
 sub drawBeam(FromPosX as integer, FromPosY as integer, ToPosX as integer, ToPosY as integer, Coloring as uinteger, Pattern as uinteger = &b1110111011101110)
-	if SkipSounds = 0 then
+	if SkipBeams = 0 then
 		line(CanvasScreen.Wideth/2+FromPosX,FromPosY)-(CanvasScreen.Wideth/2+ToPosX,ToPosY),Coloring,,Pattern
 	end if
 end sub
@@ -576,8 +579,8 @@ sub checkPieces
 				.Defeated = 2
 			end if
 			
-			if .Damage >= DamageThresh(PID) OR (PlanBattle AND combatOver AND (.Damage >= 100 OR .Crew <= 0)) OR _
-				((.Damage >= 100 OR ActiveVCR.Combatants(int(3-PID)).RaceID = 12) AND .Crew <= 0) then
+			if .Damage >= DamageThresh(PID) OR ((.Damage >= 100 OR ActiveVCR.Combatants(int(3-PID)).RaceID = 12) AND .Crew <= 0) OR _
+				(PlanBattle AND combatOver AND ((.Damage >= 100 AND ShiplistObj(.HullID).HullName <> "Zilla Battlecarrier") OR .Crew <= 0)) then
 				'Ship has been destroyed
 				.Defeated = 1
 			end if
@@ -701,7 +704,7 @@ sub drawOverlay
 	dim as string CombatStr
 	
 	CombatStr = "versus"
-	gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,3,2,2)/2,5,3,2,2,rgb(255,255,255))
+	gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,0,4,3,3,rgb(255,255,255))
 	
 	if BattleTicks >= 1000 then
 		dim as double TimePassed = BattleTicks/20+1e-6
@@ -716,9 +719,14 @@ sub drawOverlay
 	end if
 
 	'Left side stuff
+	with PlayerSlot(ActiveVCR.LeftOwner)
+		CombatStr = .Race+ " ("+.PlayerName+")"
+		gfxString(CombatStr,CanvasScreen.Wideth/4-gfxLength(CombatStr,4,3,3)/2,0,4,3,3,convertColor(Coloring(ActiveVCR.LeftOwner)))
+	end with
+
 	with ActiveVCR.Combatants(1)
 		CombatStr = .Namee
-		gfxString(CombatStr,CanvasScreen.Wideth/4-gfxLength(CombatStr,4,3,3)/2,0,4,3,3,rgb(255,255,255))
+		gfxString(CombatStr,CanvasScreen.Wideth/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
 		gfxString(CombatStr,CanvasScreen.Wideth/2-325,330,4,3,3,rgb(255,255,255))
@@ -807,9 +815,14 @@ sub drawOverlay
 	end with
 
 	'Right side stuff
+	with PlayerSlot(ActiveVCR.RightOwner)
+		CombatStr = .Race+ " ("+.PlayerName+")"
+		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,0,4,3,3,convertColor(Coloring(ActiveVCR.RightOwner)))
+	end with
+
 	with ActiveVCR.Combatants(2)
 		CombatStr = .Namee
-		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,0,4,3,3,rgb(255,255,255))
+		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
 		gfxString(CombatStr,CanvasScreen.Wideth/2+160,330,4,3,3,rgb(255,255,255))
@@ -938,13 +951,14 @@ function quickBattle(ByRef ActiveBattle as VCRobj, SeedOverride as short = 0) as
 end function
 
 sub watchBattle(ByRef ActiveBattle as VCRobj)
-	dim as byte VCRspeed = DefaultVCRspeed
+	dim as byte VCRspeed = DefaultVCRspeed, BaseSeed, QuickFinish
 	dim as short DestroyedCt(2), CapturedCt(2), QuickCode
 	dim as double OddsChance
 	dim as string OddsDisp
 	
 	SkipSounds = 0
 	setupBattle(ActiveBattle)
+	BaseSeed = ActiveBattle.Seed
 	
 	do
 		cls
@@ -952,11 +966,16 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		
 		drawCombatObjs
 		drawOverlay
-		screencopy
-		sleep (10-VCRspeed)*25,1
-		InType = inkey
+		if QuickFinish = 0 then
+			screencopy
+			sleep (10-VCRspeed)*25,1
+			InType = inkey
+		end if
 		
-		if InType >= "1" AND InType <= "9" then
+		if lcase(InType) = "f" then
+			QuickFinish = 1
+			SkipSounds = 1
+		elseif InType >= "1" AND InType <= "9" then
 			'Adjust playback speed
 			VCRspeed = valint(InType)
 		elseif InType = chr(32) then
@@ -968,6 +987,12 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 			exit do
 		end if
 	loop until combatOver
+	if QuickFinish then
+		SkipSounds = 0
+		drawCombatObjs
+		drawOverlay
+		screencopy
+	end if
 	
 	if BattleTicks >= 2000 then
 		dim as string CombatStr = "Time: 100.0%"
@@ -975,30 +1000,43 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	end if
 	if ActiveVCR.Combatants(1).Defeated = 1 then
 		playClip(SFX_EXPLODE)
+		DestroyedCt(1) += 1
+	elseif ActiveVCR.Combatants(1).Defeated = 2 then
+		CapturedCt(1) += 1
 	end if
 	if ActiveVCR.Combatants(2).Defeated = 1 AND PlanBattle = 0 then
+		DestroyedCt(2) += 1
 		playClip(SFX_EXPLODE)
+	elseif ActiveVCR.Combatants(2).Defeated > 0 then
+		CapturedCt(2) += 1
 	end if
 	
-	'Combat concluded, process "what ifs" and allow any key to return to starmap
+	/'
+	 ' Combat concluded
+	 '
+	 ' Process the rest of the starting seeds (building probabilities),
+	 ' and allow any key to return to starmap
+	 '/
 	if InType <> EscKey then
-		for WhatifSeed as short = 2 to 119
-			QuickCode = quickBattle(ActiveBattle, WhatifSeed)
-			
-			if (QuickCode AND (1 SHL 0)) then
-				DestroyedCt(1) += 1
-			elseif (QuickCode AND (1 SHL 1)) then
-				CapturedCt(1) += 1
-			end if
-			
-			if (QuickCode AND (1 SHL 2)) then
-				if PlanBattle = 0 then
-					DestroyedCt(2) += 1
-				else
+		for WhatifSeed as short = 1 to 118
+			if WhatifSeed <> BaseSeed then
+				QuickCode = quickBattle(ActiveBattle, WhatifSeed)
+				
+				if (QuickCode AND (1 SHL 0)) then
+					DestroyedCt(1) += 1
+				elseif (QuickCode AND (1 SHL 1)) then
+					CapturedCt(1) += 1
+				end if
+				
+				if (QuickCode AND (1 SHL 2)) then
+					if PlanBattle = 0 then
+						DestroyedCt(2) += 1
+					else
+						CapturedCt(2) += 1
+					end if
+				elseif (QuickCode AND (1 SHL 3)) then
 					CapturedCt(2) += 1
 				end if
-			elseif (QuickCode AND (1 SHL 3)) then
-				CapturedCt(2) += 1
 			end if
 		next WhatifSeed
 		

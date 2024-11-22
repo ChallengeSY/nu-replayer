@@ -211,15 +211,13 @@ sub planetList
 		elseif InType = DownArrow AND SelectedIndex < MaxObjs then
 			SelectedIndex += 1
 		elseif InType = PageUp then
-			if SelectedIndex > (Midpoint - 1) * 2 then SelectedIndex -= (Midpoint - 1) * 2 else SelectedIndex = 1
+			SelectedIndex = max(SelectedIndex - (NormalObjsPerPage - 1), 1)
 		elseif InType = PageDown then
-			if MaxObjs < (Midpoint - 1) * 2 then
-				SelectedIndex = MaxObjs
-			elseif SelectedIndex < MaxObjs - (Midpoint - 1) * 2 then
-				SelectedIndex += (Midpoint - 1) * 2
-			else
-				SelectedIndex = MaxObjs
-			end if
+			SelectedIndex = min(SelectedIndex + (NormalObjsPerPage - 1), MaxObjs)
+		elseif InType = HomeKey then
+			SelectedIndex = 1
+		elseif InType = EndKey then
+			SelectedIndex = MaxObjs
 		elseif InType = EnterKey then
 			SelectedID = RefID
 			if ViewMode = 1 then
@@ -386,9 +384,17 @@ sub shipList
 		end select
 		color rgb(255,255,255),rgb(0,0,0)
 		locate 3+NormalObjsPerPage,1
-		print "Press TAB to cycle lists. Press ENTER to jump to the selected ship. Type in letters to narrow ship list by class"
-		color rgb(255,192,192)
-		print ""& MaxObjs;" ships found. Current class filter: "+ClassFilter+"*"
+		if MaxObjs > 0 then
+			print "Press TAB to cycle lists. Press ENTER to jump to the selected ship. Type in letters to narrow ship list by class"
+			color rgb(255,192,192)
+			print ""& MaxObjs;" ships found. Current class filter: "+ClassFilter+"*"
+		elseif ClassFilter <> "" then
+			print "No ships were found matching your filter. Try hitting BACKSPACE to relax the filter."
+			color rgb(255,192,192)
+			print "Current class filter: "+ClassFilter+"*"
+		else
+			print "No ships were found. Press ESC to return to starmap."
+		end if
 		screencopy
 		do
 			sleep 5
@@ -400,16 +406,15 @@ sub shipList
 		elseif InType = DownArrow AND SelectedIndex < MaxObjs then
 			SelectedIndex += 1
 		elseif InType = PageUp then
-			if SelectedIndex > (NormalObjsPerPage - 1) then SelectedIndex -= (NormalObjsPerPage - 1) else SelectedIndex = 1
+			SelectedIndex = max(SelectedIndex - (NormalObjsPerPage - 1), 1)
 		elseif InType = PageDown then
-			if MaxObjs < (NormalObjsPerPage - 1) then
-				SelectedIndex = MaxObjs
-			elseif SelectedIndex < MaxObjs - (NormalObjsPerPage - 1) then
-				SelectedIndex += (NormalObjsPerPage - 1)
-			else
-				SelectedIndex = MaxObjs
-			end if
-		elseif (InType >= "a" AND InType <= "z") OR (InType >= "A" AND InType <= "Z") OR (InType >= "0" AND InType <= "9") OR InType = "-" OR InType = chr(32) then
+			SelectedIndex = min(SelectedIndex + (NormalObjsPerPage - 1), MaxObjs)
+		elseif InType = HomeKey then
+			SelectedIndex = 1
+		elseif InType = EndKey then
+			SelectedIndex = MaxObjs
+		elseif ((InType >= "a" AND InType <= "z") OR (InType >= "A" AND InType <= "Z") OR (InType >= "0" AND InType <= "9") OR _
+			InType = "-" OR InType = chr(32)) AND MaxObjs > 0 then
 			ClassFilter += lcase(InType)
 			MaxObjs = searchShips(ClassFilter)
 			SelectedIndex = 1
@@ -417,7 +422,7 @@ sub shipList
 			ClassFilter = left(ClassFilter,len(ClassFilter)-1)
 			MaxObjs = searchShips(ClassFilter)
 			SelectedIndex = 1
-		elseif InType = EnterKey then
+		elseif InType = EnterKey AND MaxObjs > 0 then
 			SelectedID = RefID
 			SelectedObjType = REPORT_SHIP
 			syncReport
@@ -478,7 +483,7 @@ sub VCRlist
 			case 0
 				print "VCR Status for ";GameName;" (turn "& TurnNum;")"
 				locate 2,1
-				print "ID    Combatant Left                    Combatant Right                  Location"
+				print "ID    Combatant Left                                      Combatant Right                                    Location     Seed"
 				for Index as uinteger = 1 to LimitObjs
 					with VCRindex(Index)
 						if (Index-SelectedIndex < ceil(MidPoint) OR _
@@ -493,25 +498,29 @@ sub VCRlist
 							end if
 							
 							color rgb(255,255,255)
-							'            ID    Combatant Left                    Combatant Right                  Location
+							'            ID    Combatant Left                              Combatant Right                    Location     Seed
 							print using "####  ";.InternalID;
 							color convertColor(Coloring(.LeftOwner))
-							print using "\                            \";.Combatants(1).Namee;
+							print using "\                                              \";.Combatants(1).Namee;
 							color rgb(255,255,255)
 							print " vs ";
 							color convertColor(Coloring(.RightOwner))
-							print using "\                            \";.Combatants(2).Namee;
+							print using "\                                              \";.Combatants(2).Namee;
 							color rgb(255,255,255)
-							print using "   (####_,####)";.XLoc;.YLoc
+							print using "   (####_,####)   ###";.XLoc;.YLoc;.Seed
 						end if
 					end with
 				next Index
 		end select
 		color rgb(255,255,255),rgb(0,0,0)
 		locate 3+NormalObjsPerPage,1
-		print "Press ENTER to watch the selected VCR. Press ESC to return to the starmap"
-		color rgb(255,192,192)
-		print ""& MaxObjs;" VCRs found"
+		if MaxObjs > 0 then
+			print "Press ENTER to watch the selected VCR. Press ESC to return to the starmap"
+			color rgb(255,192,192)
+			print ""& MaxObjs;" VCRs found"
+		else
+			print "No VCRs were found. Press ESC to return to the starmap"
+		end if
 		screencopy
 		do
 			sleep 5
@@ -523,16 +532,14 @@ sub VCRlist
 		elseif InType = DownArrow AND SelectedIndex < MaxObjs then
 			SelectedIndex += 1
 		elseif InType = PageUp then
-			if SelectedIndex > (NormalObjsPerPage - 1) then SelectedIndex -= (NormalObjsPerPage - 1) else SelectedIndex = 1
+			SelectedIndex = max(SelectedIndex - (NormalObjsPerPage - 1), 1)
 		elseif InType = PageDown then
-			if MaxObjs < (NormalObjsPerPage - 1) then
-				SelectedIndex = MaxObjs
-			elseif SelectedIndex < MaxObjs - (NormalObjsPerPage - 1) then
-				SelectedIndex += (NormalObjsPerPage - 1)
-			else
-				SelectedIndex = MaxObjs
-			end if
-		elseif InType = EnterKey then
+			SelectedIndex = min(SelectedIndex + (NormalObjsPerPage - 1), MaxObjs)
+		elseif InType = HomeKey then
+			SelectedIndex = 1
+		elseif InType = EndKey then
+			SelectedIndex = MaxObjs
+		elseif InType = EnterKey AND MaxObjs > 0 then
 			watchBattle(VCRindex(SelectedIndex))
 		elseif InType = chr(9) then
 			ViewMode += 1
@@ -786,6 +793,7 @@ end sub
 
 sub resetViewport
 	RedrawIslands = 1
+	DistQuota = 84.554
 	with ViewPort
 		.X = 2000
 		.Y = 2000

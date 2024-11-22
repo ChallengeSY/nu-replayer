@@ -343,8 +343,8 @@ type GameSpecs
 end type
 
 type ViewSpecs
-	X as integer
-	Y as integer
+	X as double
+	Y as double
 	Zoom as double
 end type
 
@@ -387,7 +387,7 @@ dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPer
 dim shared as uinteger GameID, TotalGamesLoaded, SlideshowDelay
 dim shared as integer MouseX, MouseY, MouseError, SelectedIndex, ButtonCombo, ActualX, ActualY, DestPattern
 dim shared as short FadingSelect, TurnNum, BoxGlow
-dim shared as double LastPlanetUpdate, SerialRecord, Midpoint
+dim shared as double DistQuota, LastPlanetUpdate, SerialRecord, Midpoint
 dim shared as PartSpecs Engines(109), Beams(110), Tubes(310), TorpAmmo(310)
 dim shared as any ptr IslandMap, Indeterminate, Cursor, ConvertorLock, ConvertorSes
 dim shared as event e

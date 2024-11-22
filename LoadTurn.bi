@@ -1094,9 +1094,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("fighters"))
 								.Fighters = valint(mid(InStream,SeekChar(0)+11,5))
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("temperature"))
-								.Temperature = valint(mid(InStream,SeekChar(0)+17,5))
+								.Temperature = valint(mid(InStream,SeekChar(0)+14,4))
 								SeekChar(0) = instr(BlockChar(1),InStream,quote("hasstarbase"))
-								.Starbase = abs(sgn(mid(InStream,SeekChar(0)+17,5) = ":true"))
+								.Starbase = abs(sgn(mid(InStream,SeekChar(0)+13,5) = ":true"))
 								
 								BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
 								loadTurnKB(int(BlockChar(1)/1e3),PID)

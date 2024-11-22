@@ -313,7 +313,11 @@ sub renderClient
 					if .MineUnits > 0 then
 						RelativePos = getRelativePos(.X, .Y)
 						
-						circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,convertColor(Coloring(.Ownership))
+						if ViewGame.Academy then
+							circle(RelativePos.X,RelativePos.Y),int(sqr(.MineUnits)/30)*ViewPort.Zoom,convertColor(Coloring(.Ownership))
+						else
+							circle(RelativePos.X,RelativePos.Y),.Radius*ViewPort.Zoom,convertColor(Coloring(.Ownership))
+						end if 
 					end if
 				end with
 				
@@ -408,7 +412,7 @@ sub renderClient
 						if RedrawIslands = 1 AND RelativePos.X > -85 * ViewPort.Zoom AND RelativePos.Y > -85 * ViewPort.Zoom AND _
 							RelativePos.X < CanvasScreen.Wideth + 85 * ViewPort.Zoom AND RelativePos.Y < CanvasScreen.Height + 85 * ViewPort.Zoom then
 							for PID as short = OID+1 to LimitObjs
-								if Planets(PID).ObjName <> "" AND sqr((.X - Planets(PID).X)^2 + (.Y - Planets(PID).Y)^2) <= 84.554 AND _
+								if Planets(PID).ObjName <> "" AND sqr((.X - Planets(PID).X)^2 + (.Y - Planets(PID).Y)^2) <= DistQuota AND _
 									.Asteroid = 0 AND Planets(PID).Asteroid = 0 then
 									dim as ViewSpecs Neighbor
 									
@@ -733,11 +737,15 @@ sub renderClient
 				SelectedObjType = .ObjType
 			end with
 		case "-"
-			ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
-			RedrawIslands = 1
+			if ViewGame.Academy = 0 then
+				ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
+				RedrawIslands = 1
+			end if
 		case "+"
-			ViewPort.Zoom = min(ViewPort.Zoom * 2, 8)
-			RedrawIslands = 1
+			if ViewGame.Academy = 0 then
+				ViewPort.Zoom = min(ViewPort.Zoom * 2, 8)
+				RedrawIslands = 1
+			end if
 		case "b"
 			if BaseFound > 0 AND SelectedObjType <> REPORT_BASE then
 				SelectedObjType = REPORT_BASE

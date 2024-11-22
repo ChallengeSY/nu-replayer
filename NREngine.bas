@@ -149,6 +149,13 @@ sub loadGame(ByRef LoadID as uinteger)
 					MapFile = "games/"+str(GameID)+"/Map.csv"
 				end if
 				ShiplistFile = "games/"+str(GameID)+"/Shiplist.csv"
+				
+				if .Academy then
+					with ViewPort
+						.Zoom = 16
+						DistQuota = 2.9
+					end with
+				end if
 			end with
 
 			open "debugout.txt" for output as #19
@@ -299,6 +306,7 @@ sub recordPersonalGames
 	
 	dim as string URLName, InStream
 	dim as integer GamesRegistered
+	color rgb(255,255,255),rgb(0,0,0)
 	cls
 	print "Loading personal games..."
 	screencopy
