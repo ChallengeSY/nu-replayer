@@ -921,6 +921,9 @@ function quickBattle(ByRef ActiveBattle as VCRobj, SeedOverride as short = 0) as
 	if SeedOverride > 0 then
 		ActiveSeed = SeedOverride
 	end if
+	if ActiveSeed < 0 then
+		return -1 'Twister Battles are NYI
+	end if
 	
 	do
 		playVCRcycle
@@ -959,6 +962,9 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	SkipSounds = 0
 	setupBattle(ActiveBattle)
 	BaseSeed = ActiveBattle.Seed
+	if BaseSeed <= 0 then
+		exit sub 'Twister Battles are NYI
+	end if
 	
 	do
 		cls

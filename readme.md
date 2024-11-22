@@ -33,6 +33,7 @@ Nu Replayer comes with its own Visual Combat Recording (or simply VCR) player. I
 ### Controls
 * Change replay speed: 1-9
 * Enter step mode: Spacebar (any other key exits step mode
+* Instantly finish the current replay: F
 
 ## Networking
 Nu Replayer features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).
