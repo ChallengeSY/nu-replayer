@@ -67,7 +67,7 @@ function trunc(Amount as double) as integer
 	if Amount > 0 then
 		return int(Amount)
 	else
-		return -int(-Amount)
+		return ceil(Amount)
 	end if
 end function
 

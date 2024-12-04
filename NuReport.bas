@@ -315,7 +315,7 @@ sub getReport
 					if .MineralMines = -1 then
 						ResourceStr = "Mines: ?"
 					elseif .Ownership > 0 AND HorwaspPlanet = 0 then
-						if .Colonists <= 100 then
+						if .Colonists <= 200 then
 							StructCap = .Colonists
 						else
 							StructCap = 200+int(sqr(.Colonists-200))
@@ -945,7 +945,7 @@ sub getReport
 		case REPORT_ARTI
 			'Artifact report
 			with Artifacts(SelectedID)
-				ReportColor = rgb(224,192,160)
+				ReportColor = rgb(192,160,224)
 				
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
@@ -1154,7 +1154,7 @@ sub buildAuxList
 						AuxCount += 1
 						with AuxList(AuxCount)
 							.Namee = Artifacts(AID).Namee
-							.Coloring = rgb(224,192,160)
+							.Coloring = rgb(192,160,224)
 							.ObjType = REPORT_ARTI
 							.ObjID = AID
 						end with

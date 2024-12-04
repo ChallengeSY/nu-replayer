@@ -521,9 +521,10 @@ sub fighterDogfighting
 							elseif .Combatants(2).FtrCraft(RFtr).Reverse <> -1 then
 								/'
 								 ' Left side fighters get a huge advantage,
-								 ' because they can still shoot even when destroyed in the very same tick.
+								 ' not only because they get a 6% advantage in the d100 rolls,
+								 ' but because they can still shoot even when destroyed in the very same tick.
 								 '
-								 ' This does not hold true to right side fighters.
+								 ' Right side fighters get no accomodation in either instance.
 								 '/
 								drawBeam(.Combatants(2).FtrCraft(RFtr).Position,(6.9+RFtr)*10,.Combatants(1).FtrCraft(LFtr).Position,(6.9+LFtr)*10,OriginColor(2))
 								.Combatants(1).FtrCraft(LFtr).Reverse = -1
@@ -554,8 +555,8 @@ sub rechargeBeams
 			for BeamID as byte = 1 to .BeamCt
 				if rollSeededDice(100) > 50 AND .BeamBanks(BeamID) < 100 then
 					.BeamBanks(BeamID) += .BeamChargeX
-				end if 
-			next BeamID 
+				end if
+			next BeamID
 		end with
 	next PID
 end sub
@@ -702,6 +703,9 @@ sub drawOverlay
 	dim as integer TotalDist = Distance * 100
 	dim as uinteger CombatColor
 	dim as string CombatStr
+	dim as short MeterWidth
+	
+	MeterWidth = min(CanvasScreen.Wideth/2-412,150)
 	
 	CombatStr = "versus"
 	gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,0,4,3,3,rgb(255,255,255))
@@ -714,7 +718,7 @@ sub drawOverlay
 	else
 		TotalDist = Distance * 100
 		
-		CombatStr = "Distance: "+commaSep(TotalDist)+"km"
+		CombatStr = "Distance: "+commaSep(TotalDist)+"m"
 		gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,rgb(255,255,255))
 	end if
 
@@ -729,12 +733,12 @@ sub drawOverlay
 		gfxString(CombatStr,CanvasScreen.Wideth/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
-		gfxString(CombatStr,CanvasScreen.Wideth/2-325,330,4,3,3,rgb(255,255,255))
+		gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,330,4,3,3,rgb(255,255,255))
 		if .RaceID <> 12 then 
 			CombatStr = "Shield: "+str(.Shield)+"%"
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,360,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,360,4,3,3,rgb(255,255,255))
 			if .Shield > 0 then
-				line(CanvasScreen.Wideth/2-150,360)-(CanvasScreen.Wideth/2-151+min(.Shield,100),379),rgb(0,128,255),bf
+				line(CanvasScreen.Wideth/2-50-MeterWidth,360)-(CanvasScreen.Wideth/2-51-MeterWidth+min(.Shield,MeterWidth),379),rgb(0,128,255),bf
 			end if
 		end if
 		CombatStr = "Damage: "+str(.Damage)+"%"
@@ -745,9 +749,9 @@ sub drawOverlay
 		else
 			CombatColor = rgb(255,255,255)
 		end if
-		gfxString(CombatStr,CanvasScreen.Wideth/2-325,390,4,3,3,CombatColor)
+		gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,390,4,3,3,CombatColor)
 		if .Damage > 0 then
-			line(CanvasScreen.Wideth/2-150,390)-(CanvasScreen.Wideth/2-151+min(.Damage,100),409),rgb(255,64,64),bf
+			line(CanvasScreen.Wideth/2-50-MeterWidth,390)-(CanvasScreen.Wideth/2-51-MeterWidth+min(.Damage,MeterWidth),409),rgb(255,64,64),bf
 		end if
 		if .RaceID <> 12 then 
 			CombatStr = "Crew  : "+commaSep(.Crew)
@@ -755,31 +759,31 @@ sub drawOverlay
 				CombatColor = rgb(255,255,0)
 			else
 				CombatColor = rgb(255,255,255)
-				line(CanvasScreen.Wideth/2-150,420)-(CanvasScreen.Wideth/2-151+min(.Crew,100),439),rgb(128,255,0),bf
+				line(CanvasScreen.Wideth/2-50-MeterWidth,420)-(CanvasScreen.Wideth/2-51-MeterWidth+min(.Crew,MeterWidth),439),rgb(128,255,0),bf
 			end if
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,420,4,3,3,CombatColor)
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,420,4,3,3,CombatColor)
 		end if
 		if .BayCt > 0 then
 			dim as short FtrCount = .Fighters+countFighters(1)
 			
 			CombatStr = "Ftrs  : "+str(FtrCount)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,450,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,450,4,3,3,rgb(255,255,255))
 			CombatStr = "Fighter Bays x"+str(.BayCt)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,480,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,480,4,3,3,rgb(255,255,255))
 			
 			if FtrCount > 0 then
-				line(CanvasScreen.Wideth/2-150,450)-(CanvasScreen.Wideth/2-151+min(FtrCount,100),469),rgb(255,255,255),bf
+				line(CanvasScreen.Wideth/2-50-MeterWidth,450)-(CanvasScreen.Wideth/2-51-MeterWidth+min(FtrCount,MeterWidth),469),rgb(255,255,255),bf
 			end if
 		end if
 		if .TubeCt > 0 then
 			CombatStr = "Torps : "+str(.TorpAmmo)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,510,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,510,4,3,3,rgb(255,255,255))
 
 			CombatStr = Tubes(.TorpID).PartName+" Tubes x"+str(.TubeCt)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,540,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,540,4,3,3,rgb(255,255,255))
 			
 			if .TorpAmmo > 0 then
-				line(CanvasScreen.Wideth/2-150,510)-(CanvasScreen.Wideth/2-151+min(.TorpAmmo,100),529),rgb(255,255,255),bf
+				line(CanvasScreen.Wideth/2-50-MeterWidth,510)-(CanvasScreen.Wideth/2-51-MeterWidth+min(.TorpAmmo,MeterWidth),529),rgb(255,255,255),bf
 			end if
 			
 			for TID as byte = 1 to .TubeCt
@@ -791,13 +795,13 @@ sub drawOverlay
 					CombatColor = rgb(0,255,0)
 				end if
 				
-				line(CanvasScreen.Wideth/2-325,570+TID*5)-(CanvasScreen.Wideth/2-125,573+TID*5),rgb(64,64,64),bf
-				line(CanvasScreen.Wideth/2-125-.TorpTubes(TID)/41*200,570+TID*5)-(CanvasScreen.Wideth/2-125,573+TID*5),CombatColor,bf
+				line(CanvasScreen.Wideth/2-225-MeterWidth,570+TID*5)-(CanvasScreen.Wideth/2-25-MeterWidth,573+TID*5),rgb(64,64,64),bf
+				line(CanvasScreen.Wideth/2-25-MeterWidth-.TorpTubes(TID)/41*200,570+TID*5)-(CanvasScreen.Wideth/2-25-MeterWidth,573+TID*5),CombatColor,bf
 			next TID
 		end if
 		if .BeamCt > 0 then
 			CombatStr = Beams(.BeamID).PartName+" x"+str(.BeamCt)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-325,660,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,660,4,3,3,rgb(255,255,255))
 			
 			for BID as byte = 1 to .BeamCt
 				if .BeamBanks(BID) <= 40 then
@@ -808,8 +812,8 @@ sub drawOverlay
 					CombatColor = rgb(0,255,0)
 				end if
 				
-				line(CanvasScreen.Wideth/2-325,690+BID*5)-(CanvasScreen.Wideth/2-125,693+BID*5),rgb(64,64,64),bf
-				line(CanvasScreen.Wideth/2-125-.BeamBanks(BID)*2,690+BID*5)-(CanvasScreen.Wideth/2-125,693+BID*5),CombatColor,bf
+				line(CanvasScreen.Wideth/2-225-MeterWidth,690+BID*5)-(CanvasScreen.Wideth/2-25-MeterWidth,693+BID*5),rgb(64,64,64),bf
+				line(CanvasScreen.Wideth/2-25-MeterWidth-.BeamBanks(BID)*2,690+BID*5)-(CanvasScreen.Wideth/2-25-MeterWidth,693+BID*5),CombatColor,bf
 			next BID
 		end if
 	end with
@@ -825,12 +829,12 @@ sub drawOverlay
 		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
-		gfxString(CombatStr,CanvasScreen.Wideth/2+160,330,4,3,3,rgb(255,255,255))
+		gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,330,4,3,3,rgb(255,255,255))
 		if .RaceID <> 12 then 
 			CombatStr = "Shield: "+str(.Shield)+"%"
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,360,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,360,4,3,3,rgb(255,255,255))
 			if .Shield > 0 then
-				line(CanvasScreen.Wideth/2+151-min(.Shield,100),360)-(CanvasScreen.Wideth/2+150,379),rgb(0,128,255),bf
+				line(CanvasScreen.Wideth/2+51+MeterWidth-min(.Shield,MeterWidth),360)-(CanvasScreen.Wideth/2+50+MeterWidth,379),rgb(0,128,255),bf
 			end if
 		end if
 		CombatStr = "Damage: "+str(.Damage)+"%"
@@ -841,9 +845,9 @@ sub drawOverlay
 		else
 			CombatColor = rgb(255,255,255)
 		end if
-		gfxString(CombatStr,CanvasScreen.Wideth/2+160,390,4,3,3,CombatColor)
+		gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,390,4,3,3,CombatColor)
 		if .Damage > 0 then
-			line(CanvasScreen.Wideth/2+151-min(.Damage,100),390)-(CanvasScreen.Wideth/2+150,409),rgb(255,64,64),bf
+			line(CanvasScreen.Wideth/2+51+MeterWidth-min(.Damage,MeterWidth),390)-(CanvasScreen.Wideth/2+50+MeterWidth,409),rgb(255,64,64),bf
 		end if
 		if PlanBattle = 0 AND .RaceID <> 12 then
 			CombatStr = "Crew  : "+commaSep(.Crew)
@@ -851,31 +855,31 @@ sub drawOverlay
 				CombatColor = rgb(255,255,0)
 			else
 				CombatColor = rgb(255,255,255)
-				line(CanvasScreen.Wideth/2+151-min(.Crew,100),420)-(CanvasScreen.Wideth/2+150,439),rgb(128,255,0),bf
+				line(CanvasScreen.Wideth/2+51+MeterWidth-min(.Crew,MeterWidth),420)-(CanvasScreen.Wideth/2+50+MeterWidth,439),rgb(128,255,0),bf
 			end if
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,420,4,3,3,CombatColor)
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,420,4,3,3,CombatColor)
 		end if
 		if .BayCt > 0 then
 			dim as short FtrCount = .Fighters+countFighters(2)
 			
 			CombatStr = "Ftrs  : "+str(FtrCount)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,450,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,450,4,3,3,rgb(255,255,255))
 			CombatStr = "Fighter Bays x"+str(.BayCt)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,480,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,480,4,3,3,rgb(255,255,255))
 			
 			if FtrCount > 0 then
-				line(CanvasScreen.Wideth/2+151-min(FtrCount,100),450)-(CanvasScreen.Wideth/2+150,469),rgb(255,255,255),bf
+				line(CanvasScreen.Wideth/2+51+MeterWidth-min(FtrCount,MeterWidth),450)-(CanvasScreen.Wideth/2+50+MeterWidth,469),rgb(255,255,255),bf
 			end if
 		end if
 		if .TubeCt > 0 then
 			CombatStr = "Torps : "+str(.TorpAmmo)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,510,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,510,4,3,3,rgb(255,255,255))
 
 			CombatStr = Tubes(.TorpID).PartName+" Tubes x"+str(.TubeCt)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,540,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,540,4,3,3,rgb(255,255,255))
 			
 			if .TorpAmmo > 0 then
-				line(CanvasScreen.Wideth/2+151-min(.TorpAmmo,100),510)-(CanvasScreen.Wideth/2+150,529),rgb(255,255,255),bf
+				line(CanvasScreen.Wideth/2+51+MeterWidth-min(.TorpAmmo,MeterWidth),510)-(CanvasScreen.Wideth/2+50+MeterWidth,529),rgb(255,255,255),bf
 			end if
 			
 			for TID as byte = 1 to .TubeCt
@@ -887,13 +891,13 @@ sub drawOverlay
 					CombatColor = rgb(0,255,0)
 				end if
 				
-				line(CanvasScreen.Wideth/2+160,570+TID*5)-(CanvasScreen.Wideth/2+360,573+TID*5),rgb(64,64,64),bf
-				line(CanvasScreen.Wideth/2+160,570+TID*5)-(CanvasScreen.Wideth/2+160+.TorpTubes(TID)/41*200,573+TID*5),CombatColor,bf
+				line(CanvasScreen.Wideth/2+60+MeterWidth,570+TID*5)-(CanvasScreen.Wideth/2+260+MeterWidth,573+TID*5),rgb(64,64,64),bf
+				line(CanvasScreen.Wideth/2+60+MeterWidth,570+TID*5)-(CanvasScreen.Wideth/2+60+MeterWidth+.TorpTubes(TID)/41*200,573+TID*5),CombatColor,bf
 			next TID
 		end if
 		if .BeamCt > 0 then
 			CombatStr = Beams(.BeamID).PartName+" x"+str(.BeamCt)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+160,660,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,660,4,3,3,rgb(255,255,255))
 			
 			for BID as byte = 1 to .BeamCt
 				if .BeamBanks(BID) <= 40 then
@@ -904,8 +908,8 @@ sub drawOverlay
 					CombatColor = rgb(0,255,0)
 				end if
 				
-				line(CanvasScreen.Wideth/2+160,690+BID*5)-(CanvasScreen.Wideth/2+360,693+BID*5),rgb(64,64,64),bf
-				line(CanvasScreen.Wideth/2+160,690+BID*5)-(CanvasScreen.Wideth/2+160+.BeamBanks(BID)*2,693+BID*5),CombatColor,bf
+				line(CanvasScreen.Wideth/2+60+MeterWidth,690+BID*5)-(CanvasScreen.Wideth/2+260+MeterWidth,693+BID*5),rgb(64,64,64),bf
+				line(CanvasScreen.Wideth/2+60+MeterWidth,690+BID*5)-(CanvasScreen.Wideth/2+60+MeterWidth+.BeamBanks(BID)*2,693+BID*5),CombatColor,bf
 			next BID
 		end if
 	end with
@@ -958,6 +962,9 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	dim as short DestroyedCt(2), CapturedCt(2), QuickCode
 	dim as double OddsChance
 	dim as string OddsDisp
+	dim as short MeterWidth
+	
+	MeterWidth = min(CanvasScreen.Wideth/2-412,150)
 	
 	SkipSounds = 0
 	setupBattle(ActiveBattle)
@@ -1050,26 +1057,26 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 			OddsChance = DestroyedCt(1)/118*100+1e-6
 			OddsDisp = left(str(OddsChance),len(str(int(OddsChance)))+2)+"%"
 			
-			gfxString("Dead: "+OddsDisp,CanvasScreen.Wideth/2-500,390,4,3,3,rgb(255,255,255))
+			gfxString("Dead: "+OddsDisp,CanvasScreen.Wideth/2-400-MeterWidth,390,4,3,3,rgb(255,255,255))
 		end if
 		if CapturedCt(1) > 0 then
 			OddsChance = CapturedCt(1)/118*100+1e-6
 			OddsDisp = left(str(OddsChance),len(str(int(OddsChance)))+2)+"%"
 			
-			gfxString("Capt: "+OddsDisp,CanvasScreen.Wideth/2-500,420,4,3,3,rgb(255,255,255))
+			gfxString("Capt: "+OddsDisp,CanvasScreen.Wideth/2-400-MeterWidth,420,4,3,3,rgb(255,255,255))
 		end if
 		
 		if DestroyedCt(2) > 0 then
 			OddsChance = DestroyedCt(2)/118*100+1e-6
 			OddsDisp = left(str(OddsChance),len(str(int(OddsChance)))+2)+"%"
 			
-			gfxString("Dead: "+OddsDisp,CanvasScreen.Wideth/2+350,390,4,3,3,rgb(255,255,255))
+			gfxString("Dead: "+OddsDisp,CanvasScreen.Wideth/2+250+MeterWidth,390,4,3,3,rgb(255,255,255))
 		end if
 		if CapturedCt(2) > 0 then
 			OddsChance = CapturedCt(2)/118*100+1e-6
 			OddsDisp = left(str(OddsChance),len(str(int(OddsChance)))+2)+"%"
 			
-			gfxString("Capt: "+OddsDisp,CanvasScreen.Wideth/2+350,420,4,3,3,rgb(255,255,255))
+			gfxString("Capt: "+OddsDisp,CanvasScreen.Wideth/2+250+MeterWidth,420,4,3,3,rgb(255,255,255))
 		end if
 		
 		screencopy

@@ -28,7 +28,7 @@ function getRelativePos(InX as short, InY as short) as ViewSpecs
 	return WorkObj
 end function
 
-sub drawFlag(DispX as short, DispY as short, Coloring as uinteger = rgb(255,224,192))
+sub drawFlag(DispX as short, DispY as short, Coloring as uinteger = rgb(224,192,255))
 	line(DispX,DispY)-(DispX,DispY-12),Coloring
 	line(DispX,DispY-12)-(DispX+6,DispY-9),Coloring
 	line(DispX,DispY-6)-(DispX+6,DispY-9),Coloring
@@ -541,9 +541,11 @@ sub VCRlist
 			SelectedIndex = MaxObjs
 		elseif InType = EnterKey AND MaxObjs > 0 then
 			watchBattle(VCRindex(SelectedIndex))
+			/'
 		elseif InType = chr(9) then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0
+			'/
 		elseif InType = EscKey then
 			exit do
 		end if
