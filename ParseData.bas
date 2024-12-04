@@ -244,7 +244,7 @@ type ParseCombatPiece
 end type
 
 type ParseVCR
-	Seed as short
+	Seed as integer
 	XLoc as short
 	YLoc as short
 	Battletype as byte
@@ -609,7 +609,7 @@ sub exportVCRs(GameID as integer, CurTurn as short)
 
 	for ObjID = 1 to LimitObjs
 		with VCRParser(ObjID)
-			if .Seed > 0 AND .InternalID <> VCRParser(ObjID-1).InternalID then
+			if .LeftOwner > 0 AND .RightOwner > 0 then
 				print #20, ""& .InternalID;","& .Seed;","& .XLoc;","& .YLoc;","& .Battletype;","& .LeftOwner;","& .RightOwner;","& .Turn;",";
 				
 				for Plr as byte = 1 to 2

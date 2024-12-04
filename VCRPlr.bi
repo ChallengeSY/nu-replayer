@@ -56,7 +56,7 @@ type CombatPiece
 end type
 
 type VCRobj
-	Seed as short
+	Seed as integer
 	XLoc as short
 	YLoc as short
 	Battletype as byte

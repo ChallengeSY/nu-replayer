@@ -507,7 +507,12 @@ sub VCRlist
 							color convertColor(Coloring(.RightOwner))
 							print using "\                                              \";.Combatants(2).Namee;
 							color rgb(255,255,255)
-							print using "   (####_,####)   ###";.XLoc;.YLoc;.Seed
+							print using "   (####_,####)   ";.XLoc;.YLoc;
+							if .Seed > 0 and .Seed <= 119 then
+								print using " ###";.Seed
+							else
+								print "Twst"
+							end if
 						end if
 					end with
 				next Index
