@@ -269,8 +269,8 @@ sub renderClient
 	'Scalable "Remastered"-style UI
 	if MouseError = 0 then
 		with CursorPos	
-			.X = (MouseX / ViewPort.Zoom + ViewPort.X) - CanvasScreen.Height/2 / ViewPort.Zoom
-			.Y = CanvasScreen.Height/2 / ViewPort.Zoom + (-MouseY / ViewPort.Zoom + ViewPort.Y)
+			.X = round((MouseX / ViewPort.Zoom + ViewPort.X) - CanvasScreen.Height/2 / ViewPort.Zoom)
+			.Y = round(CanvasScreen.Height/2 / ViewPort.Zoom + (-MouseY / ViewPort.Zoom + ViewPort.Y))
 		end with
 	end if
 	
@@ -338,7 +338,9 @@ sub renderClient
 						dim as uinteger TempColor
 						RelativePos = getRelativePos(.X, .Y)
 						
-						if .Temperature <= 3000 then
+						if .Neutron then
+							TempColor = rgb(255,192,255)
+						elseif .Temperature <= 3000 then
 							TempColor = rgb(192,0,0)
 						elseif .Temperature <= 6000 then
 							TempColor = rgb(192,96,0)
@@ -391,6 +393,23 @@ sub renderClient
 						RelativePos = getRelativePos(.X, .Y)
 						
 						drawFlag(RelativePos.X,RelativePos.Y)
+					end if
+				end with
+				
+				'Black Holes
+				with BlackHoles(OID)
+					if .Core > 0 then
+						RelativePos = getRelativePos(.XLoc, .YLoc)
+						
+						circle(RelativePos.X,RelativePos.Y),.Core*ViewPort.Zoom,rgb(96,160,192),,,,F
+						
+						for BID as byte = 1 to 9
+							dim as short ErgoRadius = .Core + .Band * BID
+							
+							for Seg as short = 0 to 340 step 20
+								circle(RelativePos.X,RelativePos.Y),ErgoRadius*ViewPort.Zoom,rgb(96,160,192),degtorad(Seg+BID*5),degtorad(Seg+10+BID*5)
+							next Seg
+						next BID
 					end if
 				end with
 				
@@ -625,6 +644,19 @@ sub renderClient
 					end if
 				end with
 				
+				with BlackHoles(OID)
+					if .Core > 0 then
+						RelativePos = getRelativePos(.XLoc, .YLoc)
+						CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+						
+						if CurDist < MinDist then
+							MinDist = CurDist
+							SelectedObjType = REPORT_BHOLE
+							SelectedID = OID
+						end if
+					end if
+				end with
+				
 				AuxList(OID) = ResetAux
 			next OID
 			
@@ -713,29 +745,37 @@ sub renderClient
 				end if
 			end if
 		case UpArrow
-			if SelAux > 1 then
-				SelAux -= 1
-			else
-				SelAux = AuxCount
+			if AuxCount > 0 then
+				if SelAux > 1 then
+					SelAux -= 1
+				else
+					SelAux = AuxCount
+				end if
+				
+				AuxPage = ceil(SelAux/10)-1
+				with AuxList(SelAux)
+					SelectedID = .ObjID
+					SelectedObjType = .ObjType
+				end with
 			end if
-			
-			AuxPage = ceil(SelAux/10)-1
-			with AuxList(SelAux)
-				SelectedID = .ObjID
-				SelectedObjType = .ObjType
-			end with
 		case DownArrow
-			if SelAux < AuxCount then
-				SelAux += 1
-			else
-				SelAux = 1
+			if AuxCount > 0 then
+				if SelAux < AuxCount then
+					SelAux += 1
+				else
+					SelAux = 1
+				end if
+				
+				AuxPage = ceil(SelAux/10)-1
+				with AuxList(SelAux)
+					SelectedID = .ObjID
+					SelectedObjType = .ObjType
+				end with
 			end if
-			
-			AuxPage = ceil(SelAux/10)-1
-			with AuxList(SelAux)
-				SelectedID = .ObjID
-				SelectedObjType = .ObjType
-			end with
+		case LeftArrow
+			fetchNextObj(-1)
+		case RightArrow
+			fetchNextObj(1)
 		case "-"
 			if ViewGame.Academy = 0 then
 				ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
@@ -751,12 +791,14 @@ sub renderClient
 				SelectedObjType = REPORT_BASE
 				SelectedID = BaseFound
 				
+				SelAux = 0
 				StorePage = 0
 			end if
 		case "p"
 			if PlanetFound > 0 AND SelectedObjType <> REPORT_PLAN then
 				SelectedObjType = REPORT_PLAN
 				SelectedID = PlanetFound
+				SelAux = 0
 			end if
 		case HomeKey
 			if StorePage > 0 then
@@ -775,6 +817,10 @@ sub renderClient
 				AuxPage += 1
 			end if
 		case "v"
+			if SelectedObjType = REPORT_VCR then
+				watchBattle(VCRbattles(SelectedID))
+			end if
+		case EnterKey
 			if SelectedObjType = REPORT_VCR then
 				watchBattle(VCRbattles(SelectedID))
 			end if

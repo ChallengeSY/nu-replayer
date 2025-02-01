@@ -580,7 +580,7 @@ sub checkPieces
 				.Defeated = 2
 			end if
 			
-			if .Damage >= DamageThresh(PID) OR ((.Damage >= 100 OR ActiveVCR.Combatants(int(3-PID)).RaceID = 12) AND .Crew <= 0) OR _
+			if .Damage >= DamageThresh(PID) OR ((.Damage >= 100 OR ActiveVCR.Combatants(int(3-PID)).RaceID = 12) AND .Crew <= 0 AND PlanBattle = 0) OR _
 				(PlanBattle AND combatOver AND ((.Damage >= 100 AND ShiplistObj(.HullID).HullName <> "Zilla Battlecarrier") OR .Crew <= 0)) then
 				'Ship has been destroyed
 				.Defeated = 1
@@ -633,7 +633,7 @@ function defeatedShip(ByVal Source as ulong, ByVal Dest as ulong, ByVal Aux as a
 	if Source <> rgb(255,0,255) ANDALSO rnd < 0.33 then
 		return Source
 	else
-		return 0
+		return Dest
 	end if
 end function
 
@@ -815,7 +815,7 @@ sub drawOverlay
 			BeamsY = max(WeaponY,BeamsY)
 		end if
 		if .BeamCt > 0 then
-			CombatStr = Beams(.BeamID).PartName+" x"+str(.BeamCt)
+			CombatStr = Beams(.BeamID).PartName+" Banks x"+str(.BeamCt)
 			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,BeamsY,4,3,3,rgb(255,255,255))
 			
 			for BID as byte = 1 to .BeamCt
@@ -916,7 +916,7 @@ sub drawOverlay
 			WeaponY += 150
 		end if
 		if .BeamCt > 0 then
-			CombatStr = Beams(.BeamID).PartName+" x"+str(.BeamCt)
+			CombatStr = Beams(.BeamID).PartName+" Banks x"+str(.BeamCt)
 			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,BeamsY,4,3,3,rgb(255,255,255))
 			
 			for BID as byte = 1 to .BeamCt
@@ -1051,6 +1051,24 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	 ' and allow any key to return to starmap
 	 '/
 	if InType <> EscKey then
+		dim as string OutcomeStr
+		if ActiveVCR.Combatants(1).Defeated > 0 AND ActiveVCR.Combatants(2).Defeated > 0 then
+			OutcomeStr = "Both combatants defeated!"
+		elseif ActiveVCR.Combatants(1).Defeated = 1 then
+			OutcomeStr = "RIGHT SIDE wins!"
+		elseif ActiveVCR.Combatants(2).Defeated = 1 AND PlanBattle = 0 then
+			OutcomeStr = "LEFT SIDE wins!"
+		elseif ActiveVCR.Combatants(1).Defeated = 2 then
+			OutcomeStr = "RIGHT SIDE wins by capture!"
+		elseif ActiveVCR.Combatants(2).Defeated > 0 then
+			OutcomeStr = "LEFT SIDE wins by capture!"
+		else
+			OutcomeStr = "Draw! Battle Time expired!"
+		end if
+		
+		gfxString(OutcomeStr,CanvasScreen.Wideth/2-gfxLength(OutcomeStr,4,3,3)/2,270,4,3,3,rgb(255,255,255))
+		screencopy
+		
 		for WhatifSeed as short = 1 to 118
 			if WhatifSeed <> BaseSeed then
 				QuickCode = quickBattle(ActiveBattle, WhatifSeed)

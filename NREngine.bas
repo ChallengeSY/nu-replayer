@@ -26,12 +26,14 @@ sub updateGameList(DownloadList as byte = 0)
 	dim as longint BytesDownloaded = 0	
 	
 	if DownloadList then
-		createMeter(0,"Downloading raw game list...")
+		createMeter(0,"Downloading raw game list... (finalizing prep)")
 		screencopy
 
 		dim SendBuffer as string
 		dim RecvBuffer as zstring * RECVBUFFLEN+1
 		dim Bytes as integer
+		dim FirstRead as integer
+		dim TotalBytes as integer
 
 		#IFDEF __USE_ZLIB__
 		#ELSE
@@ -48,18 +50,31 @@ sub updateGameList(DownloadList as byte = 0)
 
 				do
 					Bytes = SDLNet_TCP_Recv( NuSocket, strptr( RecvBuffer ), RECVBUFFLEN )
-					if( Bytes <= 0 ) then
+					if Bytes <= 0 then
 						exit do
 					end if
-
+					
 					'' add the null-terminator
 					RecvBuffer[Bytes] = 0
-
+					
+					if FirstRead = 0 then
+						FirstRead = instr(RecvBuffer,"Content-Length:")
+						if FirstRead > 0 then
+							TotalBytes = valint(mid(RecvBuffer,FirstRead+16,10))
+						end if
+						
+						FirstRead = -1
+					end if
+					
 					'' print it as string
 					print #7, RecvBuffer;
 					BytesDownloaded += Bytes
-
-					createMeter(0,commaSep(BytesDownloaded)+" bytes downloaded so far for the raw game list")
+					
+					if TotalBytes > 0 then
+						createMeter(min(BytesDownloaded/TotalBytes, 1.0),"Downloading raw game list... ("+commaSep(BytesDownloaded/1e3)+" / "+commaSep(TotalBytes/1e3)+" KB downloaded)")
+					else
+						createMeter(0,"Downloading raw game list... ("+commaSep(BytesDownloaded/1e3)+" KB downloaded)")
+					end if
 					screencopy
 				loop
 				close #7
@@ -71,7 +86,7 @@ sub updateGameList(DownloadList as byte = 0)
 	#ENDIF
 
 	if FileDateTime("raw/listgames.txt") > FileDateTime("games/List.csv") then
-		createMeter(0,"Converting game list...")
+		createMeter(1,"Converting game list...")
 		screencopy
 		if listGames then
 			print " Failure! Could not load game list.";
@@ -109,6 +124,8 @@ sub loadGame(ByRef LoadID as uinteger)
 				.PlayerCount = 0
 				.Sphere = 0
 				.Academy = 0
+				.AccelStart = 0
+				.TorpSet = 0
 				if FileExists(SettingsFile) then
 					open SettingsFile for input as #2
 					do
@@ -126,6 +143,10 @@ sub loadGame(ByRef LoadID as uinteger)
 								input #2, .Sphere
 							case "Academy"
 								input #2, .Academy
+							case "AccelStart"
+								input #2, .AccelStart
+							case "TorpSet"
+								input #2, .TorpSet
 						end select
 					loop until eof(2)
 					close #2

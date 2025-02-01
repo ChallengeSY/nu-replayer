@@ -36,11 +36,11 @@ function downloadLastTurns(GameID as integer) as integer
 	
 	dim as string InStream, TargetFile(1)
 	dim as byte Player = 0, FoundSettings = 0
-	dim as integer SeekChar
 	ErrorMsg = ""
 	
 	GameParser.LastTurn = 0
 	GameParser.DynamicMap = 0
+	GameParser.TorpSet = 0
 
 	'Download a series of turns
 	do
@@ -52,7 +52,7 @@ function downloadLastTurns(GameID as integer) as integer
 		if Player = 1 then
 			createMeter(0,"Downloading turns... (0 / ? players done)")
 		else
-			createMeter((Player-1)/(GameParser.PlayerCount+2),"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)")
+			createMeter((Player-1)/GameParser.PlayerCount,"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)")
 		end if
 		screencopy
 		
@@ -105,61 +105,43 @@ function downloadLastTurns(GameID as integer) as integer
 				ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to API error."
 			elseif Player = 1 then
 				with GameParser
-					.PlayerCount = 0
-					.MapWidth = 2000
-					.MapHeight = 2000
-					.CloudyIonStorms = 0
-					.Sphere = 0
-					.Academy = 0
 					.DynamicMap = 0
-					.AccelStart = 0
-					.LastTurn = 0
-					
-					SeekChar = instr(InStream,quote("slots")+":")
-					if SeekChar > 0 then
-						FoundSettings = 1
-						.PlayerCount = valint(mid(InStream,SeekChar+8,2))
-					end if
+					.PlayerCount = getJsonVal(InStream,"slots")
+					FoundSettings = (.PlayerCount > 0)
 
-					SeekChar = instr(InStream,quote("turn")+":")
-					.LastTurn = valint(mid(InStream,SeekChar+7,4))
+					.LastTurn = getJsonVal(InStream,"turn")
+					.MapWidth = getJsonVal(InStream,"mapwidth")
+					.MapHeight = getJsonVal(InStream,"mapheight")
 
-					SeekChar = instr(InStream,quote("mapwidth")+":")
-					.MapWidth = valint(mid(InStream,SeekChar+11,4))
-
-					SeekChar = instr(InStream,quote("mapheight")+":")
-					.MapHeight = valint(mid(InStream,SeekChar+12,4))
-
-					SeekChar = instr(InStream,quote("nuionstorms")+":true")
-					.CloudyIonStorms = abs(sgn(SeekChar))
-
-					SeekChar = instr(InStream,quote("sphere")+":true")
-					.Sphere = abs(sgn(SeekChar))
-
-					SeekChar = instr(InStream,quote("isacademy")+":true")
-					.Academy = abs(sgn(SeekChar))
-
-					SeekChar = instr(InStream,quote("acceleratedturns")+":")
-					.AccelStart = valint(mid(InStream,SeekChar+19,3))
+					.CloudyIonStorms = getJsonBool(InStream,"nuionstorms")
+					.Sphere = getJsonBool(InStream,"sphere")
+					.Academy = getJsonBool(InStream,"isacademy")
+					.AccelStart = getJsonVal(InStream,"acceleratedturns")
+					.TorpSet = getJsonVal(InStream,"torpedoset")
 
 					mkdir("games/"+str(GameID))
 					exportSettings(GameID,1)
 					
-					print
-					print "Found the following settings..."
-					print "* Players: "& .PlayerCount
-					print "* Map Size: "& .MapWidth;" X "& .MapHeight
-					if .CloudyIonStorms > 0 then
-						print "* Cloudy ion storms active"
-					end if
-					if .Sphere > 0 then
-						print "* Sphere active"
-					end if
-					if .Academy > 0 then
-						print "* Academy active"
-					end if
-					if .AccelStart > 0 then
-						print "* Accelerated Start: "& .AccelStart;" turns"
+					if FoundSettings then
+						print
+						print "Found the following settings..."
+						print "* Players: "& .PlayerCount
+						print "* Map Size: "& .MapWidth;" X "& .MapHeight
+						if .CloudyIonStorms > 0 then
+							print "* Cloudy ion storms active"
+						end if
+						if .Sphere > 0 then
+							print "* Sphere active"
+						end if
+						if .Academy > 0 then
+							print "* Academy active"
+						end if
+						if .AccelStart > 0 then
+							print "* Accelerated Start: "& .AccelStart;" turns"
+						end if
+						if .TorpSet > 0 then
+							print "* Torpedo set "& .TorpSet;" active"
+						end if
 					end if
 				end with
 				
@@ -171,7 +153,7 @@ function downloadLastTurns(GameID as integer) as integer
 		SDLNet_TCP_Close( NuSocket )
 	loop
 
-	createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"")
+	createMeter(GameParser.PlayerCount/GameParser.PlayerCount,"")
 	return ErrorMsg = ""
 end function
 
@@ -228,7 +210,7 @@ function downloadZipPackage(GameID as integer) as integer
 					BlankLines = 0
 				end if 
 				
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... (finalizing prep)")
+				createMeter(0,"Downloading ZIP package... (finalizing prep)")
 				screencopy
 			loop until BlankLines >= 4
 			close #6
@@ -256,7 +238,7 @@ function downloadZipPackage(GameID as integer) as integer
 				put #8, , *DL_BUFFER, Bytes
 				
 				BytesDownloaded += Bytes
-				createMeter(GameParser.PlayerCount/(GameParser.PlayerCount+2),"Downloading ZIP package... ("+commaSep(int(BytesDownloaded/1e3))+" / "+commaSep(int(TotalBytes/1e3))+" KB downloaded)")
+				createMeter(BytesDownloaded/TotalBytes/2,"Downloading ZIP package... ("+commaSep(int(BytesDownloaded/1e3))+" / "+commaSep(int(TotalBytes/1e3))+" KB downloaded)")
 				screencopy
 			loop
 			close #8

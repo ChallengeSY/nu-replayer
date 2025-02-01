@@ -63,14 +63,6 @@ function round(Amount as double) as integer
 	return int(Amount + 0.5)
 end function
 
-function trunc(Amount as double) as integer
-	if Amount > 0 then
-		return int(Amount)
-	else
-		return ceil(Amount)
-	end if
-end function
-
 function convertIP(InIP as integer) as string
 	dim as string LongString, ShortString(4), OutString
 	LongString = str(hex(InIP,8))

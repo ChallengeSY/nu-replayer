@@ -39,7 +39,7 @@ sub fetchStaticData
 	dim RecvBuffer as zstring * RECVBUFFLEN+1
 	dim Bytes as integer
 	
-	dim as integer ObjIDa, ObjIDb, ObjCount, BlockChar(2), SeekChar(2)
+	dim as integer ObjIDa, ObjIDb, ObjCount, BlockChar(2)
 	dim as string InStream, TargetFile(1)
 	dim as ParseHullDesign InterHull
 	dim as ParsePartDesign InterPart
@@ -111,9 +111,7 @@ sub fetchStaticData
 				
 				do
 					with InterHull
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						.HullName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+						.HullName = getJsonStr(InStream,"name",BlockChar(1))
 						
 						.HullName = findReplace(.HullName, "Class Torpedo ", "")
 						.HullName = findReplace(.HullName, "Class ", "")
@@ -122,50 +120,25 @@ sub fetchStaticData
 							.HullName = "Bloodfang Stealth Carrier"
 						end if
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
-						.DuraniumCost = valint(mid(InStream,SeekChar(0)+11,4))
+						.DuraniumCost = getJsonVal(InStream,"duranium",BlockChar(1))
+						.TritaniumCost = getJsonVal(InStream,"tritanium",BlockChar(1))
+						.MolybdenumCost = getJsonVal(InStream,"molybdenum",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
-						.TritaniumCost = valint(mid(InStream,SeekChar(0)+12,4))
+						.NeuMax = getJsonVal(InStream,"fueltank",BlockChar(1))
+						.Crew = getJsonVal(InStream,"crew",BlockChar(1))
+						.Engines = getJsonVal(InStream,"engines",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
-						.MolybdenumCost = valint(mid(InStream,SeekChar(0)+13,4))
+						.HullMass = getJsonVal(InStream,"mass",BlockChar(1))
+						.TechLevel = getJsonVal(InStream,"techlevel",BlockChar(1))
+						.Cargo = getJsonVal(InStream,"cargo",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("fueltank"))
-						.NeuMax = valint(mid(InStream,SeekChar(0)+11,5))
+						.FighterBays = getJsonVal(InStream,"fighterbays",BlockChar(1))
+						.TorpTubes = getJsonVal(InStream,"launchers",BlockChar(1))
+						.BeamBanks = getJsonVal(InStream,"beams",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("crew"))
-						.Crew = valint(mid(InStream,SeekChar(0)+7,5))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("engines"))
-						.Engines = valint(mid(InStream,SeekChar(0)+10,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
-						.HullMass = valint(mid(InStream,SeekChar(0)+7,5))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("techlevel"))
-						.TechLevel = valint(mid(InStream,SeekChar(0)+12,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("cargo"))
-						.Cargo = valint(mid(InStream,SeekChar(0)+8,5))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("fighterbays"))
-						.FighterBays = valint(mid(InStream,SeekChar(0)+14,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("launchers"))
-						.TorpTubes = valint(mid(InStream,SeekChar(0)+12,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("beams"))
-						.BeamBanks = valint(mid(InStream,SeekChar(0)+8,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("cost"))
-						.MegacreditCost = valint(mid(InStream,SeekChar(0)+7,6))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("advantage"))
-						.AdvantageValue = valint(mid(InStream,SeekChar(0)+12,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
+						.MegacreditCost = getJsonVal(InStream,"cost",BlockChar(1))
+						.AdvantageValue = getJsonVal(InStream,"advantage",BlockChar(1))
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						
 						print #6, ""& ObjIDa;","& .TechLevel;",";quote(.HullName);","& .HullMass; _
 							","& .NeuMax;","& .Cargo;","& .Crew;","& .Engines;","& .BeamBanks; _
@@ -195,34 +168,21 @@ sub fetchStaticData
 				
 				do
 					with InterPart
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						.PartName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-						
+						.PartName = getJsonStr(InStream,"name",BlockChar(1))
 						.PartMass = 0
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
-						.DuraniumCost = valint(mid(InStream,SeekChar(0)+11,4))
+						.DuraniumCost = getJsonVal(InStream,"duranium",BlockChar(1))
+						.TritaniumCost = getJsonVal(InStream,"tritanium",BlockChar(1))
+						.MolybdenumCost = getJsonVal(InStream,"molybdenum",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
-						.TritaniumCost = valint(mid(InStream,SeekChar(0)+12,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
-						.MolybdenumCost = valint(mid(InStream,SeekChar(0)+13,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("techlevel"))
-						.TechLevel = valint(mid(InStream,SeekChar(0)+12,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("cost"))
-						.PartCost = valint(mid(InStream,SeekChar(0)+7,6))
+						.TechLevel = getJsonVal(InStream,"techlevel",BlockChar(1))
+						.PartCost = getJsonVal(InStream,"cost",BlockChar(1))
 						
 						for WID as byte = 1 to 9
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("warp"+str(WID)))
-							.WarpEfficiency(WID) = valint(mid(InStream,SeekChar(0)+7+len(str(WID)),6))
+							.WarpEfficiency(WID) = getJsonVal(InStream,"warp"+str(WID),BlockChar(1))
 						next WID
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						
 						print #7, quote("Engine")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
 							",0,"& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost;",0,0,0";
@@ -249,38 +209,21 @@ sub fetchStaticData
 				
 				do
 					with InterPart
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						.PartName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+						.PartName = getJsonStr(InStream,"name",BlockChar(1))
+						.PartMass = getJsonVal(InStream,"mass",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
-						.PartMass = valint(mid(InStream,SeekChar(0)+7,4))
+						.DuraniumCost = getJsonVal(InStream,"duranium",BlockChar(1))
+						.TritaniumCost = getJsonVal(InStream,"tritanium",BlockChar(1))
+						.MolybdenumCost = getJsonVal(InStream,"molybdenum",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
-						.DuraniumCost = valint(mid(InStream,SeekChar(0)+11,4))
+						.TechLevel = getJsonVal(InStream,"techlevel",BlockChar(1))
+						.PartCost = getJsonVal(InStream,"cost",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
-						.TritaniumCost = valint(mid(InStream,SeekChar(0)+12,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
-						.MolybdenumCost = valint(mid(InStream,SeekChar(0)+13,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("techlevel"))
-						.TechLevel = valint(mid(InStream,SeekChar(0)+12,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("cost"))
-						.PartCost = valint(mid(InStream,SeekChar(0)+7,6))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("crewkill"))
-						.WepKill = valint(mid(InStream,SeekChar(0)+11,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
-						.WepBlast = valint(mid(InStream,SeekChar(0)+9,4))
-						
+						.WepKill = getJsonVal(InStream,"crewkill",BlockChar(1))
+						.WepBlast = getJsonVal(InStream,"damage",BlockChar(1))
 						.Range = 200
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						
 						print #7, quote("Beam")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
 							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost; _
@@ -300,42 +243,22 @@ sub fetchStaticData
 				
 				do
 					with InterPart
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						.PartName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+						.PartName = getJsonStr(InStream,"name",BlockChar(1))
+						.PartMass = getJsonVal(InStream,"mass",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
-						.PartMass = valint(mid(InStream,SeekChar(0)+7,4))
+						.DuraniumCost = getJsonVal(InStream,"duranium",BlockChar(1))
+						.TritaniumCost = getJsonVal(InStream,"tritanium",BlockChar(1))
+						.MolybdenumCost = getJsonVal(InStream,"molybdenum",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
-						.DuraniumCost = valint(mid(InStream,SeekChar(0)+11,4))
+						.TechLevel = getJsonVal(InStream,"techlevel",BlockChar(1))
+						.PartCost = getJsonVal(InStream,"launchercost",BlockChar(1))
+						.AmmoCost = getJsonVal(InStream,"torpedocost",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
-						.TritaniumCost = valint(mid(InStream,SeekChar(0)+12,4))
+						.WepKill = getJsonVal(InStream,"crewkill",BlockChar(1))
+						.WepBlast = getJsonVal(InStream,"damage",BlockChar(1))
+						.Range = getJsonVal(InStream,"combatrange",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
-						.MolybdenumCost = valint(mid(InStream,SeekChar(0)+13,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("techlevel"))
-						.TechLevel = valint(mid(InStream,SeekChar(0)+12,3))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("launchercost"))
-						.PartCost = valint(mid(InStream,SeekChar(0)+15,5))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedocost"))
-						.AmmoCost = valint(mid(InStream,SeekChar(0)+14,5))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("crewkill"))
-						.WepKill = valint(mid(InStream,SeekChar(0)+11,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
-						.WepBlast = valint(mid(InStream,SeekChar(0)+9,4))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("combatrange"))
-						.Range = valint(mid(InStream,SeekChar(0)+14,6))
-						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						ObjIDa = valint(mid(InStream,SeekChar(0)+5,5))
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						
 						print #7, quote("Tube")+","& ObjIDa;","& .TechLevel;",";quote(.PartName); _
 							","& .PartMass;","& .PartCost;","& .DuraniumCost;","& .TritaniumCost;","& .MolybdenumCost; _

@@ -43,6 +43,8 @@ const FunctionTen = chr(255,68)
 const FunctionEleven = chr(255,133)
 const FunctionTwelve = chr(255,134)
 const CTRLFunctionTwelve = chr(255,138)
+const LeftArrow = chr(255,75)
+const RightArrow = chr(255,77)
 const UpArrow = chr(255,72)
 const DownArrow = chr(255,80)
 const HomeKey = chr(255,71)
@@ -253,8 +255,9 @@ type StarObj
 	
 	Temperature as integer
 	Radius as short
-	Mass as integer 
-	Planets as short 
+	Mass as integer
+	Planets as short
+	Neutron as byte
 end type
 
 type NebObj
@@ -286,6 +289,15 @@ type ArtiObj
 	
 	LocationType as byte
 	LocationID as short
+end type
+
+type BlackObj
+	Namee as string
+	XLoc as short
+	YLoc as short
+	
+	Core as short
+	Band as short
 end type
 
 type AuxObj
@@ -339,6 +351,7 @@ type GameSpecs
 	Sphere as byte
 	Academy as byte
 	AccelStart as short
+	TorpSet as byte
 	LastTurn as short
 end type
 
@@ -379,6 +392,7 @@ dim shared as StarObj StarClusters(LimitObjs), ResetStar
 dim shared as NebObj Nebulae(LimitObjs), ResetNeb
 dim shared as WormObj Wormholes(LimitObjs), ResetWorm
 dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
+dim shared as BlackObj BlackHoles(LimitObjs), ResetBlack
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
 dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, OfflineMode, FirstRun, CanNavigate(1), _
 	TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
@@ -745,7 +759,7 @@ sub menu
 	MouseError = getmouse(MouseX,MouseY,0,ButtonCombo)
 	gfxstring("Nu Replayer",10,10,10,9,5,rgb(128,255,255),rgb(0,255,255))
 
-	gfxstring("Copyright (C) 2012 - 2024 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
+	gfxstring("Copyright (C) 2012 - 2025 Paul Ruediger",0,CanvasScreen.Height-15,3,3,2,rgb(255,255,255))
 	if OfflineMode = 0 then
 		NetworkStr = "Network okay"
 		Greeting = "Welcome, "+Username
@@ -788,6 +802,7 @@ sub menu
 								GameID = .ID
 							end if
 						end if
+						
 					else
 						gfxstring(.Namee,CanvasScreen.Wideth/2+10,50*(FeaturedGame+(13-MaxMenuEntries))-5,3,3,2,rgb(128,128,128))
 						gfxstring(.GameDesc+" / Turn "+str(.LastTurn),CanvasScreen.Wideth/2+30,50*(FeaturedGame+(13-MaxMenuEntries))+15,3,3,2,rgb(128,128,128))
@@ -1405,5 +1420,6 @@ sub replayHub(DownloadMode as byte = 0)
 		end if
 	loop
 end sub
+
 
 

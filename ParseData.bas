@@ -160,6 +160,7 @@ type ParseStar
 	Radius as short
 	Mass as integer
 	Planets as short
+	Neutron as byte
 end type
 
 type ParseNebulae
@@ -255,15 +256,26 @@ type ParseVCR
 	Combatants(2) as ParseCombatPiece
 end type
 
+type ParseBlackHole
+	Namee as string
+	XLoc as short
+	YLoc as short
+	
+	Core as short
+	Band as short
+end type
+
 type ParseGame
 	MapWidth as short
 	MapHeight as short
+	CampaignGame as byte
 	DynamicMap as byte
 	PlayerCount as byte
 	CloudyIonStorms as byte
 	Sphere as byte
 	Academy as byte
 	AccelStart as short
+	TorpSet as byte
 	LastTurn as short
 end type
 
@@ -281,6 +293,7 @@ dim shared as ParseWormhole WormholeParser(LimitObjs), InterWormhole, ResetWormh
 dim shared as ParseArtifact ArtifactParser(LimitObjs), InterArtifact, ResetArtifactPar
 dim shared as ParseRelation RelateParser(LimitObjs), ResetRelationsPar
 dim shared as ParseVCR VCRParser(LimitObjs), ResetVCRPar
+dim shared as ParseBlackHole BlackParser(LimitObjs), InterBlack, ResetBlackPar
 dim shared as ParseGame GameParser, ResetGamePar
 dim shared as double KBUpdate
 
@@ -292,6 +305,14 @@ ResetShipPar.FriendlyCode = quote("???")
 ResetMinefPar.FCode = quote("???")
 ResetGamePar.MapWidth = 2000
 ResetGamePar.MapHeight = 2000
+for PID as byte = 1 to 2
+	with ResetVCRPar.Combatants(PID)
+		.BeamKillX = 1
+		.BeamChargeX = 1
+		.TorpChargeX = 1
+		.TorpMissChance = 35
+	end with
+next pID
 
 #IFNDEF __CMD_LINE__
 function cmdLine(SearchStr as string) as byte
@@ -305,6 +326,29 @@ function cmdLine(SearchStr as string) as byte
 	return FoundStr
 end function
 #ENDIF
+
+function getJsonVal(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0, DefVal as integer = -1) as integer
+	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":")
+	
+	if MatchFound > 0 AND (MatchFound < CharEnd OR CharEnd = 0) then
+		return valint(mid(ReadStr,MatchFound+len(ReadParam)+3,11))
+	end if
+	
+	return DefVal
+end function
+
+function getJsonStr(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0) as string
+	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":")
+	dim as integer EndQuote = instr(MatchFound+len(ReadParam)+4,ReadStr,chr(34))
+	
+	return mid(ReadStr, MatchFound+len(ReadParam)+4, EndQuote-MatchFound-len(ReadParam)-4)
+end function
+
+function getJsonBool(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0) as integer
+	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":true")
+	
+	return abs(sgn(MatchFound > 0 AND (MatchFound < CharEnd OR CharEnd = 0)))
+end function
 
 sub exportScores(GameID as integer, CurTurn as short)
 	open "games/"+str(GameID)+"/"+str(CurTurn)+"/Score.csv" for output as #12
@@ -474,13 +518,13 @@ sub exportStarList(GameID as integer, AlwaysWrite as byte = 0)
 		open FileName for output as #21
 		print #21, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
 			quote("Temp")+","+quote("Radius")+","+quote("Mass")+","+_
-			quote("Planets")
+			quote("Planets")+","+quote("Neutron")
 	
 		for ObjID = 1 to LimitObjs
 			with StarParser(ObjID)
 				if len(.ClustName) > 0 then
 					print #21, ""& ObjID;","& quote(.ClustName);","& .XLoc;","& .YLoc; _
-						","& .Temp;","& .Radius;","& .Mass;","& .Planets
+						","& .Temp;","& .Radius;","& .Mass;","& .Planets;","& .Neutron
 				end if
 			end with
 		next
@@ -554,7 +598,7 @@ end sub
 sub exportSettings(GameID as integer, AlwaysWrite as byte = 0)
 	dim as integer ObjID
 	
-	if FileExists("games/"+str(GameID)+"/Settings.csv") = 0 OR AlwaysWrite > 0 then
+	if FileExists("games/"+str(GameID)+"/Settings.csv") = 0 OR AlwaysWrite then
 		with GameParser
 			open "games/"+str(GameID)+"/Settings.csv" for output as #23
 			print #23, quote("Players");","& .PlayerCount
@@ -565,6 +609,7 @@ sub exportSettings(GameID as integer, AlwaysWrite as byte = 0)
 			print #23, quote("Wraparound");","& .Sphere
 			print #23, quote("Academy");","& .Academy
 			print #23, quote("AccelStart");","& .AccelStart
+			print #23, quote("TorpSet");","& .TorpSet
 			close #23
 		end with
 	end if
@@ -631,6 +676,26 @@ sub exportVCRs(GameID as integer, CurTurn as short)
 	close #20
 end sub
 
+sub exportBlackHoles(GameID as integer, AlwaysWrite as byte = 0)
+	dim as integer ObjID
+	
+	if FileExists("games/"+str(GameID)+"/BlackHoles.csv") = 0 OR AlwaysWrite then
+		open "games/"+str(GameID)+"/BlackHoles.csv" for output as #26
+		print #26, quote("ID")+","+quote("Name")+","+quote("X")+","+quote("Y")+","+_
+			quote("Core")+","+quote("Band")
+	
+		for ObjID = 1 to LimitObjs
+			with BlackParser(ObjID)
+				if len(.Namee) > 0 then
+					print #26, ""& ObjID;","& quote(.Namee);","& .XLoc;","& .YLoc; _
+						","& .Core;","& .Band
+				end if
+			end with
+		next
+		close #26
+	end if
+end sub
+
 sub createMap(GameID as integer, CurTurn as short)
 	if GameID >= 2972 AND (GameParser.DynamicMap > 0 OR _
 		FileExists("games/"+str(GameID)+"/Map.csv") = 0 OR FileDateTime("games/"+str(GameID)+"/Map.csv") < DataFormat) then
@@ -684,7 +749,8 @@ sub exportCSVfiles(GameID as integer, CurTurn as short)
 	exportRelationships(GameID,CurTurn)
 	exportArtifactList(GameID,CurTurn)
 	exportWormholeList(GameID,CurTurn)
-	exportSettings(GameID)
+	exportSettings(GameID, FileDateTime("games/"+str(GameID)+"/Settings.csv") < DataFormat)
 	exportStarList(GameID, FileDateTime("games/"+str(GameID)+"/StarClusters.csv") < DataFormat)
 	exportVCRs(GameID,CurTurn)
+	exportBlackHoles(GameID, FileDateTime("games/"+str(GameID)+"/BlackHoles.csv") < DataFormat)
 end sub

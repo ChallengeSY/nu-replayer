@@ -7,6 +7,7 @@ enum ReportCollection
 	REPORT_STAR
 	REPORT_NEB
 	REPORT_WORM
+	REPORT_BHOLE
 	REPORT_ARTI
 	REPORT_VCR
 end enum
@@ -508,7 +509,7 @@ sub VCRlist
 							print using "\                                              \";.Combatants(2).Namee;
 							color rgb(255,255,255)
 							print using "   (####_,####)   ";.XLoc;.YLoc;
-							if .Seed > 0 and .Seed <= 119 then
+							if .Seed >= 0 and .Seed < 119 then
 								print using " ###";.Seed
 							else
 								print "Twst"
@@ -773,6 +774,57 @@ sub playerList
 			if ViewMode > 2 then ViewMode = 0
 		end if
 	loop until InType = EscKey
+end sub
+
+sub fetchNextObj(Direction as byte)
+	if SelectedObjType <> 0 then
+		dim as integer OrigID = SelectedID
+		dim as integer ObjLimit = LimitObjs
+		dim as byte ObjFound
+		if SelectedObjType = REPORT_MINE then
+			ObjLimit = MetaLimit 
+		end if
+		
+		do
+			SelectedID += Direction
+			if SelectedID > ObjLimit then
+				SelectedID = 1
+			end if
+			if SelectedID < 1 then
+				SelectedID = ObjLimit
+			end if
+			
+			select case SelectedObjType
+				case REPORT_PLAN
+					ObjFound = (Planets(SelectedID).ObjName <> "")
+				case REPORT_SHIP
+					ObjFound = (Starships(SelectedID).ShipType <> 0)
+				case REPORT_BASE
+					ObjFound = (Planets(SelectedID).BasePresent > 0)
+				case REPORT_MINE
+					ObjFound = (Minefields(SelectedID).MineUnits > 0)
+				case REPORT_STAR
+					ObjFound = (StarClusters(SelectedID).Mass > 0)
+				case REPORT_NEB
+					ObjFound = (Nebulae(SelectedID).Intensity > 0)
+				case REPORT_ION
+					ObjFound = (IonStorms(SelectedID).Voltage > 0)
+				case REPORT_WORM
+					ObjFound = (Wormholes(SelectedID).Stability > 0)
+				case REPORT_ARTI
+					ObjFound = (Artifacts(SelectedID).Namee <> "")
+				case REPORT_VCR
+					ObjFound = (VCRbattles(SelectedID).LeftOwner > 0)
+				case REPORT_BHOLE
+					ObjFound = (BlackHoles(SelectedID).Core > 0)
+			end select
+			
+			if ObjFound then
+				syncReport(1)
+				exit do
+			end if
+		loop until SelectedID = OrigID
+	end if
 end sub
 
 sub launchConvertor(ByVal InternalPtr as any ptr = 0)

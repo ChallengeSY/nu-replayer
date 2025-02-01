@@ -1,11 +1,11 @@
-const BROWSER_LONG = "Nu Replayer 0.96b (Beta)"
+const BROWSER_LONG = "Nu Replayer 1.00"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
 const RECVBUFFLEN = 8192
 const NEWLINE = !"\r\n"
 const DEFAULT_HOST = "api.planets.nu"
-const BROWSER_SHORT = "NuReplayer Beta"
+const BROWSER_SHORT = "NuReplayer"
 dim shared as IPAddress NuIP
 dim shared as TCPSocket NuSocket
 #ENDIF
@@ -96,7 +96,7 @@ end sub
 
 sub updateStarmap
 	dim as string SettingsFile, PlanetsFile, ShipsFile, MapFile, BasesFile, StorageFile, _
-		IonFile, MineFile, StarFile, NebFile, WormFile, ArtiFile, CombatsFile
+		IonFile, MineFile, StarFile, NebFile, WormFile, ArtiFile, CombatsFile, BlackFile
 	dim as short LoadObjID
 	'Loads various files and renders their contents onto the starmap
 	
@@ -112,6 +112,7 @@ sub updateStarmap
 	WormFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Wormholes.csv"
 	ArtiFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Artifacts.csv"
 	CombatsFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/VCRs.csv"
+	BlackFile = "games/"+str(GameID)+"/BlackHoles.csv"
 	
 	for OID as integer = 0 to MetaLimit
 		if OID <= LimitObjs then
@@ -150,6 +151,7 @@ sub updateStarmap
 			if ReplayerMode <> MODE_CLIENT then
 				StarClusters(OID) = ResetStar
 				Nebulae(OID) = ResetNeb
+				BlackHoles(OID) = ResetBlack
 			end if
 		end if
 			
@@ -272,6 +274,10 @@ sub updateStarmap
 					input #5, .BayNum
 					input #5, .TubeNum
 					input #5, .TubePos
+					.TubePos += ViewGame.TorpSet * 100
+					while .TubePos > 100 ANDALSO Tubes(.TubePos).PartName = ""
+						.TubePos -= 100
+					wend 
 					
 					input #5, .TotalMass
 					input #5, .Ammo
@@ -483,6 +489,7 @@ sub updateStarmap
 						input #11, .Temperature
 						input #11, .Radius, .Mass
 						input #11, .Planets
+						input #11, .Neutron
 					end with
 				end if
 			next SID
@@ -490,7 +497,7 @@ sub updateStarmap
 		end if
 		
 		if FileExists(NebFile) then
-			debugout("Opened star nebulae file")
+			debugout("Opened nebulae file")
 			open NebFile for input as #12
 			line input #12, NullStr
 			for SID as integer = 0 to LimitObjs
@@ -509,6 +516,20 @@ sub updateStarmap
 			next SID
 			close #12
 		end if
+	
+		if FileExists(BlackFile) then
+			debugout("Opened black holes file")
+			'Tentative
+			open BlackFile for input as #16
+			line input #16, NullStr
+			input #16, LoadObjID
+			with BlackHoles(LoadObjID)
+				input #16, .Namee
+				input #16, .XLoc, .YLoc
+				input #16, .Core, .Band
+			end with
+			close #16
+		endif
 	end if
 	
 	if FileExists(WormFile) then
@@ -579,6 +600,11 @@ sub updateStarmap
 							input #15, .HullID
 							input #15, .BeamID
 							input #15, .TorpID
+							.TorpID += ViewGame.TorpSet * 100
+							while .TorpID > 100 ANDALSO Tubes(.TorpID).PartName = ""
+								.TorpID -= 100
+							wend 
+							
 							input #15, .Shield
 							input #15, .Damage
 							input #15, .Crew

@@ -3387,6 +3387,7 @@
 199630,"Demons run when a good commander goes to war.","Custom Game",71
 199927,"Corona Sector 0071","Standard",76
 199987,"Cevius Sector 0071","Standard Beginners",94
+200015,"Senior officers classic - MAX ALLY = 1. Safe passages limited","Custom Game",137
 200029,"Rocky 12 Sector 0071","Horwasp Alpha Campaign Melee",51
 200091,"jaloke's La guerra de las galaxias en español","Custom Game",75
 200139,"Blauvehr Sector 0071","Classic",84
@@ -7437,6 +7438,7 @@
 528152,"Pyxis Sector 0144","Classic",84
 528157,"Medium-sized 8 slots, 300 pl., Planets Limits Ships (PLS), increased fof (PlanetsCon2022)","Custom Game",51
 528301,"Limball Sector 0144","Standard",81
+528513,"Crowded Galaxy","Custom Game",188
 528556,"Campaign Captains NO HORWASPS #8","Custom Game",196
 528799,"Praesepe 5 Sector 0144","Standard Beginners",33
 529301,"Turning World Sector 0144","Bleeding Edge",94
@@ -7795,6 +7797,7 @@
 594870,"Bimbo Sector 0155","Standard",69
 595105,"Washington Sector 0155","Classic",122
 595419,"Cor Caroli Sector 0155","Campaign",91
+595678,"Arkto Sector 0155","Teams of 3",94
 595717,"Lorthidonia Sector 0155","Mentor vs Midshipmen",34
 595926,"Gorath Sector 0155","Standard",77
 596004,"Estes Sector 0155","Standard Beginners",52
@@ -7875,6 +7878,7 @@
 603671,"Regenal Sector 0157","Campaign",58
 603674,"Carsonio Sector 0157","Classic",81
 603679,"Beverly 90120 Sector 0157","Mentor vs Midshipmen",33
+604003,"Atari 1000 Sector 0157","Epic Fleet Officers",110
 604019,"Ceti Alpha 5 Sector 0157","Classic",98
 604079,"600 Campaign Bugs off","Custom Game",100
 604105,"Challenger 5 Sector 0157","Standard",68
@@ -7893,6 +7897,7 @@
 605106,"Fantasia Sector 0158","Standard Beginners",25
 605179,"Scorpius Sector 0158","League 2v2 Blitz",19
 605328,"Tataween Sector 0158","Standard Beginners",31
+605445,"Ugo Sector 0158","Classic",160
 605500,"Kura Sector 0158","Standard Beginners",30
 605518,"New Sinewnew Sector 0158","Giant Melee",58
 605526,"Neophyte Games: Resurrection","Custom Game",85
@@ -7904,10 +7909,12 @@
 605791,"Ve'vla Vegus Sector 0158","Classic",92
 605959,"Orionis I Sector 0158","Standard Beginners",24
 606105,"Bonzi Sector 0158","Standard Beginners",39
+606144,"New Alaska Sector 0158","Classic",148
 606235,"Thorak Sector 0158","League Blitz",27
 606331,"Taulus Sector 0158","League Blitz",17
 606335,"Corona Sector 0158","Standard Beginners",33
 606367,"YouTwo Sector 0158","Mentor vs Midshipmen",47
+606379,"Tataween Sector 0158","Epic",129
 606446,"Alpha's Star Sector 0158","Classic",96
 606447,"Tera 9 Sector 0158","Campaign",84
 606456,"Serpens Caput 759 Sector 0158","Standard",120
@@ -7938,6 +7945,8 @@
 608086,"Zol Sector 0159","Standard Beginners",27
 608146,"Sanstrisious Sector 0159","Classic",69
 608293,"Green Planet Sector 0159","Standard",138
+608339,"Bootie Sector 0159","Epic",142
+608444,"Lepus 5 Sector 0159","Captains Campaign",108
 608479,"Rock Sector 0159","Standard Beginners",37
 608495,"Muracha Sector 0159","League Blitz",30
 608572,"Sagitta Sector 0159","Classic",71
@@ -7966,6 +7975,7 @@
 610002,"Atlantia 2 Sector 0160","Standard Beginners",28
 610010,"Oceanlandia Sector 0160","Campaign",63
 610097,"Cestus 3 Sector 0160","Standard Beginners",48
+610153,"Googelplex Sector 0160","Giant Melee",145
 610243,"Launa Planet Sector 0160","Epic",69
 610459,"Oakhurst Sector 0160","Standard Intermediate",44
 610556,"Edna Sector 0160","Standard Beginners",50
@@ -7985,11 +7995,13 @@
 611587,"Sagitta Sector 0160","Classic",87
 611749,"Chanda M Sector 0160","League 2v2 Blitz",23
 611783,"Yoggoth Sector 0160","Standard",70
+611786,"Pyxis Sector 0160","Classic",114
 611816,"Deep 1 Sector 0160","Campaign",79
 611862,"Alienation Sector 0160","Standard Beginners",44
 611988,"Helios Sector 0160","Classic",64
 612022,"Sector 612022","Custom Game",72
 612087,"Organia 3 Sector 0160","League Beginner Blitz",15
+612098,"Elvis Sector 0160","Giant Melee",124
 612129,"Launa Planet Sector 0160","Standard Beginners",25
 612168,"Hiperborealia Sector 0160","Epic",76
 612293,"Venturia Sector 0160","Standard Intermediate",49
@@ -8003,9 +8015,12 @@
 612902,"Karelia Sector 0161","Classic",62
 613125,"Bellatrix Sector 0161","Standard",55
 613225,"NGC 2403-A Sector 0161","Standard Beginners",46
+613422,"Washington Sector 0161","Captains Classic",65
 613431,"Madonna Sector 0161","League Blitz",20
+613529,"Zol Sector 0161","Epic",121
 613552,"Talos Sector 0161","Campaign",53
 613668,"Itarius Sector 0161","Standard",119
+613740,"Kapteyn's Planet Sector 0161","Epic Fleet Officers",76
 613772,"Beta Auriga Sector 0161","Standard Intermediate",52
 614018,"Capricornus Sector 0161","Mentor vs Midshipmen",41
 614020,"Vega Sector 0161","Standard Beginners",49
@@ -8014,6 +8029,7 @@
 614217,"Cattlian Sector 0161","Standard Intermediate",40
 614282,"Krell Sector 0161","Epic",80
 614287,"Alienation Sector 0161","Standard Beginners",50
+614395,"Rocky 12 Sector 0161","Giant Melee",120
 614396,"Scoptor Sector 0161","Campaign",106
 614604,"Cygnet Sector 0161","Standard Beginners",50
 614738,"Exodious Sector 0161","Classic",77
@@ -8025,6 +8041,7 @@
 615029,"WANDERING TRIBES 1 SHIP 1 CHANCE TO GET IT RIGHT. 80 TURNS AND DONE","Custom Game",80
 615211,"URSA Beta Sector 0161","Mentor vs Midshipmen",41
 615244,"Muracha Sector 0161","Standard Beginners",30
+615306,"Euro Disney World Sector 0161","Classic",92
 615415,"Thi Alpha Chi Sector 0161","Standard",79
 615420,"Delta Delta Delta Sector 0161","Standard Intermediate",52
 615641,"Sol 3 Sector 0162","Epic",56
@@ -8035,11 +8052,14 @@
 616172,"Australis Sector 0162","Classic",58
 616209,"Another World Sector 0162","Standard Beginners",42
 616241,"Beverly 90120 Sector 0162","Giant Melee",44
+616361,"Ka'Hat Sector 0162","Epic Senior Officers",81
 616428,"Bubble World Sector 0162","Standard Intermediate",64
+616481,"Cestus 3 Sector 0162","Teams of 3",49
 616677,"Smith's World Sector 0162","Classic",44
 616709,"The New Revised WANDERING TRIBES 1 SHIP 1 CHANCE TO GET IT RIGHT. 80 TURNS AND DONE ","Custom Game",80
 616731,"Lacerta Sector 0162","Standard",81
 616735,"Kzin Sector 0162","Standard Intermediate",53
+616767,"Vendor Sector 0162","Epic",97
 616787,"Zimphfir Sector 0162","Standard Beginners",50
 616842,"Beta Ti Chi 6 Sector 0162","Classic",77
 617081,"Erecka Sector 0162","Classic",68
@@ -8052,16 +8072,21 @@
 617621,"THE 3RD WANDERING TRIBES 1 SHIP 1 CHANCE TO GET IT RIGHT. 80 TURNS AND DONE","Custom Game",80
 617918,"Toltek 12 Sector 0162","Giant Melee",57
 617957,"Helios Sector 0162","Campaign",59
+618004,"Nyphidonia Sector 0162","Classic",90
+618018,"PLS Lone Wolf Campaign Fast XVII","Custom Game",100
 618063,"Upikarium Sector 0162","Standard Intermediate",70
 618096,"New Morocco Sector 0162","Standard Beginners",34
+618236,"Sagitta Sector 0162","Classic",89
 618272,"New Georgia Sector 0162","Standard Intermediate",42
 618342,"Bellmont Sector 0163","Standard",74
+618350,"Portsmouth Sector 0163","Epic",104
 618552,"Baseball Sector 0163","Standard Beginners",48
 618588,"Embassy Planet Sector 0163","Campaign",87
 618758,"Casablanca Sector 0163","Standard",113
 618822,"Wally World Sector 0163","Standard Intermediate",70
 618931,"Kattia Sector 0163","League Blitz",17
 618971,"Oakhurst Sector 0163","Standard Beginners",45
+619052,"Cuhia Sector 0163","Giant Melee",92
 619225,"Bortex Sector 0163","Standard Beginners",33
 619463,"Washington Sector 0163","Campaign",92
 619483,"Yoggoth Sector 0163","Standard",82
@@ -8077,14 +8102,18 @@
 620567,"Baseball Sector 0164","Standard",68
 620883,"New Alaska Sector 0164","Campaign",66
 620917,"Down World Sector 0164","Standard Beginners",43
+620976,"Chrome Sector 0164","Classic",59
 621004,"Achernar Sector 0164","Standard Intermediate",47
+621048,"Green Planet Sector 0164","Standard",119
 621103,"Morning Star Sector 0164","Standard Beginners",39
 621253,"Virgo Pegasi Sector 0164","Standard Intermediate",39
 621351,"Challenger 5 Sector 0164","Standard Intermediate",65
+621352,"Cor Caroli Sector 0164","Classic",56
 621430,"Scoptor Sector 0164","Campaign",71
 621481,"Orionis II Sector 0164","Mentor vs Midshipmen",50
 621515,"Bellatrix Sector 0164","Standard Beginners",44
 621531,"New Chicago Sector 0164","League Dogfight",22
+621662,"Ve'vla Vegus Sector 0164","Classic",59
 621668,"Mao 1 Sector 0164","League 2v2 Blitz",30
 621705,"Tniacth Sector 0164","Standard",57
 621858,"Alpha Beta Sector 0164","Standard Intermediate",40
@@ -8095,6 +8124,7 @@
 622476,"Lacerta Sector 0164","Standard Beginners",50
 622701,"Ceti helios Sector 0165","Standard Beginners",43
 622865,"Mileb Sector 0165","Standard",62
+622866,"Mao 2 Sector 0165","Campaign",96
 622868,"Gorath Sector 0165","Standard Intermediate",32
 623074,"Bubble World Sector 0165","Standard Beginners",50
 623256,"Tniacth Sector 0165","Standard",87
@@ -8102,22 +8132,78 @@
 623573,"Bootes Sector 0165","Campaign",74
 623627,"Bundy Sector 0165","League Blitz",26
 623743,"Small World Sector 0165","Standard",65
+623852,"Galaxtia Sector 0165","Mentor vs Midshipmen",56
 623883,"Tataween Sector 0165","Standard Intermediate",38
 623993,"Centrum Sector 0165","Standard Beginners",48
 624474,"New Albania Sector 0165","Standard Intermediate",44
 624846,"Achernar Sector 0165","Standard Beginners",46
+625069,"Ice Planet Sector 0165","Campaign",114
 625133,"Romulus Sector 0165","Standard",44
 625284,"Texiconia Sector 0165","Standard Intermediate",34
 625298,"New Ireland Sector 0165","League Blitz",30
 625506,"Kahless Sector 0165","Standard Beginners",45
 625845,"New Alaska Sector 0165","Campaign",52
+625890,"Under World Sector 0165","Standard",63
 625914,"Mao 6 Sector 0165","Standard Beginners",30
+626033,"Gorath Sector 0166","Epic",60
 626290,"Bonzi Sector 0166","Standard Intermediate",44
 626337,"Disney World Sector 0166","Standard Beginners",38
 626616,"Kattia Sector 0166","Standard Intermediate",70
+626618,"Corboda Vh 243 Sector 0166","Mentor vs Midshipmen",36
 626677,"Hallone Sector 0166","Standard Beginners",37
+626752,"Blondonia Sector 0166","League 2v2 Blitz",24
+626897,"Vor Sector 0166","Campaign",55
+626902,"Atlantia 2 Sector 0166","Standard",68
 627134,"Lola 23a Sector 0166","Standard Intermediate",38
 627287,"Barnard's Sector 0166","Standard Beginners",37
+627314,"Packlidia Sector 0166","Standard",95
+627569,"Cylon Sector 0166","Campaign",92
 627824,"New Chicago Sector 0166","Standard Intermediate",32
 628047,"Blondonia Sector 0166","Standard Beginners",26
+628050,"Pisro Sector 0166","Standard",53
+628293,"B.D. -12 4523 Sector 0166","Campaign",66
+628411,"terangui Sector 0166","Standard Intermediate",60
+628441,"Ceti helios Sector 0166","Standard Beginners",50
+628644,"Chanda M Sector 0166","Standard",80
+628834,"Mekbuda Sector 0166","Standard Beginners",50
 628876,"Small World Sector 0166","Standard Intermediate",34
+629031,"Gorath Sector 0166","Standard",76
+629660,"Leshy Sector 0167","Standard Beginners",50
+629844,"Adobee Sector 0167","Standard Intermediate",65
+629903,"Venturia Sector 0167","Standard",63
+629909,"Beta Ti Chi 6 Sector 0167","Campaign",58
+630221,"Another World Sector 0167","Standard Beginners",35
+630369,"Perot's World Sector 0167","Standard Intermediate",55
+630425,"Romulus Sector 0167","Standard",48
+630491,"Mirak Sector 0167","Standard Beginners",35
+630624,"Orion Sector 0167","Standard Intermediate",46
+630723,"Dull Planet Sector 0167","Standard Beginners",32
+631069,"Kazh Sector 0167","Standard Beginners",46
+631090,"Fornax Sector 0167","Mentor vs Midshipmen",41
+631124,"Planet X Sector 0167","Campaign",44
+631385,"New New York Sector 0167","Standard Intermediate",41
+631721,"Serada 9 Sector 0167","Standard",55
+631796,"Amascusin Sector 0167","Standard Beginners",48
+631866,"Arcturus Sector 0167","Campaign",53
+631923,"Scorpius Sector 0167","Standard Intermediate",56
+632045,"Remit Sector 0167","Standard Beginners",31
+632334,"Mileb Sector 0167","Standard",63
+632343,"Merah-5 Sector 0167","Standard Intermediate",66
+632466,"Memory Alpha Sector 0168","Standard Beginners",34
+632705,"Hudrak-12 Sector 0168","Standard Beginners",50
+632784,"Shaw Sector 0168","Standard Intermediate",62
+632831,"Cassiopeia Sector 0168","Standard",50
+632976,"Pisro Sector 0168","Standard Intermediate",52
+633167,"Canes Ceti Sector 0168","Standard Beginners",41
+633294,"New New York Sector 0168","Standard Intermediate",41
+633341,"Challenger 5 Sector 0168","Standard Beginners",40
+633756,"Fantasia Sector 0168","Standard Beginners",40
+634358,"Gorbie World Sector 0168","Standard Beginners",42
+634630,"Lyra Sector 0168","Standard Beginners",46
+635456,"Mekbuda Sector 0169","Standard Beginners",48
+635748,"Spica Sector 0169","Standard Beginners",28
+636436,"Forel Sector 0169","League Blitz",18
+636438,"Laseria Sector 0169","League Beginner Blitz",28
+636882,"Milon Sector 0169","League Blitz",21
+636999,"Regula Sector 0169","League Beginner Blitz",27
+637364,"Grus Sector 0169","League Blitz",9

@@ -107,12 +107,14 @@ Function unpackZipPackage(ByRef archive As String, ByVal displayMeter As Single 
 	If (zip = NULL) Then
 		Return 2
 	End If
+	
+	Dim As Integer fileCount = zip_get_num_entries(zip, 0)
 
 	'' For each file in the .zip... (really nice API, thanks libzip)
-	For i As Integer = 0 To (zip_get_num_entries(zip, 0) - 1)
+	For i As Integer = 0 To (fileCount - 1)
 		#ifdef BROWSER_LONG
 		If displayMeter >= 0 Then
-			createMeter(displayMeter,"Extracting files... ("+commaSep(i)+" / "+commaSep(zip_get_num_entries(zip, 0))+" done)")
+			createMeter(0.5 + i/fileCount/2,"Extracting files... ("+commaSep(i)+" / "+commaSep(fileCount)+" done)")
 			Screencopy
 		End If
 		#endif

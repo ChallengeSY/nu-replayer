@@ -12,6 +12,55 @@ dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePag
 
 ResetAux.Coloring = rgb(192,192,192)
 
+function findAuxMate(FindName as string, FindCat as byte) as byte
+	for AID as integer = 1 to AuxCount
+		with AuxList(AID)
+			if instr(.Namee,FindName) > 0 AND .ObjType = FindCat then
+				return -1
+			elseif .ObjID = 0 then
+				exit for
+			end if
+		end with
+	next AID
+	
+	return 0
+end function
+
+sub emorkCombo(PartA as string, PartB as string, PositionY as short)
+	dim as string CombinedParts = PartA + " + " + PartB
+	dim as string ComboAbil = ""
+	dim as uinteger SubColor = rgb(128,128,128)
+	
+	if findAuxMate("Emork's "+PartB,REPORT_ARTI) then
+		SubColor = rgb(192,160,224)
+	end if
+	
+	if instr(CombinedParts,"Blood") > 0 AND instr(CombinedParts,"Bones") > 0 then
+		ComboAbil = "Creates 500 clans per turn"
+	elseif instr(CombinedParts,"Blood") > 0 AND instr(CombinedParts,"Flesh") > 0 then
+		ComboAbil = "Heats planet to 100 (by +5)"
+	elseif instr(CombinedParts,"Blood") > 0 AND instr(CombinedParts,"Mind") > 0 then
+		ComboAbil = "Improves engines installed"
+	elseif instr(CombinedParts,"Blood") > 0 AND instr(CombinedParts,"Spirit") > 0 then
+		ComboAbil = "Creates 50 torps per turn"
+	elseif instr(CombinedParts,"Bones") > 0 AND instr(CombinedParts,"Flesh") > 0 then
+		ComboAbil = "Cools planet to 0 (by -5)"
+	elseif instr(CombinedParts,"Bones") > 0 AND instr(CombinedParts,"Mind") > 0 then
+		ComboAbil = "Improves torpedo tubes installed"
+	elseif instr(CombinedParts,"Bones") > 0 AND instr(CombinedParts,"Spirit") > 0 then
+		ComboAbil = "Creates 50 fighters per turn"
+	elseif instr(CombinedParts,"Flesh") > 0 AND instr(CombinedParts,"Mind") > 0 then
+		ComboAbil = "Improves natives to Unity (by +20%)"
+	elseif instr(CombinedParts,"Flesh") > 0 AND instr(CombinedParts,"Spirit") > 0 then
+		ComboAbil = "Improves density to 100% (by +10%)"
+	elseif instr(CombinedParts,"Mind") > 0 AND instr(CombinedParts,"Spirit") > 0 then
+		ComboAbil = "Improves beam banks installed"
+	end if
+	
+	gfxString("(With "+PartB+")",Sidebar,PositionY,3,2,2,SubColor)
+	gfxString(" "+ComboAbil,Sidebar,PositionY+20,3,2,2,SubColor)
+end sub
+
 sub getReport
 	dim as ViewSpecs ActiveReport, SelectionCursor
 	line (Sidebar,40)-(CanvasScreen.Wideth-1,CanvasScreen.Height-1),ReportBG,bf
@@ -78,6 +127,13 @@ sub getReport
 				if .Ownership = 0 AND .LastScan = 0 then	
 					gfxString("Never scanned",Sidebar,80,3,2,2,rgb(128,128,128))	
 					gfxString("(No colony present)",Sidebar,120,3,2,2,rgb(128,128,128))
+					
+					if StarRadiation > 0 then
+						gfxString("Radiation: "+str(StarRadiation)+" MJ",Sidebar,540,3,2,2,rgb(128,128,128))
+					end if
+					if NebDensity > 0 then
+						gfxString("Visibility: "+commaSep(round(NebVis))+" LY",Sidebar,560,3,2,2,rgb(128,128,128))
+					end if
 				else
 					if .Ownership = 0 then
 						gfxString("No colony present",Sidebar,120,3,2,2,rgb(128,128,128))
@@ -147,7 +203,7 @@ sub getReport
 						gfxString(commaSep(PopulationNum)+" colonists",Sidebar,120,3,2,2,ReportColor)
 						
 						TaxRevenue = int(.Colonists * .ColTaxRate/1000 * RacialTaxes/100)
-						HappyDelta = trunc((1000 - sqr(.Colonists) - 80*.ColTaxRate - abs(OptimalTemp - .Temp) * 3 - (.Factories + .MineralMines) / 3) / 100) + _
+						HappyDelta = fix((1000 - sqr(.Colonists) - 80*.ColTaxRate - abs(OptimalTemp - .Temp) * 3 - (.Factories + .MineralMines) / 3) / 100) + _
 							min(HissBonus,100 - .ColHappy) + (ArtiBonus*5)
 						
 						if HorwaspPlanet then
@@ -222,7 +278,7 @@ sub getReport
 							
 							'Colonists need to be present to collect taxes from natives
 							TaxRevenue = int(.Natives * .NatTaxRate/1000 * RacialTaxes/100 * .NativeGov/5)
-							HappyDelta = trunc((1000 - sqr(.Natives) - 85*.NatTaxRate - (.Factories + .MineralMines) / 2 - 50 * (10 - .NativeGov)) / 100) + _
+							HappyDelta = fix((1000 - sqr(.Natives) - 85*.NatTaxRate - (.Factories + .MineralMines) / 2 - 50 * (10 - .NativeGov)) / 100) + _
 								NativeHappyBonus + min(HissBonus,100 - .NatHappy) + (ArtiBonus*5)
 							
 							if HappyDelta > 0 then
@@ -453,7 +509,7 @@ sub getReport
 				
 				dim as string HullClassName
 				dim as string MisnNames(28) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
-					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {2}", "{Racial}", "Cloak", _
+					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {1}", "{Racial}", "Cloak", _
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
 					"Repair Ship {1}", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak + Intercept {1}", _
 					"Push Minefield", "Pull Minefield", "Enter Wormhole", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}", _
@@ -904,21 +960,27 @@ sub getReport
 				ActiveReport.Y = .Y
 				gfxString("Star Cluster "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
 				gfxString(.Namee,Sidebar,60,3,2,2,rgb(255,255,255))
-				gfxString("Core Radius: "+str(.Radius)+" LY",Sidebar,80,3,2,2,rgb(255,255,255))
-				gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,100,3,2,2,rgb(255,255,255))
-				gfxString("Mass: "+commaSep(.Mass)+" kT",Sidebar,120,3,2,2,rgb(255,255,255))
-				gfxString("Temperature: "+commaSep(.Temperature)+" W",Sidebar,140,3,2,2,rgb(255,255,255))
+				gfxString("Core Radius: "+str(.Radius)+" LY",Sidebar,100,3,2,2,rgb(255,255,255))
+				if .Neutron then
+					gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(255,192,255))
+				else
+					gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(255,255,255))
+				end if
+				gfxString("Mass: "+commaSep(.Mass)+" kT",Sidebar,140,3,2,2,rgb(255,255,255))
+				gfxString("Temperature: "+commaSep(.Temperature)+" W",Sidebar,160,3,2,2,rgb(255,255,255))
 			end with
 			
 		case REPORT_NEB
 			'Nebula report
 			with Nebulae(SelectedID)
+				ReportColor = rgb(80,208,112)
+
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
 				gfxString("Nebula "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
-				gfxString(.Namee,Sidebar,60,3,2,2,rgb(255,255,255))
-				gfxString("Radius: "+str(.Radius)+" LY",Sidebar,80,3,2,2,rgb(255,255,255))
-				gfxString("Intensity: "+str(.Intensity),Sidebar,100,3,2,2,rgb(255,255,255))
+				gfxString(.Namee,Sidebar,60,3,2,2,ReportColor)
+				gfxString("Radius: "+str(.Radius)+" LY",Sidebar,100,3,2,2,ReportColor)
+				gfxString("Intensity: "+str(.Intensity),Sidebar,120,3,2,2,ReportColor)
 			end with
 			
 		case REPORT_WORM
@@ -940,6 +1002,23 @@ sub getReport
 					gfxString("Dest: ("+str(.DestX)+","+str(.DestY)+")",Sidebar,100,3,2,2,ReportColor)
 				end if
 				gfxString("Stability: "+str(.Stability)+"%",Sidebar,120,3,2,2,ReportColor)
+			end with
+			
+		case REPORT_BHOLE
+			dim as short ErgoRadius
+			
+			with BlackHoles(SelectedID)
+				ErgoRadius = .Core + .Band*9
+				ReportColor = rgb(96,160,192)
+				
+				ActiveReport.X = .XLoc
+				ActiveReport.Y = .YLoc
+				gfxString("Black Hole "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
+				gfxString(.Namee,Sidebar,60,3,2,2,ReportColor)
+				
+				gfxString("Core: "+str(.Core)+" LY",Sidebar,100,3,2,2,ReportColor)
+				gfxString("Ergosphere: "+str(ErgoRadius)+" LY",Sidebar,120,3,2,2,ReportColor)
+				gfxString("  ("+str(.Band)+" LY per band)",Sidebar,140,3,2,2,ReportColor)
 			end with
 			
 		case REPORT_ARTI
@@ -966,14 +1045,39 @@ sub getReport
 						
 						if right(.Namee,5) = "Blood" then
 							gfxString("Can move without fuel",Sidebar,160,3,2,2,ReportColor)
+							
+							emorkCombo("Blood","Bones",200)
+							emorkCombo("Blood","Flesh",240)
+							emorkCombo("Blood","Mind",280)
+							emorkCombo("Blood","Spirit",320)
 						elseif right(.Namee,5) = "Bones" then
 							gfxString("Combat mass 200% of hull mass",Sidebar,160,3,2,2,ReportColor)
+
+							emorkCombo("Bones","Blood",200)
+							emorkCombo("Bones","Flesh",240)
+							emorkCombo("Bones","Mind",280)
+							emorkCombo("Bones","Spirit",320)
 						elseif right(.Namee,5) = "Flesh" then
-							gfxString("Ground Combat attack ratio set to 50:1",Sidebar,160,3,2,2,ReportColor)
+							gfxString("Ground Combat attack 50:1",Sidebar,160,3,2,2,ReportColor)
+
+							emorkCombo("Flesh","Blood",200)
+							emorkCombo("Flesh","Bones",240)
+							emorkCombo("Flesh","Mind",280)
+							emorkCombo("Flesh","Spirit",320)
 						elseif right(.Namee,4) = "Mind" then
 							gfxString("Decreases visibility to 5 LY",Sidebar,160,3,2,2,ReportColor)
+
+							emorkCombo("Mind","Blood",200)
+							emorkCombo("Mind","Bones",240)
+							emorkCombo("Mind","Flesh",280)
+							emorkCombo("Mind","Spirit",320)
 						elseif right(.Namee,6) = "Spirit" then
 							gfxString("Gains 2X Faster Beams ability",Sidebar,160,3,2,2,ReportColor)
+
+							emorkCombo("Spirit","Blood",200)
+							emorkCombo("Spirit","Bones",240)
+							emorkCombo("Spirit","Flesh",280)
+							emorkCombo("Spirit","Mind",320)
 						end if
 				end select
 				
@@ -1093,7 +1197,9 @@ end sub
 
 sub clearReport
 	setmouse(,,0)
+	SelAux = 0
 	SelectedObjType = 0
+	SelectedID = 0
 end sub
 
 sub buildAuxList
@@ -1208,7 +1314,7 @@ sub buildAuxList
 							AuxCount += 1
 							with AuxList(AuxCount)
 								.Namee = Nebulae(AID).Namee+" Nebula"
-								.Coloring = rgb(0,176,0)
+								.Coloring = rgb(80,208,112)
 								.ObjType = REPORT_NEB
 								.ObjID = AID
 							end with
@@ -1350,6 +1456,12 @@ sub syncReport(AddCycle as byte = 0)
 					ViewPort.X = .XLoc
 					ViewPort.Y = .YLoc
 				end if
+			end with
+			
+		case REPORT_BHOLE
+			with BlackHoles(SelectedID)
+				ViewPort.X = .XLoc
+				ViewPort.Y = .YLoc
 			end with
 	end select
 	
