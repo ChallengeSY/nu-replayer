@@ -8,7 +8,7 @@ const BorderBG = rgb(16,0,48)
 
 dim shared as uinteger PaintColor(2)
 dim shared as AuxObj AuxList(MetaLimit), ResetAux
-dim shared as short Sidebar, PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, NebDensity, StarRadiation, SelAux, DiamondBase, DiamH, DiamL
+dim shared as short PlanetFound, BaseFound, AuxCount, AuxPage, StorePage, MoreStorage, HissBonus, ArtiBonus, NebDensity, StarRadiation, SelAux, DiamondBase, DiamH, DiamL
 
 ResetAux.Coloring = rgb(192,192,192)
 
@@ -496,10 +496,11 @@ sub getReport
 						gfxString("Radiation: "+str(StarRadiation)+" MJ",Sidebar,540,3,2,2,ReportColor)
 					end if
 					if NebDensity > 0 then
-						gfxString("Visibility: "+commaSep(round(NebVis))+" LY",Sidebar,560,3,2,2,ReportColor)
+						gfxString("Planet Visibility: "+commaSep(round(NebVis))+" LY",Sidebar,560,3,2,2,ReportColor)
 					end if
 				end if
 			end with
+			
 		case REPORT_SHIP
 			'Ship report
 			with Starships(SelectedID)
@@ -955,19 +956,28 @@ sub getReport
 			'Star Cluster report
 			with StarClusters(SelectedID)
 				Radiation = ceil(sqr(.Mass))
+				ReportColor = rgb(224,224,255)
 				
 				ActiveReport.X = .X
 				ActiveReport.Y = .Y
 				gfxString("Star Cluster "+str(SelectedID)+" Report",Sidebar,40,3,2,2,rgb(192,192,192))
-				gfxString(.Namee,Sidebar,60,3,2,2,rgb(255,255,255))
-				gfxString("Core Radius: "+str(.Radius)+" LY",Sidebar,100,3,2,2,rgb(255,255,255))
-				if .Neutron then
-					gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(255,192,255))
+				gfxString(.Namee,Sidebar,60,3,2,2,ReportColor)
+				gfxString("Core Radius: "+str(.Radius)+" LY",Sidebar,100,3,2,2,ReportColor)
+				if .Radius >= Radiation then
+					if .Neutron then
+						gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(128,128,128))
+					else
+						gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(128,128,128))
+					end if
 				else
-					gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(255,255,255))
+					if .Neutron then
+						gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(255,192,255))
+					else
+						gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,ReportColor)
+					end if
 				end if
-				gfxString("Mass: "+commaSep(.Mass)+" kT",Sidebar,140,3,2,2,rgb(255,255,255))
-				gfxString("Temperature: "+commaSep(.Temperature)+" W",Sidebar,160,3,2,2,rgb(255,255,255))
+				gfxString("Mass: "+commaSep(.Mass)+" kT",Sidebar,140,3,2,2,ReportColor)
+				gfxString("Temperature: "+commaSep(.Temperature)+" W",Sidebar,160,3,2,2,ReportColor)
 			end with
 			
 		case REPORT_NEB

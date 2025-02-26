@@ -14,6 +14,7 @@ end enum
 
 dim shared as integer SelectedID
 dim shared as double NextMapSlide
+dim shared as short Sidebar
 dim shared as ReportCollection SelectedObjType
 
 function convertColor(Brush as ColorSpecs) as uinteger
@@ -23,7 +24,7 @@ end function
 function getRelativePos(InX as short, InY as short) as ViewSpecs
 	dim as ViewSpecs WorkObj
 	
-	WorkObj.X = (InX - ViewPort.X) * ViewPort.Zoom + CanvasScreen.Height/2
+	WorkObj.X = (InX - ViewPort.X) * ViewPort.Zoom + Sidebar/2
 	WorkObj.Y = CanvasScreen.Height/2 - (InY - ViewPort.Y) * ViewPort.Zoom
 	
 	return WorkObj
@@ -155,8 +156,6 @@ sub planetList
 					end with
 				next Index
 			case 1
-				Midpoint = BasesPerPage/2
-
 				print "Starbase List for ";GameName;" (turn "& TurnNum;")"
 				print "ID    Planet Name                 Ownership                            Defense   Fighters   Damage   Tech (HEBT)"
 				for Index as uinteger = 1 to LimitObjs
@@ -221,12 +220,12 @@ sub planetList
 			SelectedIndex = MaxObjs
 		elseif InType = EnterKey then
 			SelectedID = RefID
-			if ViewMode = 1 then
+			if ViewMode = 1 AND Planets(RefID).BasePresent > 0 then
 				SelectedObjType = REPORT_BASE
 			else
 				SelectedObjType = REPORT_PLAN
 			end if
-			syncReport
+			syncReport(1)
 			exit do
 		elseif InType = chr(9) then
 			ViewMode += 1

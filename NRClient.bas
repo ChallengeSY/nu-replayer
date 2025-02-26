@@ -266,6 +266,10 @@ sub renderClient
 		line IslandMap,(0,0)-(4095,2159),rgb(255,0,255),bf
 	end if
 	
+	'Flexible Sidebar
+	TurnStr = "Turn "+str(TurnNum)
+	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+" "+TurnStr,3,2,2), CanvasScreen.Wideth*3/4)
+	
 	'Scalable "Remastered"-style UI
 	if MouseError = 0 then
 		with CursorPos	
@@ -435,7 +439,7 @@ sub renderClient
 									.Asteroid = 0 AND Planets(PID).Asteroid = 0 then
 									dim as ViewSpecs Neighbor
 									
-									Neighbor.X = (Planets(PID).X - ViewPort.X) * ViewPort.Zoom + CanvasScreen.Height/2
+									Neighbor.X = (Planets(PID).X - ViewPort.X) * ViewPort.Zoom + Sidebar/2
 									Neighbor.Y = CanvasScreen.Height/2 - (Planets(PID).Y - ViewPort.Y) * ViewPort.Zoom
 									
 									line IslandMap,(RelativePos.X,RelativePos.Y)-(Neighbor.X,Neighbor.Y),rgb(48,48,48)
@@ -516,11 +520,7 @@ sub renderClient
 		next OID
 	next DrawLayer
 	
-	'Flexible Sidebar
-	TurnStr = "Turn "+str(TurnNum)
-	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+" ",3,2,2) - gfxLength(TurnStr,3,2,2), CanvasScreen.Height)
 	line(Sidebar,0)-(CanvasScreen.Wideth-1,39),ReportBG,bf
-	
 	gfxString(GameName,Sidebar,0,3,2,2,rgb(255,215,0))
 	gfxString(TurnStr,Sidebar+gfxLength(GameName+" ",3,2,2),0,3,2,2,rgb(255,255,255))
 	
