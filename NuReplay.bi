@@ -209,11 +209,11 @@ type ShipObj
 	Crew as short
 	Infection as short
 	WarpSpeed as byte
-	EnginePos as byte
+	EnginePos as short
 	BeamNum as byte
-	BeamPos as byte
+	BeamPos as short
 	TubeNum as byte
-	TubePos as byte
+	TubePos as short
 	BayNum as byte
 	
 	'Metadata not provided by turn file

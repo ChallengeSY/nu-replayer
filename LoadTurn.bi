@@ -17,7 +17,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	randomize timer
 	
 	dim as string InStream, ObjName, ObjCode, RawPath, LoadFile
-	dim as integer ObjIDa, ObjIDb, RelateID, StorageID, CombatID, ErrorLog, BlockChar(2), SeekChar(2)
+	dim as integer ObjIDa, ObjIDb, RelateID, StorageID, CombatID, ErrorLog, BlockChar(2), SeekChar
 	dim as byte RaceType
 	dim as double ParseStart, ParseEnd
 
@@ -101,7 +101,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	end with
 
 	if PrintTxt then
-		print "Parsing players...";
+		print "Converting players...";
 	end if
 	loadTurnUI(0)
 	
@@ -134,7 +134,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				continue for
 			end if
 		end if
-		print #9, "[";Time;", ";Date;"] Parsing Player "& PID;"'s data from ";LoadFile;"..."
+		print #9, "[";Time;", ";Date;"] Converting Player "& PID;"'s data from ";LoadFile;"..."
 
 		open LoadFile for input as #1
 		do
@@ -147,41 +147,36 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			ProcessSlot(PID).RaceType = "Unknown"
 		else
 			'In case the Settings.csv file doesn't exist, convert settings from here
-			if PID = 1 AND FileExists("games/"+str(GameNum)+"/Settings.csv") = 0 then
-				BlockChar(0) = instr(InStream,quote("settings")+": {")
-								
-				if BlockChar(0) > 0 then
-					BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
-					
-					with GameParser
-						SeekChar(0) = instr(BlockChar(0),InStream,quote("slots")+":")
-						.PlayerCount = valint(mid(InStream,SeekChar(0)+8,2))
+			BlockChar(0) = instr(InStream,quote("settings")+": {")
+							
+			if BlockChar(0) > 0 then
+				BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
+
+				with GameParser
+					if PID = 1 AND FileExists("player1-turn"+str(TurnNum+1)+".trn") = 0 then
+						.PlayerCount = getJsonVal(InStream,"slots",BlockChar(0))
+						.MapWidth = getJsonVal(InStream,"mapwidth",BlockChar(0))
+						.MapHeight = getJsonVal(InStream,"mapheight",BlockChar(0))
 						
-						SeekChar(0) = instr(BlockChar(0),InStream,quote("mapwidth")+":")
-						.MapWidth = valint(mid(InStream,SeekChar(0)+11,4))
-						
-						SeekChar(0) = instr(BlockChar(0),InStream,quote("mapheight")+":")
-						.MapHeight = valint(mid(InStream,SeekChar(0)+12,4))
-						
-						SeekChar(0) = instr(BlockChar(0),InStream,quote("sphere")+":true")
-						.Sphere = abs(sgn(SeekChar(0) > 0 AND SeekChar(0) < BlockChar(1)))
-						
-						SeekChar(0) = instr(BlockChar(0),InStream,quote("isacademy")+":true")
-						.Academy = abs(sgn(SeekChar(0) > 0 AND SeekChar(0) < BlockChar(1)))
-						
-						SeekChar(0) = instr(BlockChar(0),InStream,quote("acceleratedturns")+":")
-						.AccelStart = valint(mid(InStream,SeekChar(0)+19,3))
+						.CloudyIonStorms = getJsonBool(InStream,"nuionstorms",BlockChar(0))
+						.Sphere = getJsonBool(InStream,"sphere",BlockChar(0),BlockChar(1))
+						.Academy = getJsonBool(InStream,"isacademy",BlockChar(0),BlockChar(1))
+						.AccelStart = getJsonVal(InStream,"acceleratedturns",BlockChar(0))
+						.TorpSet = getJsonVal(InStream,"torpedoset",BlockChar(0))
 						
 						MinXPos = 2000 - .MapWidth/2
 						MaxXPos = MinXPos + .MapWidth
 						MinYPos = 2000 - .MapHeight/2
 						MaxYPos = MinYPos + .MapHeight
-					end with
-				end if
-				
-				if cmdLine("--verbose") then
-					print "Acquired game settings for game "& GameNum 
-				end if
+						
+						if cmdLine("--verbose") then
+							print "Acquired game settings for game "& GameNum 
+						end if
+						
+					end if
+					
+					.CampaignGame = getJsonBool(InStream,"campaignmode",BlockChar(0),BlockChar(1))
+				end with
 				
 				loadTurnKB(int(BlockChar(1)/1e3),PID)
 			end if
@@ -192,22 +187,14 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
 				
 				with ProcessSlot(PID)
-					SeekChar(0) = instr(BlockChar(0),InStream,quote("raceid"))
-					RaceType = valint(mid(InStream,SeekChar(0)+9,2))
-
-					SeekChar(0) = instr(BlockChar(0),InStream,quote("username"))
-					SeekChar(1) = instr(SeekChar(0)+12,InStream,chr(34))
-					.Namee = mid(InStream, SeekChar(0)+12, SeekChar(1)-SeekChar(0)-12)
+					RaceType = getJsonVal(InStream,"raceid",BlockChar(0))
+					.Namee = getJsonStr(InStream,"username",BlockChar(0))
 
 					'Academy resources
-					SeekChar(0) = instr(BlockChar(0),InStream,quote("duranium"))
-					.StockDu = valint(mid(InStream,SeekChar(0)+11,7))
-					SeekChar(0) = instr(BlockChar(0),InStream,quote("tritanium"))
-					.StockTr = valint(mid(InStream,SeekChar(0)+12,7))
-					SeekChar(0) = instr(BlockChar(0),InStream,quote("molybdenum"))
-					.StockMo = valint(mid(InStream,SeekChar(0)+13,7))
-					SeekChar(0) = instr(BlockChar(0),InStream,quote("megacredits"))
-					.StockCr = valint(mid(InStream,SeekChar(0)+14,7))
+					.StockDu = getJsonVal(InStream,"duranium",BlockChar(0))
+					.StockTr = getJsonVal(InStream,"tritanium",BlockChar(0))
+					.StockMo = getJsonVal(InStream,"molybdenum",BlockChar(0))
+					.StockCr = getJsonVal(InStream,"megacredits",BlockChar(0))
 
 					select case RaceType
 						case 1
@@ -251,23 +238,18 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			if BlockChar(0) > 0 then
 				BlockChar(1) = instr(BlockChar(0),InStream,ArrayClose)
 				
-				SeekChar(0) = instr(BlockChar(0),InStream,quote("ownerid")+":"+str(PID))
-				if SeekChar(0) < BlockChar(1) then
+				SeekChar = instr(BlockChar(0),InStream,quote("ownerid")+":"+str(PID))
+				if SeekChar < BlockChar(1) then
 					with ProcessSlot(PID)
 						'Starships
-						SeekChar(1) = instr(SeekChar(0),InStream,quote("capitalships")) 
-						.TotalShips = valint(mid(InStream,SeekChar(1)+15,3))
-						SeekChar(1) = instr(SeekChar(0),InStream,quote("freighters")) 
-						.Freighters = valint(mid(InStream,SeekChar(1)+13,3))
+						.TotalShips = getJsonVal(InStream,"capitalships",SeekChar)
+						.Freighters = getJsonVal(InStream,"freighters",SeekChar)
 						.TotalShips += .Freighters
 						
 						'Planets/Bases/Military
-						SeekChar(1) = instr(SeekChar(0),InStream,quote("planets")) 
-						.Planets = valint(mid(InStream,SeekChar(1)+10,3))
-						SeekChar(1) = instr(SeekChar(0),InStream,quote("starbases")) 
-						.Bases = valint(mid(InStream,SeekChar(1)+12,3))
-						SeekChar(1) = instr(SeekChar(0),InStream,quote("militaryscore")) 
-						.Military = valint(mid(InStream,SeekChar(1)+16,13))
+						.Planets = getJsonVal(InStream,"planets",SeekChar)
+						.Bases = getJsonVal(InStream,"starbases",SeekChar)
+						.Military = getJsonVal(InStream,"militaryscore",SeekChar)
 					end with
 				end if
 				
@@ -284,123 +266,74 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-					ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
-					SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
-					ObjCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
-					
 					with InterPlan
 						'Coordinates
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+						.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 						
 						'Colony info
-						.PlanName = ObjName
-						.FriendlyCode = ObjCode
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
-						.PlanetOwner = valint(mid(InStream,SeekChar(0)+10,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
-						.Colonists = valint(mid(InStream,SeekChar(0)+8,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("colonisttaxrate"))
-						.ColTaxes = valint(mid(InStream,SeekChar(0)+18,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("colonisthappypoints"))
-						.ColHappy = valint(mid(InStream,SeekChar(0)+22,4))
+						.PlanName = findReplace(getJsonStr(InStream,"name",BlockChar(1)),",","&")
+						.FriendlyCode = findReplace(getJsonStr(InStream,"friendlycode",BlockChar(1)),",","&")
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("temp"))
-						.Temp = valint(mid(InStream,SeekChar(0)+7,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("infoturn"))
-						.LastScan = valint(mid(InStream,SeekChar(0)+11,4))
+						.PlanetOwner = getJsonVal(InStream,"ownerid",BlockChar(1))
+						.Colonists = getJsonVal(InStream,"clans",BlockChar(1))
+						.ColTaxes = getJsonVal(InStream,"colonisttaxrate",BlockChar(1))
+						.ColHappy = getJsonVal(InStream,"colonisthappypoints",BlockChar(1))
+						
+						.Temp = getJsonVal(InStream,"temp",BlockChar(1))
+						.LastScan = getJsonVal(InStream,"infoturn",BlockChar(1))
 						
 						'Native info
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativeclans"))
-						.Natives = valint(mid(InStream,SeekChar(0)+14,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativetaxrate"))
-						.NatTaxes = valint(mid(InStream,SeekChar(0)+16,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativehappypoints"))
-						.NatHappy = valint(mid(InStream,SeekChar(0)+20,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativetype"))
-						.NativeType = valint(mid(InStream,SeekChar(0)+13,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("nativegovernment"))
-						.NativeGov = valint(mid(InStream,SeekChar(0)+19,1))
+						.Natives = getJsonVal(InStream,"nativeclans",BlockChar(1))
+						.NatTaxes = getJsonVal(InStream,"nativetaxrate",BlockChar(1))
+						.NatHappy = getJsonVal(InStream,"nativehappypoints",BlockChar(1))
+						.NativeType = getJsonVal(InStream,"nativetype",BlockChar(1))
+						.NativeGov = getJsonVal(InStream,"nativegovernment",BlockChar(1))
 						
 						'Surface minerals
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("neutronium"))
-						.Neu = valint(mid(InStream,SeekChar(0)+13,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
-						.Dur = valint(mid(InStream,SeekChar(0)+11,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
-						.Trit = valint(mid(InStream,SeekChar(0)+12,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
-						.Moly = valint(mid(InStream,SeekChar(0)+13,6))
+						.Neu = getJsonVal(InStream,"neutronium",BlockChar(1))
+						.Dur = getJsonVal(InStream,"duranium",BlockChar(1))
+						.Trit = getJsonVal(InStream,"tritanium",BlockChar(1))
+						.Moly = getJsonVal(InStream,"molybdenum",BlockChar(1))
 						
 						'Mineable minerals
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundneutronium"))
-						.GNeu = valint(mid(InStream,SeekChar(0)+19,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundduranium"))
-						.GDur = valint(mid(InStream,SeekChar(0)+17,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundtritanium"))
-						.GTrit = valint(mid(InStream,SeekChar(0)+18,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("groundmolybdenum"))
-						.GMoly = valint(mid(InStream,SeekChar(0)+19,6))
+						.GNeu = getJsonVal(InStream,"groundneutronium",BlockChar(1))
+						.GDur = getJsonVal(InStream,"groundduranium",BlockChar(1))
+						.GTrit = getJsonVal(InStream,"groundtritanium",BlockChar(1))
+						.GMoly = getJsonVal(InStream,"groundmolybdenum",BlockChar(1))
 						
 						'Mineral densities
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("densityneutronium"))
-						.DNeu = valint(mid(InStream,SeekChar(0)+20,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("densityduranium"))
-						.DDur = valint(mid(InStream,SeekChar(0)+18,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("densitytritanium"))
-						.DTrit = valint(mid(InStream,SeekChar(0)+19,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("densitymolybdenum"))
-						.DMoly = valint(mid(InStream,SeekChar(0)+20,3))
+						.DNeu = getJsonVal(InStream,"densityneutronium",BlockChar(1))
+						.DDur = getJsonVal(InStream,"densityduranium",BlockChar(1))
+						.DTrit = getJsonVal(InStream,"densitytritanium",BlockChar(1))
+						.DMoly = getJsonVal(InStream,"densitymolybdenum",BlockChar(1))
 						
 						'Structural info
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("megacredits"))
-						.Megacredits = valint(mid(InStream,SeekChar(0)+14,7))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("supplies"))
-						.Supplies = valint(mid(InStream,SeekChar(0)+11,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mines"))
-						.MineralMines = valint(mid(InStream,SeekChar(0)+8,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("factories"))
-						.Factories = valint(mid(InStream,SeekChar(0)+12,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("defense"))
-						.DefPosts = valint(mid(InStream,SeekChar(0)+10,4))
+						.Megacredits = getJsonVal(InStream,"megacredits",BlockChar(1))
+						.Supplies = getJsonVal(InStream,"supplies",BlockChar(1))
+						.MineralMines = getJsonVal(InStream,"mines",BlockChar(1))
+						.Factories = getJsonVal(InStream,"factories",BlockChar(1))
+						.DefPosts = getJsonVal(InStream,"defense",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("debrisdisk"))
-						.Asteroid = valint(mid(InStream,SeekChar(0)+13,3))
+						.Asteroid = getJsonVal(InStream,"debrisdisk",BlockChar(1))
 					end with
 					
 					with InterWasp
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetmines"))
-						.WorkMine = valint(mid(InStream,SeekChar(0)+14,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetfactories"))
-						.WorkHarvest = valint(mid(InStream,SeekChar(0)+18,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetdefense"))
-						.WorkBurrow = valint(mid(InStream,SeekChar(0)+16,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("builtmines"))
-						.WorkTerraform = valint(mid(InStream,SeekChar(0)+13,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("larva"))
-						.Larva = valint(mid(InStream,SeekChar(0)+8,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("burrowsize"))
-						.BurrowSize = valint(mid(InStream,SeekChar(0)+13,8))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("podhullid"))
-						.PodHull = valint(mid(InStream,SeekChar(0)+12,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("podcargo"))
-						.PodCargo = valint(mid(InStream,SeekChar(0)+11,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
-						.PodX = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
-						.PodY = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("podspeed"))
-						.PodWarp = valint(mid(InStream,SeekChar(0)+11,2))
+						.WorkMine = getJsonVal(InStream,"targetmines",BlockChar(1))
+						.WorkHarvest = getJsonVal(InStream,"targetfactories",BlockChar(1))
+						.WorkBurrow = getJsonVal(InStream,"targetdefense",BlockChar(1))
+						.WorkTerraform = getJsonVal(InStream,"builtmines",BlockChar(1))
+						.Larva = getJsonVal(InStream,"larva",BlockChar(1))
+						.BurrowSize = getJsonVal(InStream,"burrowsize",BlockChar(1))
+						
+						.PodHull = getJsonVal(InStream,"podhullid",BlockChar(1))
+						.PodCargo = getJsonVal(InStream,"podcargo",BlockChar(1))
+						.PodX = getJsonVal(InStream,"targetx",BlockChar(1))
+						.PodY = getJsonVal(InStream,"targety",BlockChar(1))
+						.PodWarp = getJsonVal(InStream,"podspeed",BlockChar(1))
 					end with
 					
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-					ObjIDa = valint(mid(InStream,SeekChar(0)+5,4))
+					ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 					
 					if (cmdLine("--verbose") OR cmdLine("-vp")) AND InterPlan.PlanetOwner > 0 then
 						print "Identified planet #"& ObjIDa;" as belonging to player "& InterPlan.PlanetOwner
@@ -413,6 +346,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND TurnNum < GameParser.AccelStart) then
 								print #9, "[";Time;", ";Date;"]  Registered planet #"& ObjIDa;" (";ObjName;")"
 								PlanetParser(ObjIDa) = InterPlan
+								WaspParser(ObjIDa) = InterWasp
 								
 								.LockOwner = 1
 								.LastScan = TurnNum
@@ -422,11 +356,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						with PlanetParser(ObjIDa)
 							if .LockOwner = 0 then
 								.PlanetOwner = 0
-								.PlanName = findReplace(ObjName,",","&")
-								.FriendlyCode = findReplace(ObjCode,",","&")
-								if InterPlan.LastScan >= PlanetParser(ObjIDa).LastScan then
-									.LastScan = InterPlan.LastScan
-								end if
+								.PlanName = InterPlan.PlanName
+								.FriendlyCode = InterPlan.FriendlyCode
+								.LastScan = max(InterPlan.LastScan, .LastScan)
 								.Asteroid = InterPlan.Asteroid
 	
 								.XLoc = InterPlan.XLoc
@@ -497,14 +429,6 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				dim as integer HistoryBlock(1), WaypointsBlock(1)
 				
 				do
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-					ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
-					SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
-					ObjCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
-					
 					HistoryBlock(0) = instr(BlockChar(1),InStream,quote("history")+":[")
 					HistoryBlock(1) = instr(HistoryBlock(0),InStream,"]")
 					WaypointsBlock(0) = instr(BlockChar(1),InStream,quote("waypoints")+":[")
@@ -512,95 +436,61 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						
 					with InterShip
 						'Coordinates
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						if HistoryBlock(0) > 0 AND SeekChar(0) > HistoryBlock(0) then
-							SeekChar(0) = instr(HistoryBlock(1),InStream,quote("x"))
+						SeekChar = instr(BlockChar(1),InStream,quote("x"))
+						if HistoryBlock(0) > 0 AND SeekChar > HistoryBlock(0) then
+							SeekChar = instr(HistoryBlock(1),InStream,quote("x"))
 						end if
-						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						if HistoryBlock(0) > 0 AND SeekChar(0) > HistoryBlock(0) then
-							SeekChar(0) = instr(HistoryBlock(1),InStream,quote("y"))
+						.XLoc = valint(mid(InStream,SeekChar+4,4))
+						SeekChar = instr(BlockChar(1),InStream,quote("y"))
+						if HistoryBlock(0) > 0 AND SeekChar > HistoryBlock(0) then
+							SeekChar = instr(HistoryBlock(1),InStream,quote("y"))
 						end if
-						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						.YLoc = valint(mid(InStream,SeekChar+4,4))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
-						.TargetX = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
-						.TargetY = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("warp"))
-						.WarpFactor = valint(mid(InStream,SeekChar(0)+7,2))
+						.TargetX = getJsonVal(InStream,"targetx",BlockChar(1))
+						.TargetY = getJsonVal(InStream,"targety",BlockChar(1))
+						.WarpFactor = getJsonVal(InStream,"warp",BlockChar(1))
 						
 						'Basic info
-						.ShipName = ObJName
-						.FriendlyCode = ObjCode
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
-						.ShipOwner = valint(mid(InStream,SeekChar(0)+10,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
-						.TotalMass = valint(mid(InStream,SeekChar(0)+7,6))
+						.ShipName = findReplace(getJsonStr(InStream,"name",BlockChar(1)),",","&")
+						.FriendlyCode = findReplace(getJsonStr(InStream,"friendlycode",BlockChar(1)),",","&")
+						.ShipType = getJsonVal(InStream,"hullid",BlockChar(1))
+						.ShipOwner = getJsonVal(InStream,"ownerid",BlockChar(1))
+						.TotalMass = getJsonVal(InStream,"mass",BlockChar(1))
 						
 						'Equipment
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("beams"))
-						.BeamCount = valint(mid(InStream,SeekChar(0)+8,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("bays"))
-						.BayCount = valint(mid(InStream,SeekChar(0)+7,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("torps"))
-						.TubeCount = valint(mid(InStream,SeekChar(0)+8,2))
+						.EngineID = getJsonVal(InStream,"engineid",BlockChar(1))
+						.BeamID = getJsonVal(InStream,"beamid",BlockChar(1))
+						.BeamCount = getJsonVal(InStream,"beams",BlockChar(1))
+						.BayCount = getJsonVal(InStream,"bays",BlockChar(1))
+						.TubeID = getJsonVal(InStream,"torpedoid",BlockChar(1))
+						.TubeCount = getJsonVal(InStream,"torps",BlockChar(1))
 						
 						'Mission
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission"))
-						.Mission = valint(mid(InStream,SeekChar(0)+10,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission1target"))
-						.MisnTarget(1) = valint(mid(InStream,SeekChar(0)+17,9))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission2target"))
-						.MisnTarget(2) = valint(mid(InStream,SeekChar(0)+17,9))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("enemy"))
-						.PrimEnemy = valint(mid(InStream,SeekChar(0)+8,2))
+						.Mission = getJsonVal(InStream,"mission",BlockChar(1))
+						.MisnTarget(1) = getJsonVal(InStream,"mission1target",BlockChar(1))
+						.MisnTarget(2) = getJsonVal(InStream,"mission2target",BlockChar(1))
+						.PrimEnemy = getJsonVal(InStream,"enemy",BlockChar(1))
 						
 						'Cargo Hold
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("clans"))
-						.Colonists = valint(mid(InStream,SeekChar(0)+8,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("neutronium"))
-						.Neu = valint(mid(InStream,SeekChar(0)+13,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("duranium"))
-						.Dur = valint(mid(InStream,SeekChar(0)+11,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("tritanium"))
-						.Trit = valint(mid(InStream,SeekChar(0)+12,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("molybdenum"))
-						.Moly = valint(mid(InStream,SeekChar(0)+13,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("megacredits"))
-						.Megacredits = valint(mid(InStream,SeekChar(0)+14,7))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("supplies"))
-						.Supplies = valint(mid(InStream,SeekChar(0)+11,6))
+						.Colonists = getJsonVal(InStream,"clans",BlockChar(1))
+						.Neu = getJsonVal(InStream,"neutronium",BlockChar(1))
+						.Dur = getJsonVal(InStream,"duranium",BlockChar(1))
+						.Trit = getJsonVal(InStream,"tritanium",BlockChar(1))
+						.Moly = getJsonVal(InStream,"molybdenum",BlockChar(1))
+						.Megacredits = getJsonVal(InStream,"megacredits",BlockChar(1))
+						.Supplies = getJsonVal(InStream,"supplies",BlockChar(1))
 						
 						'Ship Status
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
-						.Damage = valint(mid(InStream,SeekChar(0)+9,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("crew"))
-						.Crewmen = valint(mid(InStream,SeekChar(0)+7,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("podcargo"))
-						if SeekChar(0) > 0 then
-							.Infection = valint(mid(InStream,SeekChar(0)+11,6))
-						end if
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("ammo"))
-						.Ordnance = valint(mid(InStream,SeekChar(0)+7,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("experience"))
-						.Experience = valint(mid(InStream,SeekChar(0)+13,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("iscloaked"))
-						.Cloaked = abs(sgn(mid(InStream,SeekChar(0)+11,5) = ":true"))
-						
-						'Ship Specs
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("hullid"))
-						.ShipType = valint(mid(InStream,SeekChar(0)+9,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("engineid"))
-						.EngineID = valint(mid(InStream,SeekChar(0)+11,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("beamid"))
-						.BeamID = valint(mid(InStream,SeekChar(0)+9,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedoid"))
-						.TubeID = valint(mid(InStream,SeekChar(0)+12,4))
+						.Damage = getJsonVal(InStream,"damage",BlockChar(1))
+						.Crewmen = getJsonVal(InStream,"crew",BlockChar(1))
+						.Infection = getJsonVal(InStream,"podcargo",BlockChar(1),,0)
+						.Ordnance = getJsonVal(InStream,"ammo",BlockChar(1))
+						.Experience = getJsonVal(InStream,"experience",BlockChar(1))
+						.Cloaked = getJsonBool(InStream,"iscloaked",BlockChar(1))
 					end with
 					
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 					
 					if (cmdLine("--verbose") OR cmdLine("-vs")) AND InterShip.ShipOwner > 0 then
 						print "Identified ship #"& ObjIDa;" as belonging to player "& InterShip.ShipOwner
@@ -630,26 +520,17 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					do
 						with InterIon
 							'Coordinates
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-							.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-							.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+							.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 							
 							'Storm info
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
-							.Radius = valint(mid(InStream,SeekChar(0)+9,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("voltage"))
-							.Voltage = valint(mid(InStream,SeekChar(0)+10,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("warp"))
-							.WarpFactor = valint(mid(InStream,SeekChar(0)+7,2))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("heading"))
-							.StormHeading = valint(mid(InStream,SeekChar(0)+10,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("isgrowing"))
-							.StormGrowing = abs(sgn(mid(InStream,SeekChar(0)+12,5) = ":true"))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("parentid"))
-							.ParentID = valint(mid(InStream,SeekChar(0)+11,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-							ObjIDa = valint(mid(InStream,SeekChar(0)+5,4))
+							.Radius = getJsonVal(InStream,"radius",BlockChar(1))
+							.Voltage = getJsonVal(InStream,"voltage",BlockChar(1))
+							.WarpFactor = getJsonVal(InStream,"warp",BlockChar(1))
+							.StormHeading = getJsonVal(InStream,"heading",BlockChar(1))
+							.StormGrowing = getJsonBool(InStream,"isgrowing",BlockChar(1))
+							.ParentID = getJsonVal(InStream,"parentid",BlockChar(1))
+							ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						end with
 	
 						if cmdLine("--verbose") OR cmdLine("-vi") then
@@ -673,27 +554,17 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 					BlockChar(1) = BlockChar(0)
 					do
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-						
 						with InterNeb
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-							.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-							.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
-							.Radius = valint(mid(InStream,SeekChar(0)+9,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("intensity"))
-							.Intense = valint(mid(InStream,SeekChar(0)+12,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("gas"))
-							.Gas = valint(mid(InStream,SeekChar(0)+6,3))
+							.NebName = getJsonStr(InStream,"name",BlockChar(1))
+							.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+							.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 							
-							.NebName = ObjName
+							.Radius = getJsonVal(InStream,"radius",BlockChar(1))
+							.Intense = getJsonVal(InStream,"intensity",BlockChar(1))
+							.Gas = getJsonVal(InStream,"gas",BlockChar(1))
 						end with
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						
 						if cmdLine("--verbose") OR cmdLine("-vn") then
 							print "Identified a part of nebulae #"& ObjIDa
@@ -716,30 +587,20 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 					BlockChar(1) = BlockChar(0)
 					do
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-						
 						with InterStar
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-							.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-							.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+							.ClustName = getJsonStr(InStream,"name",BlockChar(1))
+							.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+							.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 							
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("temp"))
-							.Temp = valint(mid(InStream,SeekChar(0)+7,6))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
-							.Radius = valint(mid(InStream,SeekChar(0)+9,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
-							.Mass = valint(mid(InStream,SeekChar(0)+7,6))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("planets"))
-							.Planets = valint(mid(InStream,SeekChar(0)+10,3))
+							.Temp = getJsonVal(InStream,"temp",BlockChar(1))
+							.Radius = getJsonVal(InStream,"radius",BlockChar(1))
+							.Mass = getJsonVal(InStream,"mass",BlockChar(1))
+							.Planets = getJsonVal(InStream,"planets",BlockChar(1))
 							
-							.ClustName = ObjName
+							.Neutron = 0 'NYI
 						end with
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 						
 						if cmdLine("--verbose") OR cmdLine("-vc") then
 							print "Identified star cluster #"& ObjIDa
@@ -754,6 +615,40 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				end if
 			end if
 			
+			'Black Hole data. Only a preliminary implementation; not currently available in existing games
+			/'
+			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/BlackHoles.csv") = 0 OR _
+				FileDateTime("games/"+str(GameNum)+"/BlackHoles.csv") < DataFormat) then
+				BlockChar(0) = instr(InStream,quote("blackholes")+": [")
+				if BlockChar(0) > 0 AND instr(InStream,quote("blackholes")+": []") = 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					do
+						with InterBlack
+							.Namee = getJsonStr(InStream,"name",BlockChar(1))
+							.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+							.YLoc = getJsonVal(InStream,"y",BlockChar(1))
+							
+							.Core = getJsonVal(InStream,"coreradius",BlockChar(1))
+							.Band = getJsonVal(InStream,"bandradius",BlockChar(1))
+						end with
+						
+						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
+						
+						if cmdLine("--verbose") OR cmdLine("-vc") then
+							print "Identified star cluster #"& ObjIDa
+						end if
+
+						print #9, "[";Time;", ";Date;"]  Registered black hole #"& ObjIDa
+						BlackParser(ObjIDa) = InterBlack
+						
+						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+						loadTurnKB(int(BlockChar(1)/1e3),PID)
+					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+				end if
+			end if
+			'/
+			
 			'Artifact data
 			BlockChar(0) = instr(InStream,quote("artifacts")+": [")
 			if BlockChar(0) > 0 AND instr(InStream,quote("artifacts")+": []") = 0 then
@@ -761,23 +656,15 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(1) = BlockChar(0)
 				do
 					with InterArtifact
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-						SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-						.Namee = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						.Namee = getJsonStr(InStream,"name",BlockChar(1))
+						.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+						.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("locationtype"))
-						.LocationType = valint(mid(InStream,SeekChar(0)+15,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("locationid"))
-						.LocationId = valint(mid(InStream,SeekChar(0)+13,4))
+						.LocationType = getJsonVal(InStream,"locationtype",BlockChar(1))
+						.LocationId = getJsonVal(InStream,"locationid",BlockChar(1))
 					end with
 					
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 					
 					if (cmdLine("--verbose") OR cmdLine("-va")) AND InterShip.ShipOwner > 0 then
 						print "Identified artifact #"& ObjIDa
@@ -797,32 +684,21 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
 				BlockChar(1) = BlockChar(0)
 				do
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-					SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-					ObjName = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
-						
 					with InterWormhole
-						.Namee = ObjName
+						.Namee = getJsonStr(InStream,"name",BlockChar(1))
 						
 						'Coordinates
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetx"))
-						.TargetX = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targety"))
-						.TargetY = valint(mid(InStream,SeekChar(0)+10,4))
-
+						.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+						.YLoc = getJsonVal(InStream,"y",BlockChar(1))
+						.TargetX = getJsonVal(InStream,"targetx",BlockChar(1))
+						.TargetY = getJsonVal(InStream,"targety",BlockChar(1))
+						
 						'Other info
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("stability"))
-						.Stability = valint(mid(InStream,SeekChar(0)+12,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("turn"))
-						.LastScan = valint(mid(InStream,SeekChar(0)+7,4))
+						.Stability = getJsonVal(InStream,"stability",BlockChar(1))
+						.LastScan = getJsonVal(InStream,"turn",BlockChar(1))
 					end with
 					
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 					
 					if (cmdLine("--verbose") OR cmdLine("-vw")) AND InterShip.ShipOwner > 0 then
 						print "Identified wormhole #"& ObjIDa
@@ -847,56 +723,38 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				do
 					with InterBase
 						'Defense status
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("defense"))
-						.OrbitalDef = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
-						.DamageLev = valint(mid(InStream,SeekChar(0)+9,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("fighters"))
-						.Fighters = valint(mid(InStream,SeekChar(0)+11,4))
+						.OrbitalDef = getJsonVal(InStream,"defense",BlockChar(1))
+						.DamageLev = getJsonVal(InStream,"damage",BlockChar(1))
+						.Fighters = getJsonVal(InStream,"fighters",BlockChar(1))
 						
 						'Orders
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission"))
-						.BaseOrders(1) = valint(mid(InStream,SeekChar(0)+10,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("mission1target"))
-						.BaseTarget(1) = valint(mid(InStream,SeekChar(0)+17,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("shipmission"))
-						.BaseOrders(2) = valint(mid(InStream,SeekChar(0)+14,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("targetshipid"))
-						.BaseTarget(2) = valint(mid(InStream,SeekChar(0)+15,4))
+						.BaseOrders(1) = getJsonVal(InStream,"mission",BlockChar(1))
+						.BaseTarget(1) = getJsonVal(InStream,"mission1target",BlockChar(1))
+						.BaseOrders(2) = getJsonVal(InStream,"shipmission",BlockChar(1))
+						.BaseTarget(2) = getJsonVal(InStream,"targetshipid",BlockChar(1))
 						
 						'Tech levels
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("hulltechlevel"))
-						.HullTech = valint(mid(InStream,SeekChar(0)+16,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("enginetechlevel"))
-						.EngineTech = valint(mid(InStream,SeekChar(0)+18,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("beamtechlevel"))
-						.BeamTech = valint(mid(InStream,SeekChar(0)+16,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("torptechlevel"))
-						.TorpTech = valint(mid(InStream,SeekChar(0)+16,3))
+						.HullTech = getJsonVal(InStream,"hulltechlevel",BlockChar(1))
+						.EngineTech = getJsonVal(InStream,"enginetechlevel",BlockChar(1))
+						.BeamTech = getJsonVal(InStream,"beamtechlevel",BlockChar(1))
+						.TorpTech = getJsonVal(InStream,"torptechlevel",BlockChar(1))
 
 						'Ship yard						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("isbuilding"))
-						if mid(InStream,SeekChar(0)+13,6) = ":false" then
+						if getJsonBool(InStream,"isbuilding",BlockChar(1)) = 0 then
 							.UseHull = 0
 							.UseEngine = 0
 							.UseBeam = 0
 							.UseTorp = 0
 						else
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildhullid"))
-							.UseHull = valint(mid(InStream,SeekChar(0)+14,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildengineid"))
-							.UseEngine = valint(mid(InStream,SeekChar(0)+16,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildbeamid"))
-							.UseBeam = valint(mid(InStream,SeekChar(0)+14,4))
-							SeekChar(0) = instr(BlockChar(1),InStream,quote("buildtorpedoid"))
-							.UseTorp = valint(mid(InStream,SeekChar(0)+17,4))
+							.UseHull = getJsonVal(InStream,"buildhullid",BlockChar(1))
+							.UseEngine = getJsonVal(InStream,"buildengineid",BlockChar(1))
+							.UseBeam = getJsonVal(InStream,"buildbeamid",BlockChar(1))
+							.UseTorp = getJsonVal(InStream,"buildtorpedoid",BlockChar(1))
 						end if
 					end with
 				
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("planetid"))
-					ObjIDa = valint(mid(InStream,SeekChar(0)+11,3))
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-					ObjIDb = valint(mid(InStream,SeekChar(0)+5,3))
+					ObjIDa = getJsonVal(InStream,"planetid",BlockChar(1))
+					ObjIDb = getJsonVal(InStream,"id",BlockChar(1))
 						
 					if PlanetParser(ObjIDa).PlanetOwner = PID then
 						print #9, "[";Time;", ";Date;"]  Registered starbase #"& ObjIDa
@@ -919,14 +777,10 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(1) = BlockChar(0)
 				do
 					with StockParser(StorageID)
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("stocktype"))
-						.ItemType = valint(mid(InStream,SeekChar(0)+12,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("stockid"))
-						.ItemId = valint(mid(InStream,SeekChar(0)+10,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("amount"))
-						.ItemAmt = valint(mid(InStream,SeekChar(0)+9,5))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("starbaseid"))
-						.StarbaseId = valint(mid(InStream,SeekChar(0)+13,4))
+						.ItemType = getJsonVal(InStream,"stocktype",BlockChar(1))
+						.ItemId = getJsonVal(InStream,"stockid",BlockChar(1))
+						.ItemAmt = getJsonVal(InStream,"amount",BlockChar(1))
+						.StarbaseId = getJsonVal(InStream,"starbaseid",BlockChar(1))
 					end with
 
 					StorageID += 1
@@ -942,27 +796,18 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(1) = BlockChar(0)
 				do
 					with InterMinef
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("ownerid"))
-						.MineOwner = valint(mid(InStream,SeekChar(0)+10,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("isweb"))
-						.Webfield = abs(sgn(mid(InStream,SeekChar(0)+7,5) = ":true"))
+						.MineOwner = getJsonVal(InStream,"ownerid",BlockChar(1))
+						.Webfield = getJsonBool(InStream,"isweb",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+						.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("units"))
-						.Units = valint(mid(InStream,SeekChar(0)+8,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("radius"))
-						.Radius = valint(mid(InStream,SeekChar(0)+9,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("friendlycode"))
-						SeekChar(1) = instr(SeekChar(0)+16,InStream,chr(34))
-						.FCode = mid(InStream, SeekChar(0)+16, SeekChar(1)-SeekChar(0)-16)
+						.Units = getJsonVal(InStream,"units",BlockChar(1))
+						.Radius = getJsonVal(InStream,"radius",BlockChar(1))
+						.FCode = getJsonStr(InStream,"friendlycode",BlockChar(1))
 					end with
 					
-					SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-					ObjIDa = valint(mid(InStream,SeekChar(0)+5,3))
+					ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
 					
 					if (cmdLine("--verbose") OR cmdLine("-vm")) AND InterShip.ShipOwner > 0 then
 						print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
@@ -985,16 +830,11 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				BlockChar(1) = BlockChar(0)
 				do
 					with RelateParser(RelateID)
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("playerid"))
-						.FromPlr = valint(mid(InStream,SeekChar(0)+11,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("playertoid"))
-						.ToPlr = valint(mid(InStream,SeekChar(0)+13,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("relationto"))
-						.RelationA = valint(mid(InStream,SeekChar(0)+13,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("relationfrom"))
-						.RelationB = valint(mid(InStream,SeekChar(0)+15,3))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("conflictlevel"))
-						.ConflictLev = valint(mid(InStream,SeekChar(0)+16,3))
+						.FromPlr = getJsonVal(InStream,"playerid",BlockChar(1))
+						.ToPlr = getJsonVal(InStream,"playertoid",BlockChar(1))
+						.RelationA = getJsonVal(InStream,"relationto",BlockChar(1))
+						.RelationB = getJsonVal(InStream,"relationfrom",BlockChar(1))
+						.ConflictLev = getJsonVal(InStream,"conflictlevel",BlockChar(1))
 					end with
 
 					if RelateParser(RelateID).FromPlr = PID then
@@ -1021,82 +861,73 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				do
 					with VCRParser(CombatID)
 						'Basic specs
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("seed"))
-						.Seed = valint(mid(InStream,SeekChar(0)+7,6))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("x"))
-						.XLoc = valint(mid(InStream,SeekChar(0)+4,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("y"))
-						.YLoc = valint(mid(InStream,SeekChar(0)+4,4))
+						.Seed = getJsonVal(InStream,"seed",BlockChar(1))
+						.XLoc = getJsonVal(InStream,"x",BlockChar(1))
+						.YLoc = getJsonVal(InStream,"y",BlockChar(1))
 						
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("battletype"))
-						.Battletype = valint(mid(InStream,SeekChar(0)+13,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("leftownerid"))
-						.LeftOwner = valint(mid(InStream,SeekChar(0)+14,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("rightownerid"))
-						.RightOwner = valint(mid(InStream,SeekChar(0)+15,2))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("turn"))
-						.Turn = valint(mid(InStream,SeekChar(0)+7,4))
-						SeekChar(0) = instr(BlockChar(1),InStream,quote("id"))
-						.InternalID = valint(mid(InStream,SeekChar(0)+5,7))
+						.Battletype = getJsonVal(InStream,"battletype",BlockChar(1))
+						.LeftOwner = getJsonVal(InStream,"leftownerid",BlockChar(1))
+						.RightOwner = getJsonVal(InStream,"rightownerid",BlockChar(1))
+						.Turn = getJsonVal(InStream,"turn",BlockChar(1))
+						.InternalID = getJsonVal(InStream,"id",BlockChar(1))
 						
 						for VCRSide as byte = 1 to 2
 							with .Combatants(VCRSide)
 								'Ship/planet piece
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("objectid"))
-								.PieceID = valint(mid(InStream,SeekChar(0)+11,4))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("name"))
-								SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))
-								.Namee = mid(InStream, SeekChar(0)+8, SeekChar(1)-SeekChar(0)-8)
+								.PieceID = getJsonVal(InStream,"objectid",BlockChar(1))
+								.Namee = findReplace(getJsonStr(InStream,"name",BlockChar(1)),",","&")
 								
 								'Functional weapons
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamcount"))
-								.BeamCt = valint(mid(InStream,SeekChar(0)+12,3))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("launchercount"))
-								.TubeCt = valint(mid(InStream,SeekChar(0)+16,3))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("baycount"))
-								.BayCt = valint(mid(InStream,SeekChar(0)+11,3))
+								.BeamCt = getJsonVal(InStream,"beamcount",BlockChar(1))
+								.TubeCt = getJsonVal(InStream,"launchercount",BlockChar(1))
+								.BayCt = getJsonVal(InStream,"baycount",BlockChar(1))
 								
 								'Ship equipment
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("hullid"))
-								.HullID = valint(mid(InStream,SeekChar(0)+9,4))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamid"))
-								.BeamID = valint(mid(InStream,SeekChar(0)+9,4))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedoid"))
-								.TorpID = valint(mid(InStream,SeekChar(0)+12,4))
+								.HullID = getJsonVal(InStream,"hullid",BlockChar(1))
+								.BeamID = getJsonVal(InStream,"beamid",BlockChar(1))
+								.TorpID = getJsonVal(InStream,"torpedoid",BlockChar(1))
 								
 								'Ship integrity
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("shield"))
-								.Shield = valint(mid(InStream,SeekChar(0)+9,4))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("damage"))
-								.Damage = valint(mid(InStream,SeekChar(0)+9,4))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("crew"))
-								.Crew = valint(mid(InStream,SeekChar(0)+7,5))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("mass"))
-								.Mass = valint(mid(InStream,SeekChar(0)+7,5))
+								.Shield = getJsonVal(InStream,"shield",BlockChar(1))
+								.Damage = getJsonVal(InStream,"damage",BlockChar(1))
+								.Crew = getJsonVal(InStream,"crew",BlockChar(1))
+								.Mass = getJsonVal(InStream,"mass",BlockChar(1))
 								
-								'Combat odds
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamkillbonus"))
-								.BeamKillX = valint(mid(InStream,SeekChar(0)+16,2))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("beamchargerate"))
-								.BeamChargeX = valint(mid(InStream,SeekChar(0)+17,2))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpchargerate"))
-								.TorpChargeX = valint(mid(InStream,SeekChar(0)+17,2))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpmisspercent"))
-								.TorpMissChance = valint(mid(InStream,SeekChar(0)+18,3))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("crewdefensepercent"))
-								.CrewDefense = valint(mid(InStream,SeekChar(0)+21,3))
+								'Combat odds. Ancient games might not have this data, so its existance is checked
+								.BeamKillX = getJsonVal(InStream,"beamkillbonus",BlockChar(1),,-1)
+								if .BeamKillX < 0 then
+									if .RaceID = 5 then
+										'Privateer ships get triple crew kill on their beam banks
+										.BeamKillX = 3
+									else
+										.BeamKillX = 1
+									end if
+								end if
+								.BeamChargeX = getJsonVal(InStream,"beamchargerate",BlockChar(1),,1)
+								.TorpChargeX = getJsonVal(InStream,"torpchargerate",BlockChar(1),,1)
+								.TorpMissChance = getJsonVal(InStream,"torpmisspercent",BlockChar(1),,35)
+								.CrewDefense = getJsonVal(InStream,"crewdefensepercent",BlockChar(1),,0)
 								
 								'Miscellaneous
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("raceid"))
-								.RaceID = valint(mid(InStream,SeekChar(0)+9,2))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("torpedos"))
-								.TorpAmmo = valint(mid(InStream,SeekChar(0)+11,5))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("fighters"))
-								.Fighters = valint(mid(InStream,SeekChar(0)+11,5))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("temperature"))
-								.Temperature = valint(mid(InStream,SeekChar(0)+14,4))
-								SeekChar(0) = instr(BlockChar(1),InStream,quote("hasstarbase"))
-								.Starbase = abs(sgn(mid(InStream,SeekChar(0)+13,5) = ":true"))
+								.RaceID = getJsonVal(InStream,"raceid",BlockChar(1))
+								.TorpAmmo = getJsonVal(InStream,"torpedos",BlockChar(1))
+								.Fighters = getJsonVal(InStream,"fighters",BlockChar(1))
+								.Temperature = getJsonVal(InStream,"temperature",BlockChar(1))
+								.Starbase = getJsonBool(InStream,"hasstarbase",BlockChar(1))
+								
+								if GameNum < 51690 then
+									/'
+									 ' Older games do not correctly handle freighters and damaged ships in the API data
+									 ' This override should cover most (if not all) holes
+									 '/
+									if GameParser.CampaignGame = 0 then
+										.Shield = max(min(.Shield, 100 - .Damage),0)
+									end if
+									
+									if .BeamCt + .TubeCt + .BayCt = 0 AND .HullID <> 108 then
+										.Shield = 0
+									end if
+								end if
 								
 								BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
 								loadTurnKB(int(BlockChar(1)/1e3),PID)
@@ -1138,7 +969,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	createMap(GameNum,TurnNum)
 
 	ParseEnd = timer
-	print #9, "[";Time;", ";Date;"] Export all done! Parsing required ";
+	print #9, "[";Time;", ";Date;"] Export all done! Conversion required ";
 	print #9, using "##.## minute(s)";(ParseEnd - ParseStart)/60
 	if PrintTxt then
 		if ErrorLog = 0 then

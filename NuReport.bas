@@ -75,10 +75,11 @@ sub getReport
 	select case SelectedObjType
 		case REPORT_PLAN
 			'Planet Report
-			dim as string FullObjName, ClimateStr, HappyDelStr, TaxStr, NativeStr, ResourceStr
+			dim as string FullObjName, ClimateStr, HappyDelStr, TaxStr, NativeStr, ResourceStr, Industry
 			dim as integer PopulationNum, TaxRevenue, MaxNatives, _
 				RacialTaxes = 100, OptimalTemp = 50, NativeHappyBonus = 0, _
-				StructCap, UsableMetals, MinableOre, OreDensity, MiningRate, RacialMining = 100
+				StructCap, UsableMetals, MinableOre, OreDensity, MiningRate, RacialMining = 100, _
+				SensorVis, BeamGrade, BeamCount, FighterBays, FighterCount
 			dim as byte HorwaspPlanet
 			dim as double MaxColonists, HappyDelta, NebVis
 			ReportColor = rgb(96,255,96)
@@ -481,9 +482,38 @@ sub getReport
 						ResourceStr = "Defense: ?"
 						PaintColor(1) = rgb(128,128,128)
 					elseif .Ownership > 0 AND HorwaspPlanet = 0 then
+						SensorVis = max(ceil((15 - .DefPosts)/15 * 100),0)
+						BeamGrade = min(max(.TechB,fix(round(sqr(.DefPosts/2)))),10)
+						BeamCount = min(round(sqr((.DefPosts+.OrbDefense)/3)),10)
+						FighterBays = fix(sqr(.DefPosts)) + sgn(.BasePresent)*5
+						FighterCount = round(sqr(max(0,.DefPosts - 0.75))) + .Fighters
+						Industry = "Light"
+						
+						if (.MineralMines < 20 AND .Factories < 15) OR NebDensity > 0 then
+							SensorVis = 0
+						end if
+						if .MineralMines + .Factories > 100 then
+							Industry = "Heavy"
+						end if
+						
 						ResourceStr = "Defense: "+str(.DefPosts)+"/"+str(StructCap)
-						if .DefPosts < 15 AND (.MineralMines >= 20 OR .Factories >= 15) AND NebDensity = 0 then
+						if SensorVis > 0 then
 							PaintColor(1) = rgb(255,255,0)
+						end if
+						
+						if CanvasScreen.Height >= 868 then
+							gfxString("Sensor Visibility: "+str(SensorVis)+"% ("+Industry+")",Sidebar,600,3,2,2,PaintColor(1))
+							if BeamCount > 0 then
+								gfxString(str(BeamCount)+"x "+Beams(BeamGrade).PartName,Sidebar,620,3,2,2,ReportColor)
+							else
+								gfxString("No beam banks",Sidebar,620,3,2,2,rgb(128,128,128))
+							end if
+							if FighterCount > 0 then
+								gfxString(str(FighterCount)+"x fighters",Sidebar,640,3,2,2,ReportColor)
+								gfxString(str(FighterBays)+"x fighter bays",Sidebar,660,3,2,2,ReportColor)
+							else
+								gfxString("No fighters",Sidebar,640,3,2,2,rgb(128,128,128))
+							end if
 						end if
 					elseif HorwaspPlanet then
 						ResourceStr = "Burrows: "+commaSep(.BurrowSize)+"  +"+str(.WorkBurrow)+"%"
@@ -496,7 +526,7 @@ sub getReport
 						gfxString("Radiation: "+str(StarRadiation)+" MJ",Sidebar,540,3,2,2,ReportColor)
 					end if
 					if NebDensity > 0 then
-						gfxString("Planet Visibility: "+commaSep(round(NebVis))+" LY",Sidebar,560,3,2,2,ReportColor)
+						gfxString("Explore Visibility: "+commaSep(round(NebVis))+" LY",Sidebar,560,3,2,2,ReportColor)
 					end if
 				end if
 			end with
