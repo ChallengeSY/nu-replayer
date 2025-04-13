@@ -37,9 +37,9 @@ sub drawFlag(DispX as short, DispY as short, Coloring as uinteger = rgb(224,192,
 end sub
 
 sub planetList
-	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
-	"Avian", "Amorphous", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
-	"", "Botanical"}
+	dim as string NativeRaces(1 to 14) => {"Humanoid", "Bovinoid", "Reptilian", _
+		"Avian", "Amorphous", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
+		"", "Botanical", "Diaphanous", "Aquatic", "Ranine"}
 
 	SelectedIndex = 1
 

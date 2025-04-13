@@ -65,9 +65,9 @@ sub getReport
 	dim as ViewSpecs ActiveReport, SelectionCursor
 	line (Sidebar,40)-(CanvasScreen.Wideth-1,CanvasScreen.Height-1),ReportBG,bf
 
-	dim as string NativeRaces(1 to 11) => {"Humanoid", "Bovinoid", "Reptilian", _
+	dim as string NativeRaces(1 to 14) => {"Humanoid", "Bovinoid", "Reptilian", _
 		"Avian", "Amorphou", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
-		"", "Botanical"}
+		"", "Botanical", "Diaphanous", "Aquatic", "Ranine"}
 	
 	dim as integer TrueItem
 	dim as uinteger ReportColor
