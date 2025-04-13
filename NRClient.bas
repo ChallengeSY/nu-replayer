@@ -280,7 +280,7 @@ sub renderClient
 	'Scalable "Remastered"-style UI
 	if MouseError = 0 then
 		with CursorPos	
-			.X = round((MouseX / ViewPort.Zoom + ViewPort.X) - CanvasScreen.Height/2 / ViewPort.Zoom)
+			.X = round((MouseX / ViewPort.Zoom + ViewPort.X) - Sidebar/2 / ViewPort.Zoom)
 			.Y = round(CanvasScreen.Height/2 / ViewPort.Zoom + (-MouseY / ViewPort.Zoom + ViewPort.Y))
 		end with
 	end if
