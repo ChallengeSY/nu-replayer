@@ -262,6 +262,9 @@ sub renderClient
 	TotalShips = 0
 	TotalPlanets = 0
 
+	if Sidebar <> SidebarMem then
+		RedrawIslands = max(RedrawIslands, 1)
+	end if
 	if RedrawIslands then
 		line IslandMap,(0,0)-(4095,2159),rgb(255,0,255),bf
 	end if
@@ -271,6 +274,7 @@ sub renderClient
 	if TurnNum <= ViewGame.AccelStart then
 		TurnStr = "Accel "+TurnStr 
 	end if
+	SidebarMem = Sidebar
 	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+" "+TurnStr,3,2,2), CanvasScreen.Wideth*3/4)
 	
 	'Scalable "Remastered"-style UI
