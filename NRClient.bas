@@ -268,6 +268,9 @@ sub renderClient
 	
 	'Flexible Sidebar
 	TurnStr = "Turn "+str(TurnNum)
+	if TurnNum <= ViewGame.AccelStart then
+		TurnStr = "Accel "+TurnStr 
+	end if
 	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+" "+TurnStr,3,2,2), CanvasScreen.Wideth*3/4)
 	
 	'Scalable "Remastered"-style UI
