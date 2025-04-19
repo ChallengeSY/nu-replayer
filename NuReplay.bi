@@ -394,8 +394,8 @@ dim shared as WormObj Wormholes(LimitObjs), ResetWorm
 dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
 dim shared as BlackObj BlackHoles(LimitObjs), ResetBlack
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, OfflineMode, FirstRun, CanNavigate(1), _
-	TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, PruneOldZIPs, _
+	OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
 dim shared as uinteger GameID, TotalGamesLoaded, SlideshowDelay
@@ -1040,6 +1040,20 @@ sub menu
 		
 		gfxstring("Default VCR Speed:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,255))
 		gfxstring(str(DefaultVCRspeed),CanvasScreen.Wideth/2+30,465,3,3,2,rgb(255,255,255))
+
+		gfxstring("Prune ZIP files after extraction:",CanvasScreen.Wideth/2+10,495,3,3,2,rgb(255,255,255))
+		if PruneOldZIPs then
+			gfxstring("Active",CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
+		else
+			gfxstring("Disabled",CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
+		end if
+
+		if MouseY >= 490 AND MouseY < 535 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,490,CanvasScreen.Wideth-1,534)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				PruneOldZIPs = 1 - PruneOldZIPs
+			end if
+		end if
 		
 		if MouseY >= 390 AND MouseY < 435 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,390,CanvasScreen.Wideth-1,434)
