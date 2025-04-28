@@ -1,5 +1,5 @@
 ## Overview
-Nu Replayer is a standalone add-on for Planets Nu, written in FreeBASIC. It is designed to build and view replays of completed games. Nu Replayer is currently in beta, as most core features are in place.
+Nu Replayer is a standalone add-on for Planets Nu, written in FreeBASIC. It is designed to build and view replays of completed games.
 
 The default interface that is opened up is a menu, housing access to the game list, network functions, and configuration.
 
@@ -32,7 +32,7 @@ Nu Replayer comes with its own Visual Combat Recording (or simply VCR) player. I
 
 ### Controls
 * Change replay speed: 1-9
-* Enter step mode: Spacebar (any other key exits step mode
+* Enter step mode: Spacebar (any other key exits step mode)
 * Instantly finish the current replay: F
 
 ## Networking
