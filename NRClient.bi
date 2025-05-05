@@ -839,7 +839,11 @@ sub launchConvertor(ByVal InternalPtr as any ptr = 0)
 		MutexLock ConvertorLock
 		ConvertorUse = 1
 		
-		exec(MassTurn,str(GameID)+" --silent --forward --skipComp")
+		if PruneDupes then
+			exec(MassTurn,str(GameID)+" --silent --forward --skipComp --prune")
+		else
+			exec(MassTurn,str(GameID)+" --silent --forward --skipComp")
+		end if
 		InType = ""
 		while inkey <> "":wend
 		

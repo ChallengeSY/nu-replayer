@@ -339,7 +339,10 @@ end function
 
 function getJsonStr(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0) as string
 	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":")
-	dim as integer EndQuote = instr(MatchFound+len(ReadParam)+4,ReadStr,chr(34))
+	dim as integer EndQuote = 0
+	do
+		EndQuote = instr(max(MatchFound+len(ReadParam)+4, EndQuote+1),ReadStr,chr(34))
+	loop until mid(ReadStr, EndQuote-1 , 2) <> "\"+chr(34)
 	
 	return mid(ReadStr, MatchFound+len(ReadParam)+4, EndQuote-MatchFound-len(ReadParam)-4)
 end function

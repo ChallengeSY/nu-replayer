@@ -4,13 +4,20 @@
 
 '#DEFINE __VERBOSE_OUTPUT__
 
+sub listGamesUI(FinID as integer)
+	createMeter(1, "Converting game list... (ID "+commaSep(FinID)+" done so far)")
+	screencopy
+end sub
+
 function listGames as integer
 	dim as string ImportFile, ExportFile, FinalExport, InStream, GameName, GameDate, GameType, NuYear
-	dim as integer GameID, TurnNum, YearNum, SeekChar(2)
+	dim as integer GameID, TurnNum, YearNum, SeekChar, ByteMax
 	
 	ImportFile = "raw/listgames.txt"
 	ExportFile = "games/ListPrelim.csv"
 	FinalExport = "games/List.csv"
+	
+	ByteMax = FileLen(ImportFile)
 	
 	open ImportFile for input as #1
 	do
@@ -27,47 +34,33 @@ function listGames as integer
 	print #2, quote("ID")+","+quote("Name")+","+quote("Desc")+","+quote("Turn")
 	if instr(InStream,quote("success")+":false") = 0 then
 		do
-			SeekChar(0) = instr(SeekChar(0)+1,InStream,quote("name")+":")
-			if SeekChar(0) > 0 then
-				SeekChar(1) = SeekChar(0)
-				SeekChar(2) = instr(SeekChar(1)+8,InStream,quote(",")+"desc")
-				GameName = mid(InStream, SeekChar(1)+8, SeekChar(2)-SeekChar(1)-8)
+			SeekChar = instr(SeekChar+1,InStream,quote("name")+":")
+			
+			if SeekChar > 0 then
+				GameName = getJsonStr(InStream,"name",SeekChar)
 				GameName = findReplace(GameName,"\"+chr(34),"''")
 				GameName = findReplace(GameName,"\/","/")
 				if GameName = "" then
 					GameName = "{Unidentified Game}"
 				end if
 				
-				SeekChar(1) = instr(SeekChar(0),InStream,quote("shortdescription")+":")
-				SeekChar(2) = instr(SeekChar(1)+20,InStream,chr(34))
-				GameType = mid(InStream, SeekChar(1)+20, SeekChar(2)-SeekChar(1)-20)
-
-				SeekChar(1) = instr(SeekChar(0),InStream,quote("turn")+":")
-				TurnNum = valint(mid(InStream,SeekChar(1)+7,4))
-
-				SeekChar(1) = instr(SeekChar(0),InStream,quote("datecreated")+":")
-				GameDate = mid(InStream,SeekChar(1)+15,12)
+				GameType = getJsonStr(InStream,"shortdescription",SeekChar)
+				TurnNum = getJsonVal(InStream,"turn",SeekChar)
+				GameDate = getJsonStr(InStream,"datecreated",SeekChar)
 				
-				if right(GameDate,1) = chr(32) then
-					GameDate = left(GameDate,len(GameDate)-1)
-				elseif mid(GameDate,len(GameDate)-1,1) = chr(32) then
-					GameDate = left(GameDate,len(GameDate)-2)
-				end if
-				
-				YearNum = (valint(right(GameDate,4)) - 2011) * 12
+				YearNum = (valint(mid(GameDate, instr(4, GameDate, "\/")+2, 4)) - 2011) * 12
 				YearNum += valint(left(GameDate,2))
-				
 				NuYear = string(4-len(str(YearNum)),"0")+str(YearNum)
-
-				SeekChar(1) = instr(SeekChar(0),InStream,quote("id")+":")
-				GameID = valint(mid(InStream,SeekChar(1)+5,7))
+				
+				GameID = getJsonVal(InStream,"id",SeekChar)
 				
 				if right(GameName,6) = "Sector" OR right(GameName,6) = "System" then
 					GameName = GameName + space(1) + str(NuYear)
 				end if
 				print #2, ""& GameID;",";quote(GameName);",";quote(GameType);","& TurnNum
+				listGamesUI(GameID)
 			end if
-		loop until SeekChar(0) = 0
+		loop until SeekChar = 0
 	end if
 	close #2
 	

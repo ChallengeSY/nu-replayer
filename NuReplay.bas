@@ -27,7 +27,7 @@ sub cleaning destructor
 	print #1, quote("Borderless");",";BorderlessFS
 	print #1, quote("Slideshow Delay");",";SlideshowDelay
 	print #1, quote("VCR Speed");",";DefaultVCRspeed
-	print #1, quote("Prune old ZIPs");",";PruneOldZIPs
+	print #1, quote("Prune Dupes");",";PruneDupes
 	close #1
 	
 	#IFNDEF __FB_DOS__
@@ -93,8 +93,8 @@ if FileExists("Settings.csv") then
 				input #1, SlideshowDelay
 			case "VCR Speed"
 				input #1, DefaultVCRspeed
-			case "Prune old ZIPs"
-				input #1, PruneOldZIPs
+			case "Prune Dupes"
+				input #1, PruneDupes
 		end select
 	loop until eof(1)
 	close #1

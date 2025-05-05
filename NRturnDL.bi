@@ -14,10 +14,6 @@ sub downloadGame(GameName as string, GameID as integer)
 		print #9, "Last downloaded game #"& GameID
 		close #9
 		
-		if PruneOldZIPs then
-			kill("raw/"+str(GameID)+"/game"+str(GameID)+".zip")
-		end if
-		
 		createMeter(1,"")
 		print
 		print word_wrap("Process successful. You can now use the Game Room for "+GameName+".")

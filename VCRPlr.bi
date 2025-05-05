@@ -139,8 +139,12 @@ sub setupBattle(ByRef BattleSetup as VCRobj)
 		with ActiveVCR.Combatants(PID)
 			.ShipPos = Distance/2*PlacementMulti(PID)
 			
-			'Fully shielded and Horwasp ships start with their weapons ready for use
-			if .Shield >= 100 OR .RaceID = 12 then
+			/'
+			 ' Fully shielded and Horwasp ships start with their weapons ready for use;
+			 ' EXCEPT if there is a Bloodfang Disruptor involved against a non-Fed ship.
+			 '/
+			if (.Shield >= 100 OR .RaceID = 12) AND _
+				(ActiveVCR.Combatants(int(3-PID)).HullID <> 2050 OR (PID = 1 AND PlanBattle) OR .RaceID = 1) then
 				for BID as byte = 1 to max(.BeamCt, .TubeCt)
 					.BeamBanks(BID) = 100
 					.TorpTubes(BID) = 30
@@ -1052,8 +1056,14 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	 '/
 	if InType <> EscKey then
 		dim as string OutcomeStr
-		if ActiveVCR.Combatants(1).Defeated > 0 AND ActiveVCR.Combatants(2).Defeated > 0 then
-			OutcomeStr = "Both combatants defeated!"
+		if ActiveVCR.Combatants(1).Defeated = 1 AND ActiveVCR.Combatants(2).Defeated = 1 AND PlanBattle = 0 then
+			OutcomeStr = "Both combatants destroyed!"
+		elseif ActiveVCR.Combatants(1).Defeated = 2 AND ActiveVCR.Combatants(2).Defeated = 2 then
+			OutcomeStr = "Both combatants captured!"
+		elseif ActiveVCR.Combatants(1).Defeated = 2 AND ActiveVCR.Combatants(2).Defeated = 1 then
+			OutcomeStr = "LEFT SIDE captured + RIGHT SIDE destroyed!"
+		elseif ActiveVCR.Combatants(1).Defeated = 1 AND ActiveVCR.Combatants(2).Defeated > 0 then
+			OutcomeStr = "LEFT SIDE destroyed + RIGHT SIDE captured!"
 		elseif ActiveVCR.Combatants(1).Defeated = 1 then
 			OutcomeStr = "RIGHT SIDE wins!"
 		elseif ActiveVCR.Combatants(2).Defeated = 1 AND PlanBattle = 0 then

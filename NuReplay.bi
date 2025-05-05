@@ -394,7 +394,7 @@ dim shared as WormObj Wormholes(LimitObjs), ResetWorm
 dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
 dim shared as BlackObj BlackHoles(LimitObjs), ResetBlack
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, PruneOldZIPs, _
+dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, PruneDupes, _
 	OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
@@ -1041,8 +1041,8 @@ sub menu
 		gfxstring("Default VCR Speed:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,255))
 		gfxstring(str(DefaultVCRspeed),CanvasScreen.Wideth/2+30,465,3,3,2,rgb(255,255,255))
 
-		gfxstring("Prune ZIP files after extraction:",CanvasScreen.Wideth/2+10,495,3,3,2,rgb(255,255,255))
-		if PruneOldZIPs then
+		gfxstring("Prune duplicate JSON files:",CanvasScreen.Wideth/2+10,495,3,3,2,rgb(255,255,255))
+		if PruneDupes then
 			gfxstring("Active",CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
 		else
 			gfxstring("Disabled",CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
@@ -1051,7 +1051,7 @@ sub menu
 		if MouseY >= 490 AND MouseY < 535 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,490,CanvasScreen.Wideth-1,534)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				PruneOldZIPs = 1 - PruneOldZIPs
+				PruneDupes = 1 - PruneDupes
 			end if
 		end if
 		

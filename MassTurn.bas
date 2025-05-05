@@ -10,18 +10,18 @@ declare sub loadTurnKB(KBCount as integer, Players as ubyte)
 #include "LoadTurn.bi"
 dim shared as byte SilentMode
 dim shared as integer MinTurn, MaxTurn, WorkTurn, GameNum, TurnNum, TurnsDone, TurnsMax, TargetA, TargetB, TurnDirection
-dim shared as string ProgressMeter, GamePath
+dim shared as string ProgressMeter, GamePath, RawPath
 
 GameNum = valint(Command(1))
 MinTurn = max(valint(Command(2)),1)
 MaxTurn = valint(Command(3))
 
 if MaxTurn = 0 then
-	GamePath = "raw/"+str(GameNum)+"/"
+	RawPath = "raw/"+str(GameNum)+"/"
 	WorkTurn = 1
 	for LoopStep as byte = 3 to 0 step -1
 		for TurnNum = WorkTurn to 99999 step 10^LoopStep
-			if FileExists(GamePath+"player1-turn"+str(TurnNum)+".trn") = 0 then
+			if FileExists(RawPath+"player1-turn"+str(TurnNum)+".trn") = 0 then
 				WorkTurn = TurnNum - 10^LoopStep
 				exit for
 			end if
@@ -41,6 +41,7 @@ if GameNum = 0 OR MinTurn > MaxTurn then
 	print #1, "--skipComp: Make the mass converter skip completed turns"
 	print #1, "--skipPart: Make the mass converter skip partially completed turns. Supercedes --skipComp if present"
 	print #1, "--silent: Do not render a window at all"
+	print #1, "--prune: Prune duplicated JSON files after conversion. (Only effective if ZIP file is present)"
 	close #1
 else
 	kill("stdout.txt")
@@ -77,19 +78,20 @@ else
 		screenset 0,1
 		windowtitle "Processing Game "+str(GameNum)+"..."
 	end if
+	
 	for TurnNum = TargetA to TargetB step TurnDirection
 		GamePath = "games/"+str(GameNum)+"/"+str(TurnNum)+"/"
 		
 		if SilentMode = 0 then
 			cls
 		end if
-		if ((FileExists(GamePath+"Score.csv") = 0 OR FileDateTime(GamePath+"Score.csv") < DataFormat) AND FileExists(GamePath+"Working") = 0) OR _
+		if (((FileExists(GamePath+"Score.csv") = 0 OR FileDateTime(GamePath+"Score.csv") < DataFormat) AND FileExists(GamePath+"Working") = 0) OR _
 			(FileExists(GamePath+"Working") AND cmdLine("--skipPart") = 0) OR _
-			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0 then
+			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0) AND FileExists(RawPath+"player1-turn"+str(TurnNum)+".trn") then
 			
 			/'
 			 ' Process the turn if any of the following are satisfied:
-			 '   The score or wormholes files do not exist
+			 '   The score file does not exist, or is outdated
 			 '   The turn is in process (indicated by a WORKING file) and --skipPart is not supplied
 			 '   Neither --skipComp nor --skipPart command options are supplied (default)
 			 '/
@@ -107,8 +109,15 @@ else
 				draw string (162-len(ProgressMeter)*4,22), ProgressMeter
 			end if
 			loadTurn(GameNum,TurnNum,0)
+			
+		 	' Assuming conversion successful, delete duplicated JSON files... if appropriate.
+			if cmdLine("--prune") AND FileExists(RawPath+"game"+str(GameNum)+".zip") AND TurnNum < MaxTurn then
+				for PlrID as byte = 1 to 35
+					kill(RawPath+"player"+str(PlrID)+"-turn"+str(TurnNum)+".trn")
+				next PlrID
+			end if
 		end if
-	next
+	next TurnNum
 end if
 
 sub loadTurnUI(Players as ubyte)
