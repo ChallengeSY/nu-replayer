@@ -10,10 +10,11 @@ sub listGamesUI(FinID as integer)
 end sub
 
 function listGames as integer
-	dim as string ImportFile, ExportFile, FinalExport, InStream, GameName, GameDate, GameType, NuYear
+	dim as string ImportFile, FailFile, ExportFile, FinalExport, InStream, GameName, GameDate, GameType, NuYear
 	dim as integer GameID, TurnNum, YearNum, SeekChar, ByteMax
 	
 	ImportFile = "raw/listgames.txt"
+	FailFile = "raw/listgamesFail.txt"
 	ExportFile = "games/ListPrelim.csv"
 	FinalExport = "games/List.csv"
 	
@@ -23,7 +24,7 @@ function listGames as integer
 	do
 		if eof(1) then
 			close #1
-			return 1
+			InStream = quote("success")+":false"
 			exit do
 		end if
 		line input #1, InStream
@@ -32,7 +33,13 @@ function listGames as integer
 	
 	open ExportFile for output as #2
 	print #2, quote("ID")+","+quote("Name")+","+quote("Desc")+","+quote("Turn")
-	if instr(InStream,quote("success")+":false") = 0 then
+	if instr(InStream,quote("success")+":false") then
+		'If failed attempt detected, do not proceed any further
+		kill(FailFile)
+		name(ImportFile,FailFile)
+		close #2
+		return 1
+	else
 		do
 			SeekChar = instr(SeekChar+1,InStream,quote("name")+":")
 			

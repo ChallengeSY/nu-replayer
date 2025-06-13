@@ -497,15 +497,20 @@ sub VCRlist
 								color ,rgb(0,0,0)
 							end if
 							
+							dim as string RightType = "S"
+							if .Battletype <> 0 then
+								RightType = "P"
+							end if
+							
 							color rgb(255,255,255)
 							'            ID    Combatant Left                              Combatant Right                    Location     Seed
 							print using "####  ";.InternalID;
 							color convertColor(Coloring(.LeftOwner))
-							print using "\                                              \";.Combatants(1).Namee;
+							print using "S####: \                                       \";.Combatants(1).PieceID;.Combatants(1).Namee;
 							color rgb(255,255,255)
 							print " vs ";
 							color convertColor(Coloring(.RightOwner))
-							print using "\                                              \";.Combatants(2).Namee;
+							print using "!####: \                                       \";RightType;.Combatants(2).PieceID;.Combatants(2).Namee;
 							color rgb(255,255,255)
 							print using "   (####_,####)   ";.XLoc;.YLoc;
 							if .Seed >= 0 and .Seed < 119 then
