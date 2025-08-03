@@ -39,7 +39,7 @@ sub renderClient
 		DestPattern += 2^16
 	end if
 
-	if InType = CtrlJ then
+	if InType = CtrlJ AND GameID > 0 then
 		'Allows instantly jumping to any turn
 		dim as ushort JumpCut, OldTurn
 		dim as ubyte CutLegal, ProcessNeeded, ZipDLenabled = 0
@@ -142,6 +142,10 @@ sub renderClient
 				end if
 			end if
 			
+			screencopy
+			sleep
+			InType = inkey
+			
 			if InType = EscKey AND JumpCut > 0 then
 				JumpCut = 0
 				InType = chr(255)
@@ -170,7 +174,7 @@ sub renderClient
 				end if
 				loadTurnExtras
 				exit do
-			#IFDEF __DOWNLOAD_TURNS__
+			#IFNDEF __FORCE_OFFLINE__
 			elseif InType = EnterKey AND ZipDLenabled then
 				if FileExists(ZipFile) then
 					if unpackZipPackage(ZipFile, 0) = 0 then
@@ -195,10 +199,6 @@ sub renderClient
 			if Results > 0 then
 				TurnNum = OldTurn
 			end if
-
-			screencopy
-			sleep 15
-			InType = inkey
 		loop until InType = EscKey
 	end if
 
@@ -217,23 +217,25 @@ sub renderClient
 
 	CanNavigate(0) = 0
 	CanNavigate(1) = 0
-	if TurnNum > 1 then
-		if FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Score.csv") AND _
-			FileDateTime("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Score.csv") >= DataFormat AND _
-			FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Working") = 0 then
-			CanNavigate(0) = 2
-		elseif FileExists("raw/"+str(GameID)+"/player1-turn"+str(TurnNum-1)+".trn") then
-			CanNavigate(0) = 1
+	if GameID > 0 then
+		if TurnNum > 1 then
+			if FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Score.csv") AND _
+				FileDateTime("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Score.csv") >= DataFormat AND _
+				FileExists("games/"+str(GameID)+"/"+str(TurnNum-1)+"/Working") = 0 then
+				CanNavigate(0) = 2
+			elseif FileExists("raw/"+str(GameID)+"/player1-turn"+str(TurnNum-1)+".trn") then
+				CanNavigate(0) = 1
+			end if
 		end if
-	end if
-
-	if TurnNum < ViewGame.LastTurn then
-		if	FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Score.csv") AND _
-			FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Score.csv") >= DataFormat AND _
-			FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Working") = 0 then
-			CanNavigate(1) = 2
-		elseif FileExists("raw/"+str(GameID)+"/player1-turn"+str(TurnNum+1)+".trn") then
-			CanNavigate(1) = 1
+	
+		if TurnNum < ViewGame.LastTurn then
+			if FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Score.csv") AND _
+				FileDateTime("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Score.csv") >= DataFormat AND _
+				FileExists("games/"+str(GameID)+"/"+str(TurnNum+1)+"/Working") = 0 then
+				CanNavigate(1) = 2
+			elseif FileExists("raw/"+str(GameID)+"/player1-turn"+str(TurnNum+1)+".trn") then
+				CanNavigate(1) = 1
+			end if
 		end if
 	end if
 
@@ -270,12 +272,16 @@ sub renderClient
 	end if
 	
 	'Flexible Sidebar
-	TurnStr = "Turn "+str(TurnNum)
-	if TurnNum <= ViewGame.AccelStart then
-		TurnStr = "Accel "+TurnStr 
+	if GameID > 0 then
+		TurnStr = " Turn "+str(TurnNum)
+		if TurnNum <= ViewGame.AccelStart then
+			TurnStr = " Accel"+TurnStr 
+		end if
+	else
+		TurnStr = ""
 	end if
 	SidebarMem = Sidebar
-	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+" "+TurnStr,3,2,2), CanvasScreen.Wideth*3/4)
+	Sidebar = min(CanvasScreen.Wideth - gfxLength(GameName+TurnStr,3,2,2), CanvasScreen.Wideth*3/4)
 	
 	'Scalable "Remastered"-style UI
 	if MouseError = 0 then
@@ -529,7 +535,9 @@ sub renderClient
 	
 	line(Sidebar,0)-(CanvasScreen.Wideth-1,39),ReportBG,bf
 	gfxString(GameName,Sidebar,0,3,2,2,rgb(255,215,0))
-	gfxString(TurnStr,Sidebar+gfxLength(GameName+" ",3,2,2),0,3,2,2,rgb(255,255,255))
+	if TurnStr <> "" then
+		gfxString(TurnStr,Sidebar+gfxLength(GameName,3,2,2),0,3,2,2,rgb(255,255,255))
+	end if
 	
 	if SelectedObjType > 0 then
 		getReport
@@ -729,7 +737,7 @@ sub renderClient
 				TurnNum -= 1
 				loadTurnExtras
 			elseif CanNavigate(0) = 1 then
-				Results = loadTurn(GameId,TurnNum-1,0)
+				Results = loadTurn(GameID,TurnNum-1,0)
 				while inkey <> "":wend
 				
 				if Results = 0 then
@@ -743,7 +751,7 @@ sub renderClient
 				TurnNum += 1
 				loadTurnExtras
 			elseif CanNavigate(1) = 1 then
-				Results = loadTurn(GameId,TurnNum+1,0)
+				Results = loadTurn(GameID,TurnNum+1,0)
 				while inkey <> "":wend
 				
 				if Results = 0 then
@@ -784,12 +792,12 @@ sub renderClient
 		case RightArrow
 			fetchNextObj(1)
 		case "-"
-			if ViewGame.Academy = 0 then
+			if ViewGame.Academy = 0 AND GameID > 0 then
 				ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
 				RedrawIslands = 1
 			end if
 		case "+"
-			if ViewGame.Academy = 0 then
+			if ViewGame.Academy = 0 AND GameID > 0 then
 				ViewPort.Zoom = min(ViewPort.Zoom * 2, 8)
 				RedrawIslands = 1
 			end if
@@ -834,11 +842,13 @@ sub renderClient
 		case "x"
 			clearReport
 		case CtrlQ
-			if ConvertorUse = 0 then
+			if GameID > 0 ANDALSO ConvertorUse = 0 then
 				ConvertorSes = ThreadCreate(@launchConvertor)
 			end if
 		case CtrlW
-			NextMapSlide = timer + SlideshowDelay/500
+			if GameID > 0 then
+				NextMapSlide = timer + SlideshowDelay/500
+			end if
 			InType = ""
 		case CtrlR
 			'Reloads the starmap

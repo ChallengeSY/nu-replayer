@@ -9,7 +9,7 @@
 const ArrayClose = "}],"
 const ObjClose = "},"
 
-#IFNDEF __DOWNLOAD_TURNS__
+#IFDEF __FORCE_OFFLINE__
 dim shared as string ErrorMsg
 #ENDIF
 

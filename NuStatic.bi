@@ -1,4 +1,4 @@
-#IFDEF __DOWNLOAD_TURNS__
+#IFNDEF __FORCE_OFFLINE__
 type ParseHullDesign
 	TechLevel as short
 	HullName as string

@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 1.03"
+const BROWSER_LONG = "Nu Replayer 1.04"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
@@ -679,13 +679,13 @@ sub loadTurnExtras
 end sub
 
 #IFNDEF __FORCE_OFFLINE__
-' Converts an address to HTTP request 
-function loadAddress(SubAddress as string, HostServer as string = DEFAULT_HOST) as string
-	return "GET /" + SubAddress + " HTTP/1.0" + NEWLINE + _
-		"Host: " + HostServer + NEWLINE + _
-		"Connection: close" + NEWLINE + _
-		"User-Agent: " + BROWSER_SHORT + NEWLINE + NEWLINE
-end function
+	' Converts an address to HTTP request 
+	function loadAddress(SubAddress as string, HostServer as string = DEFAULT_HOST) as string
+		return "GET /" + SubAddress + " HTTP/1.0" + NEWLINE + _
+			"Host: " + HostServer + NEWLINE + _
+			"Connection: close" + NEWLINE + _
+			"User-Agent: " + BROWSER_SHORT + NEWLINE + NEWLINE
+	end function
 
 	#IFDEF __API_LOGIN__
 	function apiLogin as byte
@@ -791,7 +791,6 @@ end function
 	end sub
 	#ENDIF
 
-	#IFDEF __DOWNLOAD_TURNS__
 	function retrieveData as byte
 		'Retrives turn data from Nu's servers
 		
@@ -840,7 +839,6 @@ end function
 		end if
 		SDLNet_TCP_Close( NuSocket )
 	end function
-	#ENDIF
 #ENDIF
 
 sub createMeter(Filling as double = LastFill, ProgressStr as string = LastProgress)

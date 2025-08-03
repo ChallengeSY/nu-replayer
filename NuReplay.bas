@@ -231,9 +231,9 @@ kill("stdout.txt")
 
 do
 	select case ReplayerMode
-		case MODE_MENU, MODE_QUICK, MODE_DOWNLOAD, MODE_SETTINGS
+		case MODE_MENU, MODE_QUICK, MODE_DOWNLOAD, MODE_SETTINGS, MODE_BAT_SIMS
 			menu
-			if GameID > 0 then
+			if GameID <> 0 then
 				clearData
 				loadGame(GameID)
 				prepClientScreen

@@ -11,13 +11,17 @@ declare sub loadTurnUI(Players as ubyte)
 #include "WordWrap.bi"
 #include "NRCommon.bi"
 
-'#DEFINE __FORCE_OFFLINE__
+#IFDEF __FB_DOS__
+	'DOS build theoretical, but untested
+	#DEFINE __FORCE_OFFLINE__
+#ENDIF
+
 #IFNDEF __FORCE_OFFLINE__
 	'#DEFINE __USE_ZLIB__
 	'#DEFINE __API_LOGIN__
-	#DEFINE __DOWNLOAD_LIST__
-	#DEFINE __DOWNLOAD_TURNS__
 #ENDIF
+
+'#DEFINE __BATTLE_SIMS__
 
 #IFNDEF __FB_DOS__
 #include "fbthread.bi"
@@ -367,6 +371,7 @@ enum ModalView
 	MODE_QUICK
 	MODE_DOWNLOAD
 	MODE_SETTINGS
+	MODE_BAT_SIMS
 	
 	MODE_HUB_VIEW
 	MODE_HUB_DL
@@ -498,11 +503,9 @@ Rainbow.Red = 255
 declare sub updateGameList(DownloadList as byte = 0)
 declare sub recordPersonalGames
 declare function isPersonalGame(SearchID as integer) as integer
-#IFDEF __DOWNLOAD_TURNS__
-declare sub downloadGame(GameName as string, GameID as integer)
-#ENDIF
 #IFNDEF __FORCE_OFFLINE__
 declare sub importPrivateGame
+declare sub downloadGame(GameName as string, GameID as integer)
 #ENDIF
 
 'Randomize seed
@@ -746,7 +749,7 @@ declare function apiLogin as byte
 #ELSE
 declare sub selectAccount
 #ENDIF
-#IFDEF __DOWNLOAD_TURNS__
+#IFNDEF __FORCE_OFFLINE__
 declare sub fetchStaticData
 #ENDIF
 
@@ -863,7 +866,7 @@ sub menu
 		gfxstring("Select an account",CanvasScreen.Wideth/2+10,100,5,4,3,rgb(255,255,255))
 		#ENDIF
 		
-		#IFDEF __DOWNLOAD_TURNS__
+		#IFNDEF __FORCE_OFFLINE__
 		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
 		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
@@ -890,7 +893,7 @@ sub menu
 		
 		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(255,255,255))
 		
-		#IFDEF __DOWNLOAD_LIST__
+		#IFNDEF __FORCE_OFFLINE__
 		if GameListAge > CooldownList then
 			gfxstring("Download game list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
 	
@@ -922,7 +925,7 @@ sub menu
 			end if
 		end if
 		
-		#IFNDEF __API_LOGIN
+		#IFNDEF __API_LOGIN__
 		if MouseY >= 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,90,CanvasScreen.Wideth-1,134)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
@@ -936,6 +939,25 @@ sub menu
 		#ENDIF
 	elseif OfflineMode = 0 then 
 		gfxstring("Network Mode",10,200,5,4,3,rgb(255,255,255))
+	end if
+	#ENDIF
+
+	#IFDEF __BATTLE_SIMS__
+	if ReplayerMode = MODE_BAT_SIMS then	
+		gfxstring("Battle Simulator",10,250,5,4,3,rgb(255,255,0))
+
+		for SimSlot as byte = 1 to 12
+			gfxstring("Simulator Slot "+str(SimSlot),CanvasScreen.Wideth/2+10,50*(SimSlot+1)-5,3,3,2,rgb(128,128,128))
+
+			if 0 ANDALSO MouseY >= 40 + 50*SimSlot AND MouseY < 85 + 50*SimSlot AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,40 + 50*SimSlot,CanvasScreen.Wideth-1,85 + 50*SimSlot)
+				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+					' TODO
+				end if
+			end if
+		next SimSlot
+	else
+		gfxstring("Battle Simulator",10,250,5,4,3,rgb(255,255,255))
 	end if
 	#ENDIF
 	
@@ -1143,6 +1165,17 @@ sub menu
 			end if 
 		end if
 	#ENDIF
+	#IFDEF __BATTLE_SIMS__
+	elseif MouseY >= 240 AND MouseY < 285 AND MouseX < CanvasScreen.Wideth/2 AND OfflineMode = 0 then
+		drawBox(0,240,CanvasScreen.Wideth/2-1,284)
+		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+			if ReplayerMode = MODE_BAT_SIMS then
+				ReplayerMode = MODE_MENU
+			else
+				ReplayerMode = MODE_BAT_SIMS
+			end if 
+		end if
+	#ENDIF
 	elseif MouseY >= MaxMenuEntries*50 + 40 AND MouseY < (MaxMenuEntries+1)*50 + 35 AND MouseX < CanvasScreen.Wideth/2 then
 		drawBox(0,MaxMenuEntries*50 + 40,CanvasScreen.Wideth/2-1,(MaxMenuEntries+1)*50 + 34)
 		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
@@ -1234,7 +1267,7 @@ sub replayHub(DownloadMode as byte = 0)
 							Legal = 0
 							RMessage = "Nu Replayer requires a 1024x768 in order to render the starmap."
 						elseif .GameState = 0 OR .GameState = 7 then
-							#IFDEF __DOWNLOAD_TURNS__
+							#IFNDEF __FORCE_OFFLINE__
 							if ErrorMsg <> "" then 
 								Legal = 0
 								RMessage = "Without an operational network, games cannot be downloaded."
@@ -1257,7 +1290,7 @@ sub replayHub(DownloadMode as byte = 0)
 							#ELSE
 							Legal = 0
 							if .GameState = 0 then
-								RMessage = "Downloading turns have not yet been implemented into Nu Replayer."
+								RMessage = "Downloading turns is not enabled in this build of Nu Replayer."
 							else
 								RMessage = "Last turn's data format is outdated, and raw files are not available."
 							end if

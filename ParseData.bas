@@ -348,9 +348,14 @@ function getJsonStr(ReadStr as string, ReadParam as string, CharInit as integer 
 end function
 
 function getJsonBool(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0) as integer
-	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":true")
+	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":")
+	if MatchFound > 0 AND (MatchFound < CharEnd OR CharEnd = 0) then
+		dim as string ReadVal = mid(ReadStr, MatchFound+len(quote(ReadParam))+1, 5)
+		
+		return abs(sgn(instr(1, ReadVal, "true") > 0))
+	end if
 	
-	return abs(sgn(MatchFound > 0 AND (MatchFound < CharEnd OR CharEnd = 0)))
+	return 0
 end function
 
 sub exportScores(GameID as integer, CurTurn as short)

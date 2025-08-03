@@ -8,13 +8,13 @@
 	 '/
 	
 	#include "SDL/SDL_net.bi"
-	#IFDEF ____USE_ZLIB__
+	#IFDEF __USE_ZLIB__
 	#include "zlib.bi"
 	#ENDIF
 #ENDIF
 
 #include "NREngine.bi"
-#IFDEF __DOWNLOAD_TURNS__
+#IFNDEF __FORCE_OFFLINE__
 #include "NRturnDL.bi"
 #ENDIF
 #include "NRprivate.bi"
@@ -22,7 +22,7 @@
 declare function listGames as integer
 
 sub updateGameList(DownloadList as byte = 0)
-	#IFDEF __DOWNLOAD_LIST__
+	#IFNDEF __FORCE_OFFLINE__
 	dim as longint BytesDownloaded = 0	
 	
 	if DownloadList then

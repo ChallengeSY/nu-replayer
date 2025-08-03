@@ -67,7 +67,7 @@ sub getReport
 
 	dim as string NativeRaces(1 to 14) => {"Humanoid", "Bovinoid", "Reptilian", _
 		"Avian", "Amorphou", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
-		"", "Botanical", "Diaphanous", "Aquatic", "Ranine"}
+		"Slave", "Botanical", "Diaphanous", "Aquatic", "Ranine"}
 	
 	dim as integer TrueItem
 	dim as uinteger ReportColor
@@ -1380,9 +1380,29 @@ sub buildAuxList
 					if .Mass > 0 then
 						ObjDist = sqr((.X - ViewPort.X)^2 + (.Y - ViewPort.Y)^2)
 						
-						if ObjDist <= sqr(.Mass) then
+						if .X = ViewPort.X AND .Y = ViewPort.Y then
+							AuxCount += 1
+							with AuxList(AuxCount)
+								.Namee = StarClusters(AID).Namee+" Star Cluster"
+								.Coloring = rgb(224,224,255)
+								.ObjType = REPORT_STAR
+								.ObjID = AID
+							end with
+						elseif ObjDist <= sqr(.Mass) then
 							StarRadiation += ceil((.Temperature/100) * (1 - (ObjDist / sqr(.Mass))))
 						end if
+					end if
+				end with
+				
+				with BlackHoles(AID)
+					if .Core > 0 AND .XLoc = ViewPort.X AND .YLoc = ViewPort.Y then
+						AuxCount += 1
+						with AuxList(AuxCount)
+							.Namee = BlackHoles(AID).Namee+" Black Hole"
+							.Coloring = rgb(96,160,192)
+							.ObjType = REPORT_BHOLE
+							.ObjID = AID
+						end with
 					end if
 				end with
 				

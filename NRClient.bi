@@ -39,7 +39,7 @@ end sub
 sub planetList
 	dim as string NativeRaces(1 to 14) => {"Humanoid", "Bovinoid", "Reptilian", _
 		"Avian", "Amorphous", "Insectoid", "Amphibian", "Ghipsodal", "Siliconoid", _
-		"", "Botanical", "Diaphanous", "Aquatic", "Ranine"}
+		"Slave", "Botanical", "Diaphanous", "Aquatic", "Ranine"}
 
 	SelectedIndex = 1
 
@@ -756,7 +756,7 @@ sub playerList
 					"[-] No relationship. Messages are sent the old fashioned way\n"+_
 					_
 					"[c] Send an ambassador, and attempt to establish open communication. Ambassadors relay messages instantly to their owner\n"+_
-					"[S] The offering player will allow safe passage through mines, and his ships will not open fire upon the targeting player's ships\n"+_
+					"[S] The offering player will allow safe passage through mines. Their ships will not initiate battles\n"+_
 					_
 					"[I] In addition to safe passage, the offering player will reveal the locations (but not information) "+_
 					"of their planets and ships, and give info of hostile ships and planets\n"+_

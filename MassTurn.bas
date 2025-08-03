@@ -10,18 +10,18 @@ declare sub loadTurnKB(KBCount as integer, Players as ubyte)
 #include "LoadTurn.bi"
 dim shared as byte SilentMode
 dim shared as integer MinTurn, MaxTurn, WorkTurn, GameNum, TurnNum, TurnsDone, TurnsMax, TargetA, TargetB, TurnDirection
-dim shared as string ProgressMeter, GamePath, RawPath
+dim shared as string ProgressMeter, GamePath, VRawPath
 
 GameNum = valint(Command(1))
 MinTurn = max(valint(Command(2)),1)
 MaxTurn = valint(Command(3))
 
 if MaxTurn = 0 then
-	RawPath = "raw/"+str(GameNum)+"/"
+	VRawPath = "raw/"+str(GameNum)+"/"
 	WorkTurn = 1
 	for LoopStep as byte = 3 to 0 step -1
 		for TurnNum = WorkTurn to 99999 step 10^LoopStep
-			if FileExists(RawPath+"player1-turn"+str(TurnNum)+".trn") = 0 then
+			if FileExists(VRawPath+"player1-turn"+str(TurnNum)+".trn") = 0 then
 				WorkTurn = TurnNum - 10^LoopStep
 				exit for
 			end if
@@ -71,6 +71,10 @@ else
 		SilentMode = 1
 		print #1, "--silent supplied"
 	end if
+
+	if cmdLine("--prune") then
+		print #1, "--prune supplied"
+	end if
 	close #1
 	
 	if SilentMode = 0 then
@@ -87,7 +91,7 @@ else
 		end if
 		if (((FileExists(GamePath+"Score.csv") = 0 OR FileDateTime(GamePath+"Score.csv") < DataFormat) AND FileExists(GamePath+"Working") = 0) OR _
 			(FileExists(GamePath+"Working") AND cmdLine("--skipPart") = 0) OR _
-			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0) AND FileExists(RawPath+"player1-turn"+str(TurnNum)+".trn") then
+			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0) AND FileExists(VRawPath+"player1-turn"+str(TurnNum)+".trn") then
 			
 			/'
 			 ' Process the turn if any of the following are satisfied:
@@ -111,9 +115,9 @@ else
 			loadTurn(GameNum,TurnNum,0)
 			
 		 	' Assuming conversion successful, delete duplicated JSON files... if appropriate.
-			if cmdLine("--prune") AND FileExists(RawPath+"game"+str(GameNum)+".zip") AND TurnNum < MaxTurn then
+			if cmdLine("--prune") AND FileExists(VRawPath+"game"+str(GameNum)+".zip") AND TurnNum < MaxTurn then
 				for PlrID as byte = 1 to 35
-					kill(RawPath+"player"+str(PlrID)+"-turn"+str(TurnNum)+".trn")
+					kill(VRawPath+"player"+str(PlrID)+"-turn"+str(TurnNum)+".trn")
 				next PlrID
 			end if
 		end if
