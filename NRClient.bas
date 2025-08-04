@@ -196,6 +196,7 @@ sub renderClient
 				ErrorMsg = ""
 			#ENDIF
 			end if
+			while inkey <> "":wend
 			if Results > 0 then
 				TurnNum = OldTurn
 			end if

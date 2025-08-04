@@ -718,7 +718,12 @@ sub drawOverlay
 		dim as double TimePassed = BattleTicks/20+1e-6
 		
 		CombatStr = "Time: "+left(str(TimePassed),len(str(int(TimePassed)))+2)+"%"
-		gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,rgb(255,255,255))
+		if BattleTicks >= 2000 then
+			CombatColor = rgb(255,255,0)
+		else
+			CombatColor = rgb(255,255,255)
+		end if
+		gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,CombatColor)
 	else
 		TotalDist = Distance * 100
 		
@@ -1031,10 +1036,6 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		screencopy
 	end if
 	
-	if BattleTicks >= 2000 then
-		dim as string CombatStr = "Time: 100.0%"
-		gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,rgb(255,255,0))
-	end if
 	if ActiveVCR.Combatants(1).Defeated = 1 then
 		playClip(SFX_EXPLODE)
 		DestroyedCt(1) += 1
@@ -1125,6 +1126,10 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 			OddsDisp = left(str(OddsChance),len(str(int(OddsChance)))+2)+"%"
 			
 			gfxString("Capt: "+OddsDisp,CanvasScreen.Wideth/2+250+MeterWidth,420,4,3,3,rgb(255,255,255))
+		end if
+		if BattleTicks >= 2000 AND DestroyedCt(1) + CapturedCt(1) + DestroyedCt(2) + CapturedCt(2) = 0 then
+			dim as string CombatStr = "Time: 100.0%"
+			gfxString(CombatStr,CanvasScreen.Wideth/2-gfxLength(CombatStr,4,3,3)/2,300,4,3,3,rgb(255,128,0))
 		end if
 		
 		screencopy
