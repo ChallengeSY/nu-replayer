@@ -660,18 +660,20 @@ sub renderClient
 					end if
 				end with
 				
-				with BlackHoles(OID)
-					if .Core > 0 then
-						RelativePos = getRelativePos(.XLoc, .YLoc)
-						CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
-						
-						if CurDist < MinDist then
-							MinDist = CurDist
-							SelectedObjType = REPORT_BHOLE
-							SelectedID = OID
+				if OID < LimitObjs then
+					with BlackHoles(OID)
+						if .Core > 0 then
+							RelativePos = getRelativePos(.XLoc, .YLoc)
+							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
+							
+							if CurDist < MinDist then
+								MinDist = CurDist
+								SelectedObjType = REPORT_BHOLE
+								SelectedID = OID
+							end if
 						end if
-					end if
-				end with
+					end with
+				end if
 				
 				AuxList(OID) = ResetAux
 			next OID
@@ -790,8 +792,30 @@ sub renderClient
 			end if
 		case LeftArrow
 			fetchNextObj(-1)
+			
+			for AuxCheck as integer = 1 to AuxCount
+				with AuxList(AuxCheck)
+					if SelectedObjType = .ObjType AND SelectedID = .ObjID then
+						SelAux = AuxCheck
+						exit for
+					end if
+				end with
+			next AuxCheck
+			
+			AuxPage = ceil(SelAux/10)-1
 		case RightArrow
 			fetchNextObj(1)
+			
+			for AuxCheck as integer = 1 to AuxCount
+				with AuxList(AuxCheck)
+					if SelectedObjType = .ObjType AND SelectedID = .ObjID then
+						SelAux = AuxCheck
+						exit for
+					end if
+				end with
+			next AuxCheck
+			
+			AuxPage = ceil(SelAux/10)-1
 		case "-"
 			if ViewGame.Academy = 0 AND GameID > 0 then
 				ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)

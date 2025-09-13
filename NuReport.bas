@@ -1411,7 +1411,7 @@ sub buildAuxList
 				end if
 			end if
 		next AID
-	next AuxPass 
+	next AuxPass
 end sub
 
 sub syncReport(AddCycle as byte = 0)
