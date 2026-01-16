@@ -597,7 +597,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 							.Mass = getJsonVal(InStream,"mass",BlockChar(1))
 							.Planets = getJsonVal(InStream,"planets",BlockChar(1))
 							
-							.Neutron = 0 'NYI
+							'Weird, but adapted from their logic 
+							.Neutron = abs(sgn(.Radius >= 5 AND .Radius <= 10))
 						end with
 						
 						ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
@@ -615,8 +616,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				end if
 			end if
 			
-			'Black Hole data. Only a preliminary implementation; not currently available in existing games
-			/'
+			'Black Hole data. Only read this if non-existant or outdated
 			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/BlackHoles.csv") = 0 OR _
 				FileDateTime("games/"+str(GameNum)+"/BlackHoles.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("blackholes")+": [")
@@ -647,7 +647,6 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 				end if
 			end if
-			'/
 			
 			'Artifact data
 			BlockChar(0) = instr(InStream,quote("artifacts")+": [")

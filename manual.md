@@ -32,6 +32,10 @@ Nu Replayer comes with its own Visual Combat Recording (or simply VCR) player. I
 * Change replay speed: 1-9
 * Enter step mode: Spacebar (any other key exits step mode)
 * Instantly finish the current replay: F
+* Skip to the broadest weapon range: R
+
+When skipping towards the broadest weapon range, the VCR player will stop 800 / 1600 meters before the combatants get in range to use the weapons in question.
+Fighter Bays are usable at maximum range, so they do not qualify. Same goes for Beam Banks versus fighters (but not versus other ships). Torpedo Tubes qualify, as long as the ammo storage is *not* empty.
 
 ## Networking
 Nu Replayer features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).

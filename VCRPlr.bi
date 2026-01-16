@@ -988,13 +988,14 @@ end function
 
 sub watchBattle(ByRef ActiveBattle as VCRobj)
 	dim as byte VCRspeed = DefaultVCRspeed, BaseSeed, QuickFinish
-	dim as short DestroyedCt(2), CapturedCt(2), QuickCode
+	dim as short DestroyedCt(2), CapturedCt(2), QuickCode, FastThresh
 	dim as double OddsChance
 	dim as string OddsDisp
 	dim as short MeterWidth
 	
 	MeterWidth = min(CanvasScreen.Wideth/2-412,150)
 	
+	FastThresh = 999
 	SkipSounds = 0
 	setupBattle(ActiveBattle)
 	BaseSeed = ActiveBattle.Seed
@@ -1008,7 +1009,8 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		
 		drawCombatObjs
 		drawOverlay
-		if QuickFinish = 0 then
+		if QuickFinish = 0 AND Distance < FastThresh then
+			SkipSounds = 0
 			screencopy
 			sleep (10-VCRspeed)*25,1
 			InType = inkey
@@ -1016,6 +1018,22 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		
 		if lcase(InType) = "f" then
 			QuickFinish = 1
+			SkipSounds = 1
+		elseif FastThresh > 900 AND lcase(InType) = "r" then
+			/' 
+			 ' Skip to shortly before the broadest weapon is ready to fire.
+			 ' (Not counting fighter bays or beams versus fighters. Tubes count only if their ammo was not empty at battle start.)
+			 '/
+			if ActiveVCR.Combatants(1).BeamCt > 0 OR ActiveVCR.Combatants(2).BeamCt > 0 then
+				FastThresh = 200
+			end if 
+			if ActiveVCR.Combatants(1).TubeCt > 0 AND ActiveVCR.Combatants(1).TorpAmmo > 0 then
+				FastThresh = Tubes(ActiveVCR.Combatants(1).TorpID).Range 
+			end if
+			if ActiveVCR.Combatants(2).TubeCt > 0 AND ActiveVCR.Combatants(2).TorpAmmo > 0 then
+				FastThresh = max(FastThresh, Tubes(ActiveVCR.Combatants(2).TorpID).Range)
+			end if
+			FastThresh = FastThresh + 9 * (2-sgn(ActiveVCR.Battletype))
 			SkipSounds = 1
 		elseif InType >= "1" AND InType <= "9" then
 			'Adjust playback speed
@@ -1029,7 +1047,7 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 			exit do
 		end if
 	loop until combatOver
-	if QuickFinish then
+	if QuickFinish OR Distance >= FastThresh then
 		SkipSounds = 0
 		drawCombatObjs
 		drawOverlay

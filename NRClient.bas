@@ -357,7 +357,7 @@ sub renderClient
 						RelativePos = getRelativePos(.X, .Y)
 						
 						if .Neutron then
-							TempColor = rgb(255,192,255)
+							TempColor = rgb(96,96,224)
 						elseif .Temperature <= 3000 then
 							TempColor = rgb(192,0,0)
 						elseif .Temperature <= 6000 then
@@ -392,7 +392,7 @@ sub renderClient
 				
 				'Wormholes
 				with Wormholes(OID)
-					if .Stability > 0 then
+					if .Stability > 0 AND .X > 0 then
 						dim as ViewSpecs EndingPos
 						
 						RelativePos = getRelativePos(.X, .Y)
@@ -621,7 +621,7 @@ sub renderClient
 					end with
 				
 					with Wormholes(OID)
-						if .Stability > 0 then
+						if .Stability > 0 AND .X > 0 then
 							RelativePos = getRelativePos(.X, .Y)
 							CurDist = sqr((RelativePos.X - MouseX)^2 + (RelativePos.Y - MouseY)^2)
 								

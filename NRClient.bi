@@ -814,7 +814,7 @@ sub fetchNextObj(Direction as byte)
 				case REPORT_ION
 					ObjFound = (IonStorms(SelectedID).Voltage > 0)
 				case REPORT_WORM
-					ObjFound = (Wormholes(SelectedID).Stability > 0)
+					ObjFound = (Wormholes(SelectedID).Stability > 0 AND Wormholes(SelectedID).X > 0)
 				case REPORT_ARTI
 					ObjFound = (Artifacts(SelectedID).Namee <> "")
 				case REPORT_VCR

@@ -126,7 +126,8 @@ sub getReport
 				end if
 			
 				if .Ownership = 0 AND .LastScan = 0 then	
-					gfxString("Never scanned",Sidebar,80,3,2,2,rgb(128,128,128))	
+					gfxString(FullObjName,Sidebar,60,3,2,2,rgb(255,255,255))
+					gfxString("Never scanned",Sidebar,80,3,2,2,rgb(128,128,128))
 					gfxString("(No colony present)",Sidebar,120,3,2,2,rgb(128,128,128))
 					
 					if StarRadiation > 0 then
@@ -489,7 +490,7 @@ sub getReport
 						FighterCount = round(sqr(max(0,.DefPosts - 0.75))) + .Fighters
 						Industry = "Light"
 						
-						if (.MineralMines < 20 AND .Factories < 15) OR NebDensity > 0 then
+						if (.MineralMines <= 20 AND .Factories <= 15) OR NebDensity > 0 then
 							SensorVis = 0
 						end if
 						if .MineralMines + .Factories > 100 then
@@ -994,14 +995,10 @@ sub getReport
 				gfxString(.Namee,Sidebar,60,3,2,2,ReportColor)
 				gfxString("Core Radius: "+str(.Radius)+" LY",Sidebar,100,3,2,2,ReportColor)
 				if .Radius >= Radiation then
-					if .Neutron then
-						gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(128,128,128))
-					else
-						gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(128,128,128))
-					end if
+					gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(128,128,128))
 				else
 					if .Neutron then
-						gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(255,192,255))
+						gfxString("Neutrino Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,rgb(96,96,224))
 					else
 						gfxString("Radiation Radius: "+str(Radiation)+" LY",Sidebar,120,3,2,2,ReportColor)
 					end if
