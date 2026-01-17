@@ -1031,7 +1031,11 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 				FastThresh = Tubes(ActiveVCR.Combatants(1).TorpID).Range 
 			end if
 			if ActiveVCR.Combatants(2).TubeCt > 0 AND ActiveVCR.Combatants(2).TorpAmmo > 0 then
-				FastThresh = max(FastThresh, Tubes(ActiveVCR.Combatants(2).TorpID).Range)
+				if FastThresh > 900 then
+					FastThresh = Tubes(ActiveVCR.Combatants(2).TorpID).Range
+				else
+					FastThresh = max(FastThresh, Tubes(ActiveVCR.Combatants(2).TorpID).Range)
+				end if
 			end if
 			FastThresh = FastThresh + 9 * (2-sgn(ActiveVCR.Battletype))
 			SkipSounds = 1
