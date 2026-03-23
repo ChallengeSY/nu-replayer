@@ -802,7 +802,7 @@ sub renderClient
 				end with
 			next AuxCheck
 			
-			AuxPage = ceil(SelAux/10)-1
+			AuxPage = max(ceil(SelAux/10)-1,0)
 		case RightArrow
 			fetchNextObj(1)
 			
@@ -815,7 +815,7 @@ sub renderClient
 				end with
 			next AuxCheck
 			
-			AuxPage = ceil(SelAux/10)-1
+			AuxPage = max(ceil(SelAux/10)-1,0)
 		case "-"
 			if ViewGame.Academy = 0 AND GameID > 0 then
 				ViewPort.Zoom = max(ViewPort.Zoom / 2, 0.25)
