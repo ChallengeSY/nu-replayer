@@ -366,7 +366,7 @@ sub exportScores(GameID as integer, CurTurn as short)
 		print #13, quote("Player")+","+quote("Duranium")+","+quote("Tritanium")+","+quote("Molybdenum")+","+quote("Megacredits")
 	end if
 
-	for PID as byte = 1 to 35
+	for PID as byte = 1 to MaxPlayers
 		with ProcessSlot(PID)
 			if .Namee <> "" then
 				print #12, quote(.RaceType);",";quote(.Namee);","& .Planets;","& .Bases;","& .TotalShips;","& .Freighters;","& .Military

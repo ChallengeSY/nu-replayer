@@ -65,7 +65,7 @@ const CtrlJ = chr(10)
 const CtrlR = chr(18)
 
 const CooldownList = 8/24
-const MaxPlayers = 35
+const MaxPlayers = 100
 #DEFINE MetaLimit 2.5e5
 
 type ShipSpecs
@@ -104,7 +104,7 @@ type SlotSpecs
 	TotalClans as integer
 	TotalSupplies as integer
 	
-	Relationship(35) as byte
+	Relationship(MaxPlayers) as short
 end type
 
 type PlanObj
@@ -417,7 +417,9 @@ declare function convertColor(Brush as ColorSpecs) as uinteger
 open "Nu Colorset.csv" for input as #3
 for RID as short = 0 to MaxPlayers
 	if eof(3) then
-		exit for
+		dim as short UseColorID = (RID - 1) mod RecordID + 1
+		
+		Coloring(RID) = Coloring(UseColorID)
 	else
 		with Coloring(RID)
 			input #3, .Red
@@ -425,6 +427,8 @@ for RID as short = 0 to MaxPlayers
 			input #3, .Green
 			input #3, .Blue
 		end with
+		
+		RecordID = RID
 	end if
 next RID
 close #3

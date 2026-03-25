@@ -18,7 +18,7 @@ sub updateStatistics
 	dim as string ScoreFile, ResourceFile, RelationsFile
 	dim as byte PlrA, PlrB
 	' Loads game statistics
-	ParticipatingPlayers = 35
+	ParticipatingPlayers = MaxPlayers
 	
 	ScoreFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Score.csv"
 	ResourceFile = "games/"+str(GameID)+"/"+str(TurnNum)+"/Resources.csv"

@@ -47,7 +47,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	
 	InterShip.ShipOwner = 0
 	
-	for PlrID as ubyte = 1 to 35
+	for PlrID as ubyte = 1 to MaxPlayers
 		ProcessSlot(PlrID) = ResetSlotPar
 	next PlrID
 
