@@ -881,8 +881,7 @@ sub renderClient
 		case FunctionTwelve
 			'Takes a snapshot of the client
 			bsave("shot.bmp",0)
-		case chr(255,107)
-			'Ensures program is closed by hitting the X button
+		case XBox
 			ReplayerMode = MODE_EXIT
 		case EscKey
 			'If in a game and holding SHIFT, then exit. Otherwise, return to main menu

@@ -59,6 +59,7 @@ const PageUp = chr(255,73)
 const PageDown = chr(255,81)
 const EnterKey = chr(13)
 const EscKey = chr(27)
+const XBox = chr(255,107)
 const CtrlQ = chr(17)
 const CtrlW = chr(23)
 const CtrlJ = chr(10)
@@ -399,7 +400,7 @@ dim shared as WormObj Wormholes(LimitObjs), ResetWorm
 dim shared as ArtiObj Artifacts(LimitObjs), ResetArti
 dim shared as BlackObj BlackHoles(LimitObjs), ResetBlack
 dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, WindowStr, Commentary(LimitObjs), LastProgress, NullStr
-dim shared as ubyte SimpleView, BorderlessFS, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, PruneDupes, _
+dim shared as ubyte SimpleView, MultiWidth, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, PruneDupes, _
 	OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
@@ -541,6 +542,9 @@ end sub
 sub prepCanvas(NewWidth as short, NewHeight as short, ExtraFlags as integer = 0)
 	dim as short CalcRows = int(NewHeight/16)
 	screenres NewWidth, NewHeight,24,2,GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES OR ExtraFlags
+	if MultiWidth > 1 then
+		screencontrol SET_WINDOW_POS, 0, 0
+	end if
 	
 	'Sets a fixed character width and renders mouse invisible
 	width int(NewWidth/8), int(NewHeight/16)
@@ -588,7 +592,7 @@ end function
 sub prepClientScreen
 	with BaseScreen
 		if .Wideth > 1024 AND .Height > 768 AND SimpleView = 0 then
-			prepCanvas(.Wideth,.Height,GFX_FULLSCREEN OR (GFX_NO_FRAME AND sgn(BorderlessFS)))
+			prepCanvas(.Wideth * MultiWidth,.Height,GFX_FULLSCREEN OR GFX_NO_FRAME)
 		end if
 	end with
 end sub
@@ -1202,7 +1206,7 @@ sub menu
 	sleep 5
 	InType = inkey
 	
-	if InType = EscKey OR InType = chr(255,107) then ReplayerMode = MODE_EXIT
+	if InType = EscKey OR InType = XBox then ReplayerMode = MODE_EXIT
 end sub
 
 declare function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as byte
@@ -1456,8 +1460,7 @@ sub replayHub(DownloadMode as byte = 0)
 				ReplayerMode = MODE_DOWNLOAD
 				exit do
 			end if
-		elseif InType = chr(255,107) then
-			'Ensures program is closed by hitting the X button
+		elseif InType = XBox then
 			ReplayerMode = MODE_EXIT
 			exit do
 		elseif InType = EscKey then

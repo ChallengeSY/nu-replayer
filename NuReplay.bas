@@ -24,10 +24,10 @@ sub cleaning destructor
 	print #1, quote("Exclude MvM Games");",";ExcludeMvM
 	print #1, quote("Exclude Dataless Games");",";ExcludeNodata
 	print #1, quote("Legacy Race Names");",";LegacyRaceNames
-	print #1, quote("Borderless");",";BorderlessFS
 	print #1, quote("Slideshow Delay");",";SlideshowDelay
 	print #1, quote("VCR Speed");",";DefaultVCRspeed
 	print #1, quote("Prune Dupes");",";PruneDupes
+	print #1, quote("Width Multiplier");",";MultiWidth
 	close #1
 	
 	#IFNDEF __FB_DOS__
@@ -65,6 +65,7 @@ ExcludeNodata = 0
 LegacyRaceNames = 0
 DefaultVCRspeed = 5
 SlideshowDelay = 1000
+MultiWidth = 1
 
 if FileExists("Settings.csv") then
 	open "Settings.csv" for input as #1
@@ -87,14 +88,14 @@ if FileExists("Settings.csv") then
 				input #1, ExcludeNodata
 			case "Legacy Race Names"
 				input #1, LegacyRaceNames
-			case "Borderless"
-				input #1, BorderlessFS
 			case "Slideshow Delay"
 				input #1, SlideshowDelay
 			case "VCR Speed"
 				input #1, DefaultVCRspeed
 			case "Prune Dupes"
 				input #1, PruneDupes
+			case "Width Multiplier"
+				input #1, MultiWidth
 		end select
 	loop until eof(1)
 	close #1
@@ -143,13 +144,13 @@ with BaseScreen
 		
 		cleaning
 		end -2
-	elseif .Wideth <= 1024 OR .Height <= 800 then
+	elseif .Wideth <= 1024 OR .Height <= 768 then
 		/'
 		 ' If the desktop size is equal to the hub requirements on
 		 ' either side, then it forces fullscreen. Access to most
 		 ' features are disabled
 		 '/
-		prepCanvas(.Wideth,.Height,GFX_FULLSCREEN OR (GFX_NO_FRAME AND sgn(BorderlessFS)))
+		prepCanvas(.Wideth,.Height,GFX_FULLSCREEN OR GFX_NO_FRAME)
 	else
 		/'
 		 ' If the desktop size is greater than the hub requirements on
