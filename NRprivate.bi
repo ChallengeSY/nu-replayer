@@ -1,4 +1,4 @@
-sub importPrivateGame
+sub importPrivateGame(PreID as integer = 0)
 	dim as string InStream, GameName, ShortDesc
 	dim as integer GameNum, GameStatus, FinalTurn, SeekChar(1)
 	
@@ -7,26 +7,30 @@ sub importPrivateGame
 	dim Bytes as integer
 	dim LinesReceived as ushort
 	
-	do
-		line(CanvasScreen.Wideth/2+10,250)-(CanvasScreen.Wideth-6,274),rgb(0,0,0),bf
-		gfxstring("Enter Game ID: "+str(GameNum),CanvasScreen.Wideth/2+10,250,5,4,2,rgb(255,255,0))
-
-		if InType = EscKey then
-			if GameNum > 0 then
-				GameNum = 0
-			else
-				exit do
+	if PreID = 0 then
+		do
+			line(CanvasScreen.Wideth/2+10,250)-(CanvasScreen.Wideth-6,274),rgb(0,0,0),bf
+			gfxstring("Enter Game ID: "+str(GameNum),CanvasScreen.Wideth/2+10,250,5,4,2,rgb(255,255,0))
+	
+			if InType = EscKey then
+				if GameNum > 0 then
+					GameNum = 0
+				else
+					exit do
+				end if
+			elseif InType >= "0" AND InType <= "9" then
+				GameNum = GameNum * 10 + valint(InType)
+			elseif InType = chr(8) then
+				GameNum = int(GameNum / 10)
 			end if
-		elseif InType >= "0" AND InType <= "9" then
-			GameNum = GameNum * 10 + valint(InType)
-		elseif InType = chr(8) then
-			GameNum = int(GameNum / 10)
-		end if
-
-		screencopy
-		sleep 15
-		InType = inkey
-	loop until InType = EnterKey
+	
+			screencopy
+			sleep 15
+			InType = inkey
+		loop until InType = EnterKey
+	else
+		GameNum = PreID
+	end if
 	ErrorMsg = ""
 
 	if GameNum > 0 then

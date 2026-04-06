@@ -13,7 +13,7 @@ const ObjClose = "},"
 dim shared as string ErrorMsg
 #ENDIF
 
-function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as byte
+function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, ActiveArena as byte = 0) as byte
 	randomize timer
 	
 	dim as string InStream, ObjName, ObjCode, RawPath, LoadFile
@@ -103,9 +103,15 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 	if PrintTxt then
 		print "Converting players...";
 	end if
-	loadTurnUI(0)
+	if ActiveArena = 0 then
+		loadTurnUI(0)
+	end if
 	
-	for PID as ubyte = 1 to 35
+	for PID as ushort = 0 to MaxPlayers
+		if ActiveArena = 0 then
+			continue for
+		end if
+		
 		LoadFile = RawPath+"/player"+str(PID)+"-turn"+str(TurnNum)+".trn"
 		if FileExists(LoadFile) = 0 then
 			LoadFile = RawPath+"/"+str(TurnNum)+"/loadturn"+str(PID)
@@ -181,56 +187,52 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				loadTurnKB(int(BlockChar(1)/1e3),PID)
 			end if
 			
-			'Convert player data
-			BlockChar(0) = instr(InStream,quote("player")+": {")
-			if BlockChar(0) > 0 then
-				BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
-				
-				with ProcessSlot(PID)
-					RaceType = getJsonVal(InStream,"raceid",BlockChar(0))
-					.Namee = getJsonStr(InStream,"username",BlockChar(0))
-
-					'Academy resources
-					.StockDu = getJsonVal(InStream,"duranium",BlockChar(0))
-					.StockTr = getJsonVal(InStream,"tritanium",BlockChar(0))
-					.StockMo = getJsonVal(InStream,"molybdenum",BlockChar(0))
-					.StockCr = getJsonVal(InStream,"megacredits",BlockChar(0))
-
-					select case RaceType
-						case 1
-							.RaceType = "Fed"
-						case 2
-							.RaceType = "Lizard"
-						case 3
-							.RaceType = "Bird Man"
-						case 4
-							.RaceType = "Fascist"
-						case 5
-							.RaceType = "Privateer"
-						case 6
-							.RaceType = "Cyborg"
-						case 7
-							.RaceType = "Crystalline"
-						case 8
-							.RaceType = "Empire"
-						case 9
-							.RaceType = "Robotic"
-						case 10
-							.RaceType = "Rebel"
-						case 11
-							.RaceType = "Colonial"
-						case 12
-							.RaceType = "Horwasp"
-						case else
-							.RaceType = "Unassigned"
-					end select
-				end with
-				
-				if cmdLine("--verbose") then
-					print "Acquired player data for player "& PID 
+			if PID > 0 then
+				'Convert player data
+				BlockChar(0) = instr(InStream,quote("player")+": {")
+				if BlockChar(0) > 0 then
+					BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
+					
+					with ProcessSlot(PID)
+						.Namee = getJsonStr(InStream,"username",BlockChar(0))
+						.RaceType = getRaceByID(getJsonVal(InStream,"raceid",BlockChar(0)))
+						
+						'Academy resources
+						.StockDu = getJsonVal(InStream,"duranium",BlockChar(0))
+						.StockTr = getJsonVal(InStream,"tritanium",BlockChar(0))
+						.StockMo = getJsonVal(InStream,"molybdenum",BlockChar(0))
+						.StockCr = getJsonVal(InStream,"megacredits",BlockChar(0))
+					end with
+					
+					if cmdLine("--verbose") then
+						print "Acquired player data for player "& PID 
+					end if
+					
+					loadTurnKB(int(BlockChar(1)/1e3),PID)
 				end if
 				
-				loadTurnKB(int(BlockChar(1)/1e3),PID)
+			else
+				'Convert all players
+				BlockChar(0) = instr(InStream,quote("players")+": [")
+				if BlockChar(0) > 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					
+					for SID as ushort = 1 to MaxPlayers
+						SeekChar = instr(BlockChar(1),InStream,"status")
+						with ProcessSlot(SID)
+							.Namee = getJsonStr(InStream,"username",SeekChar)
+							.RaceType = getRaceByID(getJsonVal(InStream,"raceid",SeekChar))
+						end with
+						
+						BlockChar(1) = instr(BlockChar(1) + len(ObjClose),InStream,ObjClose)
+						if BlockChar(1) > BlockChar(2) then
+							exit for
+						end if
+						
+						loadTurnKB(int(BlockChar(1)/1e3),PID)
+					next SID
+				end if
 			end if
 			
 			'Score data
@@ -238,19 +240,38 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			if BlockChar(0) > 0 then
 				BlockChar(1) = instr(BlockChar(0),InStream,ArrayClose)
 				
-				SeekChar = instr(BlockChar(0),InStream,quote("ownerid")+":"+str(PID))
-				if SeekChar < BlockChar(1) then
-					with ProcessSlot(PID)
-						'Starships
-						.TotalShips = getJsonVal(InStream,"capitalships",SeekChar)
-						.Freighters = getJsonVal(InStream,"freighters",SeekChar)
-						.TotalShips += .Freighters
-						
-						'Planets/Bases/Military
-						.Planets = getJsonVal(InStream,"planets",SeekChar)
-						.Bases = getJsonVal(InStream,"starbases",SeekChar)
-						.Military = getJsonVal(InStream,"militaryscore",SeekChar)
-					end with
+				if PID > 0 then
+					SeekChar = instr(BlockChar(0),InStream,quote("ownerid")+":"+str(PID)+",")
+					if SeekChar < BlockChar(1) then
+						with ProcessSlot(PID)
+							'Starships
+							.TotalShips = getJsonVal(InStream,"capitalships",SeekChar)
+							.Freighters = getJsonVal(InStream,"freighters",SeekChar)
+							.TotalShips += .Freighters
+							
+							'Planets/Bases/Military
+							.Planets = getJsonVal(InStream,"planets",SeekChar)
+							.Bases = getJsonVal(InStream,"starbases",SeekChar)
+							.Military = getJsonVal(InStream,"militaryscore",SeekChar)
+						end with
+					end if
+				else
+					for SID as ushort = 1 to MaxPlayers
+						SeekChar = instr(BlockChar(0),InStream,quote("ownerid")+":"+str(SID)+",")
+						if SeekChar < BlockChar(1) then
+							with ProcessSlot(SID)
+								'Starships
+								.TotalShips = getJsonVal(InStream,"capitalships",SeekChar)
+								.Freighters = getJsonVal(InStream,"freighters",SeekChar)
+								.TotalShips += .Freighters
+								
+								'Planets/Bases/Military
+								.Planets = getJsonVal(InStream,"planets",SeekChar)
+								.Bases = getJsonVal(InStream,"starbases",SeekChar)
+								.Military = getJsonVal(InStream,"militaryscore",SeekChar)
+							end with
+						end if
+					next SID
 				end if
 				
 				if cmdLine("--verbose") then
@@ -341,7 +362,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					
 					WaspParser(ObjIDa) = InterWasp
 					
-					if InterPlan.PlanetOwner = PID then
+					if PID <= 0 OR InterPlan.PlanetOwner = PID then
 						with PlanetParser(ObjIDa)
 							if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND TurnNum < GameParser.AccelStart) then
 								print #9, "[";Time;", ";Date;"]  Registered planet #"& ObjIDa;" (";ObjName;")"
@@ -447,8 +468,13 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						end if
 						.YLoc = valint(mid(InStream,SeekChar+4,4))
 						
-						.TargetX = getJsonVal(InStream,"targetx",BlockChar(1))
-						.TargetY = getJsonVal(InStream,"targety",BlockChar(1))
+						if PID > 0 then
+							.TargetX = getJsonVal(InStream,"targetx",BlockChar(1))
+							.TargetY = getJsonVal(InStream,"targety",BlockChar(1))
+						else
+							.TargetX = .XLoc
+							.TargetY = .YLoc
+						end if
 						.WarpFactor = getJsonVal(InStream,"warp",BlockChar(1))
 						
 						'Basic info
@@ -496,7 +522,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 						print "Identified ship #"& ObjIDa;" as belonging to player "& InterShip.ShipOwner
 					end if
 					
-					if InterShip.ShipOwner = PID then
+					if PID <= 0 OR InterShip.ShipOwner = PID then
 						if ShipParser(ObjIDa).LockOwner = 0 then
 							ShipParser(ObjIDa) = InterShip
 							ShipParser(ObjIDa).LockOwner = 1
@@ -512,7 +538,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			end if
 			
 			'Ion Storms data. Only read this if the first player
-			if PID = 1 then
+			if PID <= 1 then
 				BlockChar(0) = instr(InStream,quote("ionstorms")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("ionstorms")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
@@ -547,7 +573,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			end if
 			
 			'Nebulae data. Only read this if non-existant or outdated
-			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 OR _
+			if PID <= 1 AND (FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 OR _
 				FileDateTime("games/"+str(GameNum)+"/Nebulae.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("nebulas")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("nebulas")+": []") = 0 then
@@ -580,7 +606,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			end if
 			
 			'Star Cluster data. Only read this if non-existant or outdated
-			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 OR _
+			if PID <= 1 AND (FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 OR _
 				FileDateTime("games/"+str(GameNum)+"/StarClusters.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("stars")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("stars")+": []") = 0 then
@@ -617,7 +643,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			end if
 			
 			'Black Hole data. Only read this if non-existant or outdated
-			if PID = 1 AND (FileExists("games/"+str(GameNum)+"/BlackHoles.csv") = 0 OR _
+			if PID <= 1 AND (FileExists("games/"+str(GameNum)+"/BlackHoles.csv") = 0 OR _
 				FileDateTime("games/"+str(GameNum)+"/BlackHoles.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("blackholes")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("blackholes")+": []") = 0 then
@@ -755,7 +781,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 					ObjIDa = getJsonVal(InStream,"planetid",BlockChar(1))
 					ObjIDb = getJsonVal(InStream,"id",BlockChar(1))
 						
-					if PlanetParser(ObjIDa).PlanetOwner = PID then
+					if PID <= 0 OR PlanetParser(ObjIDa).PlanetOwner = PID then
 						print #9, "[";Time;", ";Date;"]  Registered starbase #"& ObjIDa
 						with PlanetParser(ObjIDa)
 							.BasePresent = ObjIDb
@@ -822,34 +848,36 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
 			end if
 			
-			'Diplomacy relations data
-			BlockChar(0) = instr(InStream,quote("relations")+": [")
-			if BlockChar(0) > 0 AND instr(InStream,quote("relations")+": []") = 0 then
-				BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
-				BlockChar(1) = BlockChar(0)
-				do
-					with RelateParser(RelateID)
-						.FromPlr = getJsonVal(InStream,"playerid",BlockChar(1))
-						.ToPlr = getJsonVal(InStream,"playertoid",BlockChar(1))
-						.RelationA = getJsonVal(InStream,"relationto",BlockChar(1))
-						.RelationB = getJsonVal(InStream,"relationfrom",BlockChar(1))
-						.ConflictLev = getJsonVal(InStream,"conflictlevel",BlockChar(1))
-					end with
-
-					if RelateParser(RelateID).FromPlr = PID then
-						if cmdLine("--verbose") OR cmdLine("-vr") then
-							with RelateParser(RelateID)
-								if .FromPlr < .ToPlr then
-									print "Identified the relationship between players "& .FromPlr;" and "& .ToPlr;" as #"& RelateID
-								end if
-							end with
+			'Diplomacy relations data. Only applicable if fetching individual player data
+			if PID > 0 then
+				BlockChar(0) = instr(InStream,quote("relations")+": [")
+				if BlockChar(0) > 0 AND instr(InStream,quote("relations")+": []") = 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					do
+						with RelateParser(RelateID)
+							.FromPlr = getJsonVal(InStream,"playerid",BlockChar(1))
+							.ToPlr = getJsonVal(InStream,"playertoid",BlockChar(1))
+							.RelationA = getJsonVal(InStream,"relationto",BlockChar(1))
+							.RelationB = getJsonVal(InStream,"relationfrom",BlockChar(1))
+							.ConflictLev = getJsonVal(InStream,"conflictlevel",BlockChar(1))
+						end with
+	
+						if RelateParser(RelateID).FromPlr = PID then
+							if cmdLine("--verbose") OR cmdLine("-vr") then
+								with RelateParser(RelateID)
+									if .FromPlr < .ToPlr then
+										print "Identified the relationship between players "& .FromPlr;" and "& .ToPlr;" as #"& RelateID
+									end if
+								end with
+							end if
+							RelateID += 1
 						end if
-						RelateID += 1
-					end if
-						
-					BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
-					loadTurnKB(int(BlockChar(1)/1e3),PID)
-				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+							
+						BlockChar(1) = instr(BlockChar(1)+len(ObjClose),InStream,ObjClose)
+						loadTurnKB(int(BlockChar(1)/1e3),PID)
+					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+				end if
 			end if
 			
 			'VCR data
@@ -945,16 +973,20 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as
 			end if
 		end if
 	
-		with ProcessSlot(PID)
-			#IFDEF __DEDICATED__
-			if Command(3) <> "" then
-				print "Finished player "& PID;"!"
-			end if
-			#ENDIF
-
-			print #9, "[";Time;", ";Date;"]  Done for ";.RaceType;" (";trim(.Namee,chr(34));")"
-			loadTurnUI(PID)
-		end with
+		if ActiveArena then
+			exit for
+		else
+			with ProcessSlot(PID)
+				#IFDEF __DEDICATED__
+				if Command(3) <> "" then
+					print "Finished player "& PID;"!"
+				end if
+				#ENDIF
+				
+				print #9, "[";Time;", ";Date;"]  Done for ";.RaceType;" (";trim(.Namee,chr(34));")"
+				loadTurnUI(PID)
+			end with
+		end if
 	next PID
 	
 	if PrintTxt then

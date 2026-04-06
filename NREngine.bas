@@ -116,6 +116,9 @@ sub loadGame(ByRef LoadID as uinteger)
 				GameName = .Namee
 				ViewGame.LastTurn = .LastTurn
 			end with
+			if LoadID = FeaturedArena AND GameName = "" then
+				GameName = "Planets Nu Arena Live"
+			end if
 			SettingsFile = "games/"+str(GameID)+"/Settings.csv"
 
 			with ViewGame

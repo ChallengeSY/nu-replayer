@@ -58,7 +58,6 @@ sub fetchStaticData
 			ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 		else
 			mkdir "raw"
-			mkdir "raw/"+str(GameID)+""
 			open TargetFile(0) for output as #4
 
 			do

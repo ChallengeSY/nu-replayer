@@ -1,4 +1,4 @@
-declare function downloadLastTurns(GameID as integer) as integer
+declare function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as integer
 declare function downloadZipPackage(GameID as integer) as integer
 #include "NRzip.bi"
 
@@ -8,7 +8,7 @@ sub downloadGame(GameName as string, GameID as integer)
 	print word_wrap("Creating preparation data and downloading turns for "+GameName+". This may take several minutes depending on the number of players and ZIP package size...")
 	screencopy
 	
-	if downloadLastTurns(GameID) AND downloadZipPackage(GameID) then
+	if downloadLastTurns(GameID) ANDALSO downloadZipPackage(GameID) then
 		'Indicate successful operation
 		open "raw/DLturn.txt" for output as #9
 		print #9, "Last downloaded game #"& GameID
@@ -29,7 +29,7 @@ sub downloadGame(GameName as string, GameID as integer)
 	ErrorMsg = ""
 end sub
 
-function downloadLastTurns(GameID as integer) as integer
+function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as integer
 	dim SendBuffer as string
 	dim RecvBuffer as zstring * RECVBUFFLEN+1
 	dim Bytes as integer
@@ -41,18 +41,26 @@ function downloadLastTurns(GameID as integer) as integer
 	GameParser.LastTurn = 0
 	GameParser.DynamicMap = 0
 	GameParser.TorpSet = 0
-
-	'Download a series of turns
+	
+	mkdir "raw"
+	mkdir "raw/"+str(GameID)
+	
+	'Download one or more of turns, depending on the game type
 	do
-		Player += 1
-		if Player > max(1,GameParser.PlayerCount) then
-			exit do
-		end if
-		
-		if Player = 1 then
-			createMeter(0,"Downloading turns... (0 / ? players done)")
+		if ActiveArena then
+			Player = 0
+			createMeter(1/3, "Downloading spectator turn...")
 		else
-			createMeter((Player-1)/GameParser.PlayerCount,"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)")
+			Player += 1
+			if Player > max(1,GameParser.PlayerCount) then
+				exit do
+			end if
+			
+			if Player = 1 then
+				createMeter(0,"Downloading turns... (0 / ? players done)")
+			else
+				createMeter((Player-1)/GameParser.PlayerCount,"Downloading turns... ("+str(Player-1)+" / "+str(GameParser.PlayerCount)+" players done)")
+			end if
 		end if
 		screencopy
 		
@@ -73,8 +81,6 @@ function downloadLastTurns(GameID as integer) as integer
 				ErrorMsg = "Nu Replayer did not successfully send its request to Planets Nu's servers."
 				return 0
 			else
-				mkdir "raw"
-				mkdir "raw/"+str(GameID)+""
 				open TargetFile(0) for output as #4
 	
 				do
@@ -103,7 +109,7 @@ function downloadLastTurns(GameID as integer) as integer
 			
 			if instr(Instream,"{"+quote("success")+":false") then
 				ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to API error."
-			elseif Player = 1 then
+			elseif Player <= 1 then
 				with GameParser
 					.DynamicMap = 0
 					.PlayerCount = getJsonVal(InStream,"slots")
@@ -122,7 +128,7 @@ function downloadLastTurns(GameID as integer) as integer
 					mkdir("games/"+str(GameID))
 					exportSettings(GameID,1)
 					
-					if FoundSettings then
+					if FoundSettings <> 0 AND ActiveArena = 0 then
 						print
 						print "Found the following settings..."
 						print "* Players: "& .PlayerCount
@@ -151,6 +157,10 @@ function downloadLastTurns(GameID as integer) as integer
 		end if
 		
 		SDLNet_TCP_Close( NuSocket )
+		
+		if ActiveArena then
+			exit do
+		end if
 	loop
 
 	createMeter(GameParser.PlayerCount/GameParser.PlayerCount,"")

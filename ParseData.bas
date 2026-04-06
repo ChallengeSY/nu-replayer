@@ -279,7 +279,7 @@ type ParseGame
 	LastTurn as short
 end type
 
-dim shared as ParseScore ProcessSlot(35), ResetSlotPar
+dim shared as ParseScore ProcessSlot(MaxPlayers), ResetSlotPar
 dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan, ResetPlanPar
 dim shared as ParseShip ShipParser(LimitObjs), InterShip, ResetShipPar
 dim shared as ParseBase BaseParser(LimitObjs), InterBase, ResetBasePar
@@ -326,6 +326,37 @@ function cmdLine(SearchStr as string) as byte
 	return FoundStr
 end function
 #ENDIF
+
+function getRaceByID(ReadID as byte) as string
+	select case ReadID
+		case 1
+			return "Fed"
+		case 2
+			return "Lizard"
+		case 3
+			return "Bird Man"
+		case 4
+			return "Fascist"
+		case 5
+			return "Privateer"
+		case 6
+			return "Cyborg"
+		case 7
+			return "Crystalline"
+		case 8
+			return "Empire"
+		case 9
+			return "Robotic"
+		case 10
+			return "Rebel"
+		case 11
+			return "Colonial"
+		case 12
+			return "Horwasp"
+	end select
+	
+	return "Unassigned"
+end function
 
 function getJsonVal(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0, DefVal as integer = -1) as integer
 	dim as integer MatchFound = instr(CharInit,ReadStr,quote(ReadParam)+":")

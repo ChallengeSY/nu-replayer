@@ -877,8 +877,13 @@ sub loadTurnKB(KBCount as integer, PlayerID as ubyte)
 		FileSize = int(FileLen("raw/"+str(GameID)+"/player"+str(PlayerID)+"-turn"+str(TurnNum)+".trn")/1e3)
 
 		if FileSize > 0 then
-			createMeter((PlayerID-1+KBCount/FileSize)/LoadTurnDetected)
-			FileProgress = str(KBCount)+"/"+str(FileSize)+" KB done for player "+str(PlayerID)
+			if PlayerID > 0 then
+				createMeter((PlayerID-1+KBCount/FileSize)/LoadTurnDetected)
+				FileProgress = str(KBCount)+"/"+str(FileSize)+" KB done for player "+str(PlayerID)
+			else
+				FileProgress = "Converting spectator turn... ("+str(KBCount)+"/"+str(FileSize)+" KB done)"
+				createMeter((2+KBCount/FileSize)/3, FileProgress)
+			end if
 		else
 			for PlotIndeter as short = 0 to 22
 				XPos = (PlotIndeter-1)*50 + remainder(int(KBCount/2),50)

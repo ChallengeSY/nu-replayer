@@ -404,7 +404,7 @@ dim shared as ubyte SimpleView, MultiWidth, ExcludeBlitzes, ExcludeMvM, ExcludeN
 	OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
 dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
-dim shared as uinteger GameID, TotalGamesLoaded, SlideshowDelay
+dim shared as uinteger GameID, FeaturedArena, TotalGamesLoaded, SlideshowDelay
 dim shared as integer MouseX, MouseY, MouseError, SelectedIndex, ButtonCombo, ActualX, ActualY, DestPattern
 dim shared as short FadingSelect, TurnNum, BoxGlow
 dim shared as double DistQuota, LastPlanetUpdate, SerialRecord, Midpoint
@@ -509,8 +509,9 @@ declare sub updateGameList(DownloadList as byte = 0)
 declare sub recordPersonalGames
 declare function isPersonalGame(SearchID as integer) as integer
 #IFNDEF __FORCE_OFFLINE__
-declare sub importPrivateGame
+declare sub importPrivateGame(PreID as integer = 0)
 declare sub downloadGame(GameName as string, GameID as integer)
+declare sub fetchArenaFiles
 #ENDIF
 
 'Randomize seed
@@ -542,7 +543,7 @@ end sub
 sub prepCanvas(NewWidth as short, NewHeight as short, ExtraFlags as integer = 0)
 	dim as short CalcRows = int(NewHeight/16)
 	screenres NewWidth, NewHeight,24,2,GFX_NO_SWITCH OR GFX_ALPHA_PRIMITIVES OR ExtraFlags
-	if MultiWidth > 1 then
+	if MultiWidth > 1 AND ExtraFlags <> 0 then
 		screencontrol SET_WINDOW_POS, 0, 0
 	end if
 	
@@ -949,10 +950,22 @@ sub menu
 		gfxstring("Network Mode",10,200,5,4,3,rgb(255,255,255))
 	end if
 	#ENDIF
+	
+	#IFNDEF __FORCE_OFFLINE__
+	if FeaturedArena > 0 then
+		gfxstring("Watch the Arena",10,250,5,4,3,rgb(255,255,255))
+		if MouseY >= 240 AND MouseY < 285 AND MouseX < CanvasScreen.Wideth/2 then
+			drawBox(0,240,CanvasScreen.Wideth/2-1,285)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				fetchArenaFiles
+			end if
+		end if
+	end if
+	#ENDIF
 
 	#IFDEF __BATTLE_SIMS__
 	if ReplayerMode = MODE_BAT_SIMS then	
-		gfxstring("Battle Simulator",10,250,5,4,3,rgb(255,255,0))
+		gfxstring("Battle Simulator",10,300,5,4,3,rgb(255,255,0))
 
 		for SimSlot as byte = 1 to 12
 			gfxstring("Simulator Slot "+str(SimSlot),CanvasScreen.Wideth/2+10,50*(SimSlot+1)-5,3,3,2,rgb(128,128,128))
@@ -965,7 +978,7 @@ sub menu
 			end if
 		next SimSlot
 	else
-		gfxstring("Battle Simulator",10,250,5,4,3,rgb(255,255,255))
+		gfxstring("Battle Simulator",10,300,5,4,3,rgb(255,255,255))
 	end if
 	#ENDIF
 	
@@ -1209,7 +1222,7 @@ sub menu
 	if InType = EscKey OR InType = XBox then ReplayerMode = MODE_EXIT
 end sub
 
-declare function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1) as byte
+declare function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, ActiveArena as byte = 0) as byte
 
 sub replayHub(DownloadMode as byte = 0)
 	loadGameList

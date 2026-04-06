@@ -11,6 +11,8 @@ declare sub loadTurnKB(KBCount as integer, Players as ubyte)
 #include "NREngine.bas"
 #include "NRClient.bas"
 
+#include "NRArena.bas"
+
 #include "ListGames.bi"
 #include "NuStatic.bi"
 
@@ -28,6 +30,7 @@ sub cleaning destructor
 	print #1, quote("VCR Speed");",";DefaultVCRspeed
 	print #1, quote("Prune Dupes");",";PruneDupes
 	print #1, quote("Width Multiplier");",";MultiWidth
+	print #1, quote("Featured Arena");",";FeaturedArena
 	close #1
 	
 	#IFNDEF __FB_DOS__
@@ -96,6 +99,8 @@ if FileExists("Settings.csv") then
 				input #1, PruneDupes
 			case "Width Multiplier"
 				input #1, MultiWidth
+			case "Featured Arena"
+				input #1, FeaturedArena
 		end select
 	loop until eof(1)
 	close #1
