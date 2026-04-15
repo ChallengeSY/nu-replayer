@@ -25,6 +25,11 @@ function gradColoring(ColoringA as uinteger, ColoringB as uinteger, Transition a
 		retrivePrimary(ColoringA,RGBA_ALPHA)*(1-Transition) + retrivePrimary(ColoringB,RGBA_ALPHA)*Transition)
 end function
 
+function charIsLower(TestChr as string) as byte
+	return (lcase(TestChr) = TestChr AND (TestChr < "0" OR TestChr > "9") AND _
+		TestChr <> "(" AND TestChr <> ")" AND TestChr <> "<" AND TestChr <> ">")
+end function
+
 sub gfxString(Text as string, TLX as uinteger, TLY as uinteger, BSize as ubyte, LSize as ubyte, Kerning as ubyte, ColoringA as uinteger, ColoringB as uinteger = 0)
 	dim as ushort ChrID, AddedSpacing = 0, DeltaLen
 	dim as uinteger ApplyColor
@@ -40,7 +45,7 @@ sub gfxString(Text as string, TLX as uinteger, TLY as uinteger, BSize as ubyte, 
 			ApplyColor = gradColoring(ColoringA, ColoringB, Progress)
 		end if
 		
-		if lcase(PrintChr) = PrintChr AND (PrintChr < "0" OR PrintChr > "9") AND PrintChr <> "(" AND PrintChr <> ")" then
+		if charIsLower(PrintChr) then
 			printGfx(PrintChr,TLX+((LSize*3)+Kerning)*(ChrID-1)+AddedSpacing,TLY+(5*(BSize-LSize)),LSize,ApplyColor)
 		else
 			printGfx(PrintChr,TLX+((LSize*3)+Kerning)*(ChrID-1)+AddedSpacing,TLY,BSize,ApplyColor)
@@ -54,7 +59,7 @@ function gfxLength(Text as string, BSize as ubyte, LSize as ubyte, Kerning as ub
 	dim as string PrintChr
 	for ChrID = 1 to len(Text)
 		PrintChr = mid(Text,ChrID,1)
-		if lcase(PrintChr) = PrintChr AND (PrintChr < "0" OR PrintChr > "9") then
+		if charIsLower(PrintChr) then
 			Padding += (LSize*3)+Kerning
 		else
 			Padding += (BSize*3)+Kerning

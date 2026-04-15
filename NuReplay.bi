@@ -57,6 +57,7 @@ const InsertKey = chr(255,82)
 const DeleteKey = chr(255,83)
 const PageUp = chr(255,73)
 const PageDown = chr(255,81)
+const TabKey = chr(9)
 const EnterKey = chr(13)
 const EscKey = chr(27)
 const XBox = chr(255,107)
@@ -66,7 +67,7 @@ const CtrlJ = chr(10)
 const CtrlR = chr(18)
 
 const CooldownList = 8/24
-const MaxPlayers = 100
+#DEFINE MaxPlayers 100
 #DEFINE MetaLimit 2.5e5
 
 type ShipSpecs

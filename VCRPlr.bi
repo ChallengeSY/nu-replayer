@@ -749,6 +749,8 @@ sub drawOverlay
 	with ActiveVCR.Combatants(1)
 		CombatStr = .Namee
 		gfxString(CombatStr,CanvasScreen.Wideth/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
+		CombatStr = "Ship "+str(.PieceID)+": "+ShiplistObj(.HullID).HullName
+		gfxString(CombatStr,CanvasScreen.Wideth/4-gfxLength(CombatStr,4,3,3)/2,50,4,3,3,rgb(224,224,224))
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
 		gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,330,4,3,3,rgb(255,255,255))
@@ -852,6 +854,12 @@ sub drawOverlay
 	with ActiveVCR.Combatants(2)
 		CombatStr = .Namee
 		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
+		if PlanBattle = 0 then
+			CombatStr = "Ship "+str(.PieceID)+": "+ShiplistObj(.HullID).HullName
+		else
+			CombatStr = "Planet "+str(.PieceID)
+		end if
+		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,50,4,3,3,rgb(224,224,224))
 		
 		CombatStr = "Mass  : "+commaSep(.Mass)+"kT"
 		gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,330,4,3,3,rgb(255,255,255))

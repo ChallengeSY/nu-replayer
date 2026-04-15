@@ -296,7 +296,6 @@ sub renderClient
 	for DrawLayer as byte = 1 to 3
 		if DrawLayer = 2 AND ViewGame.Sphere then
 			'Wraparound Border
-			dim as integer WrapWidth, WrapHeight
 			dim as ViewSpecs EndingPos
 			
 			WrapWidth = ViewGame.MapWidth + 20
@@ -392,7 +391,7 @@ sub renderClient
 				
 				'Wormholes
 				with Wormholes(OID)
-					if .Stability > 0 AND .X > 0 then
+					if .Stability >= 0 AND .X > 0 then
 						dim as ViewSpecs EndingPos
 						
 						RelativePos = getRelativePos(.X, .Y)

@@ -153,7 +153,7 @@ sub getReport
 					if ViewGame.Academy = 0 AND HorwaspPlanet = 0 then
 						ClimateStr += " (FC "+str(.FCode)+")"
 					end if
-
+					
 					gfxString(FullObjName,Sidebar,60,3,2,2,ReportColor)
 					gfxString(ClimateStr,Sidebar,100,3,2,2,ReportColor)
 					
@@ -596,8 +596,12 @@ sub getReport
 				end if
 				
 				gfxString(.ShipName,Sidebar,100,3,2,2,ReportColor)
-				if ShiplistObj(.ShipType).Engines > 0 then 
-					gfxString(str(ShiplistObj(.ShipType).Engines)+"x "+Engines(.EnginePos).PartName,Sidebar,120,3,2,2,ReportColor)
+				if ShiplistObj(.ShipType).Engines > 0 then
+					if GameName = ActiveArenaTitle then
+						gfxString(str(ShiplistObj(.ShipType).Engines)+"x engines",Sidebar,120,3,2,2,ReportColor)
+					else
+						gfxString(str(ShiplistObj(.ShipType).Engines)+"x "+Engines(.EnginePos).PartName,Sidebar,120,3,2,2,ReportColor)
+					end if
 				else
 					gfxString("No engines",Sidebar,120,3,2,2,rgb(128,128,128))
 				end if
@@ -1344,13 +1348,22 @@ sub buildAuxList
 				
 				with Nebulae(AID)
 					ObjDist = sqr((.X - ViewPort.X)^2 + (.Y - ViewPort.Y)^2)
+					if ViewGame.Sphere then
+						for WY as byte = -1 to 1
+							for WX as byte = -1 to 1
+								if WY <> 0 OR WX <> 0 then
+									ObjDist = min(ObjDist, sqr((.X + WrapWidth*WX - ViewPort.X)^2 + (.Y + WrapHeight*WY - ViewPort.Y)^2))
+								end if
+							next WX
+						next WY
+					end if
 					
 					if .Intensity > 0 then
 						if .X = ViewPort.X AND .Y = ViewPort.Y then
 							NebDensity += .Intensity 
 							AuxCount += 1
 							with AuxList(AuxCount)
-								.Namee = Nebulae(AID).Namee+" Nebula"
+								.Namee = "Nebula "+str(AID)
 								.Coloring = rgb(80,208,112)
 								.ObjType = REPORT_NEB
 								.ObjID = AID
@@ -1365,7 +1378,7 @@ sub buildAuxList
 					if .Stability > 0 AND .X = ViewPort.X AND .Y = ViewPort.Y then
 						AuxCount += 1
 						with AuxList(AuxCount)
-							.Namee = Wormholes(AID).Namee+" Wormhole"
+							.Namee = "Wormhole "+str(AID)
 							.Coloring = rgb(0,160,176)
 							.ObjType = REPORT_WORM
 							.ObjID = AID
@@ -1376,11 +1389,20 @@ sub buildAuxList
 				with StarClusters(AID)
 					if .Mass > 0 then
 						ObjDist = sqr((.X - ViewPort.X)^2 + (.Y - ViewPort.Y)^2)
+						if ViewGame.Sphere then
+							for WY as byte = -1 to 1
+								for WX as byte = -1 to 1
+									if WY <> 0 OR WX <> 0 then
+										ObjDist = min(ObjDist, sqr((.X + WrapWidth*WX - ViewPort.X)^2 + (.Y + WrapHeight*WY - ViewPort.Y)^2))
+									end if
+								next WX
+							next WY
+						end if
 						
 						if .X = ViewPort.X AND .Y = ViewPort.Y then
 							AuxCount += 1
 							with AuxList(AuxCount)
-								.Namee = StarClusters(AID).Namee+" Star Cluster"
+								.Namee = "Star Cluster "+str(AID)
 								.Coloring = rgb(224,224,255)
 								.ObjType = REPORT_STAR
 								.ObjID = AID
@@ -1395,7 +1417,7 @@ sub buildAuxList
 					if .Core > 0 AND .XLoc = ViewPort.X AND .YLoc = ViewPort.Y then
 						AuxCount += 1
 						with AuxList(AuxCount)
-							.Namee = BlackHoles(AID).Namee+" Black Hole"
+							.Namee = "Black Hole "+str(AID)
 							.Coloring = rgb(96,160,192)
 							.ObjType = REPORT_BHOLE
 							.ObjID = AID

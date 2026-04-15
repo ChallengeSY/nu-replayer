@@ -112,12 +112,14 @@ sub loadGame(ByRef LoadID as uinteger)
 
 		dim as double NearestDist, CalcDist
 		if Dir("games/"+str(GameID), fbDirectory) <> "" then
-			with GameObj(SelectedIndex)
-				GameName = .Namee
-				ViewGame.LastTurn = .LastTurn
-			end with
 			if LoadID = FeaturedArena AND GameName = "" then
-				GameName = "Planets Nu Arena Live"
+				GameName = ActiveArenaTitle
+				ViewGame.LastTurn = TurnNum
+			else
+				with GameObj(SelectedIndex)
+					GameName = .Namee
+					ViewGame.LastTurn = .LastTurn
+				end with
 			end if
 			SettingsFile = "games/"+str(GameID)+"/Settings.csv"
 

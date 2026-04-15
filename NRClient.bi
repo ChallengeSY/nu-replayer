@@ -12,7 +12,7 @@ enum ReportCollection
 	REPORT_VCR
 end enum
 
-dim shared as integer SelectedID
+dim shared as integer SelectedID, WrapWidth, WrapHeight
 dim shared as double NextMapSlide
 dim shared as short Sidebar, SidebarMem
 dim shared as ReportCollection SelectedObjType
@@ -227,7 +227,7 @@ sub planetList
 			end if
 			syncReport(1)
 			exit do
-		elseif InType = chr(9) then
+		elseif InType = TabKey then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0
 		elseif InType = EscKey then
@@ -427,7 +427,7 @@ sub shipList
 			SelectedObjType = REPORT_SHIP
 			syncReport
 			exit do
-		elseif InType = chr(9) then
+		elseif InType = TabKey then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0
 		elseif InType = EscKey then
@@ -552,7 +552,7 @@ sub VCRlist
 		elseif InType = EnterKey AND MaxObjs > 0 then
 			watchBattle(VCRindex(SelectedIndex))
 			/'
-		elseif InType = chr(9) then
+		elseif InType = TabKey then
 			ViewMode += 1
 			if ViewMode > 1 then ViewMode = 0
 			'/
@@ -565,13 +565,19 @@ end sub
 function playerCode(PlrId as byte) as string
 	if PlrId < 10 then
 		return str(PlrId)
-	else
+	elseif PlrId <= 35 then
 		return chr(55+PlrId)
+	else
+		return "+"
 	end if
 end function
 
 sub playerList
 	dim as byte ViewMode = 0
+	if ParticipatingPlayers > 35 then
+		width int(CanvasScreen.Wideth/8), int(CanvasScreen.Height/8)
+	end if
+	
 	do
 		with GrandTotal
 			.PlanetCount = 0
@@ -623,9 +629,11 @@ sub playerList
 					print using "Grand Total                               ###         ###   ### / ###   ##,###,###   ##,###,###";_
 						.PlanetCount;.Starbases;.Ships-.Freighters;.Ships;.MilitaryScore;.EconomicScore
 				end with
-				color rgb(192,255,192)
-				print
-				print word_wrap("Economic score is measured by the economic value of each planet, which is calculated using its unspent resources (excluding neutronium). This score is based on PTScore 1.4")
+				if GameName <> ActiveArenaTitle then
+					color rgb(192,255,192)
+					print
+					print word_wrap("Economic score is measured by the economic value of each planet, which is calculated using its unspent resources (excluding neutronium). This score is based on PTScore 1.4")
+				end if
 			case 1
 				print "Resource Breakdown by Player for ";GameName;" (turn "& TurnNum;")"
 				color rgb(255,255,255)
@@ -769,15 +777,23 @@ sub playerList
 		end select
 		color rgb(255,255,255)
 		print
-		print "Press TAB to cycle lists. Press ESC to return to the starmap"
+		if GameName = ActiveArenaTitle then
+			print "Press ESC to return to the starmap"
+		else
+			print "Press TAB to cycle lists. Press ESC to return to the starmap"
+		end if
 		screencopy
 		sleep 15
 		InType = inkey
-		if InType = chr(9) then
+		if InType = TabKey AND GameName <> ActiveArenaTitle then
 			ViewMode += 1
 			if ViewMode > 2 then ViewMode = 0
 		end if
 	loop until InType = EscKey
+	
+	if ParticipatingPlayers > 35 then
+		width int(CanvasScreen.Wideth/8), int(CanvasScreen.Height/16)
+	end if
 end sub
 
 sub fetchNextObj(Direction as byte)
