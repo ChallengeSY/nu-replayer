@@ -25,7 +25,10 @@ declare sub loadTurnUI(Players as ubyte)
 
 #IFNDEF __FB_DOS__
 #include "fbthread.bi"
+
 #DEFINE __NR_AUDIO__
+declare sub setVolume(PreviewClip as byte = 0)
+declare sub playClip(ID as byte)
 #ENDIF
 
 using FB
@@ -353,6 +356,7 @@ type GameSpecs
 	MapWidth as short
 	MapHeight as short
 	DynamicMap as byte
+	CloudyStorms as byte
 	PlayerCount as byte
 	Sphere as byte
 	Academy as byte
@@ -404,8 +408,8 @@ dim shared as string PreferType, Username, APIKey, GameName, InType, ErrorMsg, W
 dim shared as ubyte SimpleView, MultiWidth, ExcludeBlitzes, ExcludeMvM, ExcludeNodata, LegacyRaceNames, DefaultVCRspeed, PruneDupes, _
 	OfflineMode, FirstRun, CanNavigate(1), TurnWIP, QueueNextSong, OldTurnFormat, ShipsFound, RedrawIslands, DevMode, ConvertorUse
 dim shared as ModalView ReplayerMode = MODE_MENU
-dim shared as ushort ParticipatingPlayers, RecordID, GamesPerPage, NormalObjsPerPage, BasesPerPage
-dim shared as uinteger GameID, FeaturedArena, TotalGamesLoaded, SlideshowDelay
+dim shared as ushort ParticipatingPlayers, RecordID, SoundVolume, GamesPerPage, NormalObjsPerPage, BasesPerPage
+dim shared as uinteger GameID, FeaturedArena, TotalGamesLoaded, ShotCount, SlideshowDelay
 dim shared as integer MouseX, MouseY, MouseError, SelectedIndex, ButtonCombo, ActualX, ActualY, DestPattern
 dim shared as short FadingSelect, TurnNum, BoxGlow
 dim shared as double DistQuota, LastPlanetUpdate, SerialRecord, Midpoint
@@ -504,6 +508,10 @@ do
 loop
 close #4
 
+do
+	ShotCount += 1
+loop while FileExists("shots/shot"+str(ShotCount)+".bmp")
+
 const VCRColor = rgb(208,144,80)
 Rainbow.Red = 255
 declare sub updateGameList(DownloadList as byte = 0)
@@ -599,6 +607,13 @@ sub prepClientScreen
 	end with
 end sub
 
+sub saveScreenshot
+	mkdir("shots")
+	bsave("shots/shot"+str(ShotCount)+".bmp",0)
+	
+	ShotCount += 1
+end sub
+
 sub clearData
 	'Clears all data
 	for RID as short = 0 to MaxPlayers
@@ -671,7 +686,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 				with GameObj(0)
 					WorkingFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Working"
 					ScoreFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Score.csv"
-					'AuxFile = "games/"+str(.ID)+"/Nebulae.csv"
+					AuxFile = "games/"+str(.ID)+"/"+str(.LastTurn)+"/Relations.csv"
 					RawFile = "raw/"+str(.ID)+"/player1-turn"+str(.LastTurn)+".trn"
 				
 					if FileExists(WorkingFile) then
@@ -681,7 +696,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 						end if
 						.GameState = 9
 					elseif FileExists(ScoreFile) then
-						if FileDateTime(ScoreFile) < DataFormat then
+						if FileDateTime(ScoreFile) < DataFormat OR FileExists(AuxFile) = 0 then
 							if FileExists(RawFile) then
 								.GameState = 8
 							else
@@ -877,33 +892,6 @@ sub menu
 		#ENDIF
 		
 		#IFNDEF __FORCE_OFFLINE__
-		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
-		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
-			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
-			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				ReplayerMode = MODE_HUB_DL
-			end if
-		end if
-		
-		if DevMode then
-			gfxstring("Fetch static specs data",CanvasScreen.Wideth/2+10,300,5,4,3,rgb(255,255,255))
-			if MouseY >= 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
-				drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
-				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-					fetchStaticData
-				end if
-			end if
-			
-			gfxstring("Present Date: "+commaSep(int(Now)),CanvasScreen.Wideth/2+10,350,5,4,3,rgb(128,128,128))
-		end if
-
-		#ELSE
-		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(128,128,128))
-		#ENDIF
-		
-		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(255,255,255))
-		
-		#IFNDEF __FORCE_OFFLINE__
 		if GameListAge > CooldownList then
 			gfxstring("Download game list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(255,255,255))
 	
@@ -924,9 +912,28 @@ sub menu
 			if MinutesRem < 10 then MinutesStr = "0" + MinutesStr
 			gfxstring("Download game list ("+str(int(HoursRem+1/60))+":"+MinutesStr+")",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
 		end if
-		#ELSE
-		gfxstring("Download game list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
-		#ENDIF
+
+		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(255,255,255))
+		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				ReplayerMode = MODE_HUB_DL
+			end if
+		end if
+		
+		if DevMode then
+			gfxstring("Fetch static specs data",CanvasScreen.Wideth/2+10,300,5,4,3,rgb(255,255,255))
+			if MouseY >= 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
+				drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
+				if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+					fetchStaticData
+				end if
+			end if
+			
+			gfxstring("Present Date: "+commaSep(int(Now)),CanvasScreen.Wideth/2+10,350,5,4,3,rgb(128,128,128))
+		end if
+		
+		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(255,255,255))
 	
 		if MouseY >= 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
@@ -934,6 +941,12 @@ sub menu
 				importPrivateGame
 			end if
 		end if
+
+		#ELSE
+		gfxstring("Download game list",CanvasScreen.Wideth/2+10,150,5,4,3,rgb(128,128,128))
+		gfxstring("Download turns",CanvasScreen.Wideth/2+10,200,5,4,3,rgb(128,128,128))
+		gfxstring("Import private game",CanvasScreen.Wideth/2+10,250,5,4,3,rgb(128,128,128))
+		#ENDIF
 		
 		#IFNDEF __API_LOGIN__
 		if MouseY >= 90 AND MouseY < 135 AND MouseX >= CanvasScreen.Wideth/2 then
@@ -953,13 +966,11 @@ sub menu
 	#ENDIF
 	
 	#IFNDEF __FORCE_OFFLINE__
-	if FeaturedArena > 0 then
-		gfxstring("Watch the Arena",10,250,5,4,3,rgb(255,255,255))
-		if MouseY >= 240 AND MouseY < 285 AND MouseX < CanvasScreen.Wideth/2 then
-			drawBox(0,240,CanvasScreen.Wideth/2-1,285)
-			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				fetchArenaFiles
-			end if
+	gfxstring("Watch the Arena",10,250,5,4,3,rgb(255,255,255))
+	if MouseY >= 240 AND MouseY < 285 AND MouseX < CanvasScreen.Wideth/2 then
+		drawBox(0,240,CanvasScreen.Wideth/2-1,285)
+		if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+			fetchArenaFiles
 		end if
 	end if
 	#ENDIF
@@ -1020,25 +1031,14 @@ sub menu
 			end if
 		else
 			gfxstring("Condensed View:",CanvasScreen.Wideth/2+10,145,3,3,2,rgb(128,128,128))
-			gfxstring("(Overridden)",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(128,128,128))
+			gfxstring("(Unavailable with a small screen)",CanvasScreen.Wideth/2+30,165,3,3,2,rgb(128,128,128))
 		end if
 
-		gfxstring("Exclude short format games:",CanvasScreen.Wideth/2+10,195,3,3,2,rgb(255,255,255))
+		gfxstring("Audio Volume:",CanvasScreen.Wideth/2+10,195,3,3,2,rgb(255,255,255))
+		gfxstring(str(ceil(SoundVolume*100/128))+"%",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
+
+		gfxstring("Exclude short format games:",CanvasScreen.Wideth/2+10,245,3,3,2,rgb(255,255,255))
 		if ExcludeBlitzes then
-			gfxstring("Active",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
-		else
-			gfxstring("Disabled",CanvasScreen.Wideth/2+30,215,3,3,2,rgb(255,255,255))
-		end if
-
-		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
-			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
-			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				ExcludeBlitzes = 1 - ExcludeBlitzes
-			end if
-		end if
-
-		gfxstring("Exclude Mentor vs. Midshipmen games:",CanvasScreen.Wideth/2+10,245,3,3,2,rgb(255,255,255))
-		if ExcludeMvM then
 			gfxstring("Active",CanvasScreen.Wideth/2+30,265,3,3,2,rgb(255,255,255))
 		else
 			gfxstring("Disabled",CanvasScreen.Wideth/2+30,265,3,3,2,rgb(255,255,255))
@@ -1047,12 +1047,12 @@ sub menu
 		if MouseY >= 240 AND MouseY < 285 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,240,CanvasScreen.Wideth-1,284)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				ExcludeMvM = 1 - ExcludeMvM
+				ExcludeBlitzes = 1 - ExcludeBlitzes
 			end if
 		end if
 
-		gfxstring("Exclude games with no local data:",CanvasScreen.Wideth/2+10,295,3,3,2,rgb(255,255,255))
-		if ExcludeNodata then
+		gfxstring("Exclude Mentor vs. Midshipmen games:",CanvasScreen.Wideth/2+10,295,3,3,2,rgb(255,255,255))
+		if ExcludeMvM then
 			gfxstring("Active",CanvasScreen.Wideth/2+30,315,3,3,2,rgb(255,255,255))
 		else
 			gfxstring("Disabled",CanvasScreen.Wideth/2+30,315,3,3,2,rgb(255,255,255))
@@ -1061,53 +1061,94 @@ sub menu
 		if MouseY >= 290 AND MouseY < 335 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,290,CanvasScreen.Wideth-1,334)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
-				ExcludeNodata = 1 - ExcludeNodata
+				ExcludeMvM = 1 - ExcludeMvM
 			end if
 		end if
 
-		gfxstring("Display race names:",CanvasScreen.Wideth/2+10,345,3,3,2,rgb(255,255,255))
-		if LegacyRaceNames then
-			gfxstring("Legacy names",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
+		gfxstring("Exclude games with no local data:",CanvasScreen.Wideth/2+10,345,3,3,2,rgb(255,255,255))
+		if ExcludeNodata then
+			gfxstring("Active",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
 		else
-			gfxstring("Current names",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
+			gfxstring("Disabled",CanvasScreen.Wideth/2+30,365,3,3,2,rgb(255,255,255))
 		end if
 
 		if MouseY >= 340 AND MouseY < 385 AND MouseX >= CanvasScreen.Wideth/2 then
 			drawBox(CanvasScreen.Wideth/2,340,CanvasScreen.Wideth-1,384)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				ExcludeNodata = 1 - ExcludeNodata
+			end if
+		end if
+
+		gfxstring("Display race names:",CanvasScreen.Wideth/2+10,395,3,3,2,rgb(255,255,255))
+		if LegacyRaceNames then
+			gfxstring("Legacy names",CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,255))
+		else
+			gfxstring("Current names",CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,255))
+		end if
+
+		if MouseY >= 390 AND MouseY < 435 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,390,CanvasScreen.Wideth-1,434)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				LegacyRaceNames = 1 - LegacyRaceNames
 			end if
 		end if
 		
-		gfxstring("Slideshow Delay:",CanvasScreen.Wideth/2+10,395,3,3,2,rgb(255,255,255))
-		gfxstring(commaSep(SlideshowDelay)+" milliseconds",CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,255))
+		gfxstring("Slideshow Delay:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,255))
+		gfxstring(commaSep(SlideshowDelay)+" milliseconds",CanvasScreen.Wideth/2+30,465,3,3,2,rgb(255,255,255))
 		
-		gfxstring("Default VCR Speed:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,255))
-		gfxstring(str(DefaultVCRspeed),CanvasScreen.Wideth/2+30,465,3,3,2,rgb(255,255,255))
+		gfxstring("Default VCR Speed:",CanvasScreen.Wideth/2+10,495,3,3,2,rgb(255,255,255))
+		gfxstring(str(DefaultVCRspeed),CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
 
-		gfxstring("Prune duplicate JSON files:",CanvasScreen.Wideth/2+10,495,3,3,2,rgb(255,255,255))
+		gfxstring("Prune duplicate JSON files:",CanvasScreen.Wideth/2+10,545,3,3,2,rgb(255,255,255))
 		if PruneDupes then
-			gfxstring("Active",CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
+			gfxstring("Active",CanvasScreen.Wideth/2+30,565,3,3,2,rgb(255,255,255))
 		else
-			gfxstring("Disabled",CanvasScreen.Wideth/2+30,515,3,3,2,rgb(255,255,255))
+			gfxstring("Disabled",CanvasScreen.Wideth/2+30,565,3,3,2,rgb(255,255,255))
 		end if
 
-		if MouseY >= 490 AND MouseY < 535 AND MouseX >= CanvasScreen.Wideth/2 then
-			drawBox(CanvasScreen.Wideth/2,490,CanvasScreen.Wideth-1,534)
+		if MouseY >= 540 AND MouseY < 585 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,540,CanvasScreen.Wideth-1,584)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				PruneDupes = 1 - PruneDupes
 			end if
 		end if
 		
-		if MouseY >= 390 AND MouseY < 435 AND MouseX >= CanvasScreen.Wideth/2 then
-			drawBox(CanvasScreen.Wideth/2,390,CanvasScreen.Wideth-1,434)
+		if MouseY >= 190 AND MouseY < 235 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,190,CanvasScreen.Wideth-1,234)
+			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
+				dim as integer NewVolume = -1
+	
+				do
+					line(CanvasScreen.Wideth/2+5,195)-(CanvasScreen.Wideth-6,229),rgb(0,0,0),bf
+					gfxstring("Enter new volume level:",CanvasScreen.Wideth/2+10,195,3,3,2,rgb(255,255,0))
+			
+					if InType = EscKey then
+						exit do
+					elseif InType >= "0" AND InType <= "9" then
+						NewVolume = valint(InType)
+						exit do
+					end if
+			
+					screencopy
+					sleep 15
+					InType = inkey
+				loop until InType = EnterKey
+				
+				if NewVolume >= 0 then
+					SoundVolume = ceil(NewVolume/9*128)
+					setVolume(1)
+				end if
+			end if
+				
+		elseif MouseY >= 440 AND MouseY < 485 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,440,CanvasScreen.Wideth-1,484)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				dim as integer NewSlideDelay
 	
 				do
-					line(CanvasScreen.Wideth/2+5,395)-(CanvasScreen.Wideth-6,429),rgb(0,0,0),bf
-					gfxstring("Enter new delay value:",CanvasScreen.Wideth/2+10,395,3,3,2,rgb(255,255,0))
-					gfxstring(commaSep(NewSlideDelay),CanvasScreen.Wideth/2+30,415,3,3,2,rgb(255,255,0))
+					line(CanvasScreen.Wideth/2+5,445)-(CanvasScreen.Wideth-6,479),rgb(0,0,0),bf
+					gfxstring("Enter new delay value:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,0))
+					gfxstring(commaSep(NewSlideDelay),CanvasScreen.Wideth/2+30,465,3,3,2,rgb(255,255,0))
 			
 					if InType = EscKey then
 						if NewSlideDelay > 0 then
@@ -1130,14 +1171,14 @@ sub menu
 				end if
 			end if
 		
-		elseif MouseY >= 440 AND MouseY < 485 AND MouseX >= CanvasScreen.Wideth/2 then
-			drawBox(CanvasScreen.Wideth/2,440,CanvasScreen.Wideth-1,484)
+		elseif MouseY >= 490 AND MouseY < 535 AND MouseX >= CanvasScreen.Wideth/2 then
+			drawBox(CanvasScreen.Wideth/2,490,CanvasScreen.Wideth-1,534)
 			if EventActive AND e.type = EVENT_MOUSE_BUTTON_PRESS then
 				dim as integer NewVCRspeed
 	
 				do
-					line(CanvasScreen.Wideth/2+5,445)-(CanvasScreen.Wideth-6,479),rgb(0,0,0),bf
-					gfxstring("Enter new VCR speed:",CanvasScreen.Wideth/2+10,445,3,3,2,rgb(255,255,0))
+					line(CanvasScreen.Wideth/2+5,495)-(CanvasScreen.Wideth-6,529),rgb(0,0,0),bf
+					gfxstring("Enter new VCR speed:",CanvasScreen.Wideth/2+10,495,3,3,2,rgb(255,255,0))
 			
 					if InType = EscKey then
 						exit do

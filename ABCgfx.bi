@@ -27,7 +27,7 @@ end function
 
 function charIsLower(TestChr as string) as byte
 	return (lcase(TestChr) = TestChr AND (TestChr < "0" OR TestChr > "9") AND _
-		TestChr <> "(" AND TestChr <> ")" AND TestChr <> "<" AND TestChr <> ">")
+		TestChr <> "(" AND TestChr <> ")" AND TestChr <> "<" AND TestChr <> ">" AND TestChr <> "!")
 end function
 
 sub gfxString(Text as string, TLX as uinteger, TLY as uinteger, BSize as ubyte, LSize as ubyte, Kerning as ubyte, ColoringA as uinteger, ColoringB as uinteger = 0)

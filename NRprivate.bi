@@ -69,14 +69,16 @@ sub importPrivateGame(PreID as integer = 0)
 		open "raw/loadinfo.txt" for input as #6
 		do
 			if eof(6) then
-				ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to lack of opening brace."
+				ErrorMsg = "Nu Replayer could not download the game info: No opening brace found"
 			end if
 			line input #6, InStream
 		loop until left(InStream,1) = "{"
 		close #6
 		
-		if instr(Instream,"{"+quote("success")+":false") then
-			ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to API error."
+		ErrorMsg = findAPIerror(InStream) 
+		
+		if ErrorMsg <> "" then
+			ErrorMsg = "Nu Replayer could not download the game info: "+ErrorMsg
 		else
 			SeekChar(0) = instr(InStream,quote("name"))
 			SeekChar(1) = instr(SeekChar(0)+8,InStream,chr(34))

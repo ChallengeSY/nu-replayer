@@ -144,6 +144,8 @@ sub loadGame(ByRef LoadID as uinteger)
 								input #2, .MapHeight
 							case "Dynamic"
 								input #2, .DynamicMap
+							case "CloudyStorms"
+								input #2, .CloudyStorms
 							case "Wraparound"
 								input #2, .Sphere
 							case "Academy"
@@ -392,7 +394,7 @@ sub recordPersonalGames
 	close #8
 	
 	for DID as integer = 1 to len(InStream)
-		if mid(InStream,DID,15) = quote("success")+":false" then
+		if findAPIerror(InStream) <> "" then
 			exit sub
 		end if
 		if mid(InStream,DID,4) = quote("id") then

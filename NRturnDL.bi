@@ -1,14 +1,14 @@
-declare function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as integer
-declare function downloadZipPackage(GameID as integer) as integer
+declare function downloadTurns(WorkID as integer, OverrideTurn as short = 0) as integer
+declare function downloadZipPackage(WorkID as integer) as integer
 #include "NRzip.bi"
 
-sub downloadGame(GameName as string, GameID as integer)
+sub downloadGame(GameName as string, WorkID as integer)
 	'Downloads game summary and data
 	cls
 	print word_wrap("Creating preparation data and downloading turns for "+GameName+". This may take several minutes depending on the number of players and ZIP package size...")
 	screencopy
 	
-	if downloadLastTurns(GameID) ANDALSO downloadZipPackage(GameID) then
+	if downloadTurns(WorkID) ANDALSO downloadZipPackage(WorkID) then
 		'Indicate successful operation
 		open "raw/DLturn.txt" for output as #9
 		print #9, "Last downloaded game #"& GameID
@@ -29,7 +29,7 @@ sub downloadGame(GameName as string, GameID as integer)
 	ErrorMsg = ""
 end sub
 
-function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as integer
+function downloadTurns(WorkID as integer, OverrideTurn as short = 0) as integer
 	dim SendBuffer as string
 	dim RecvBuffer as zstring * RECVBUFFLEN+1
 	dim Bytes as integer
@@ -43,11 +43,11 @@ function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as intege
 	GameParser.TorpSet = 0
 	
 	mkdir "raw"
-	mkdir "raw/"+str(GameID)
+	mkdir "raw/"+str(WorkID)
 	
 	'Download one or more of turns, depending on the game type
 	do
-		if ActiveArena then
+		if OverrideTurn then
 			Player = 0
 			createMeter(1/3, "Downloading spectator turn...")
 		else
@@ -64,13 +64,20 @@ function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as intege
 		end if
 		screencopy
 		
-		if APIKey = "" then
-			SendBuffer = loadAddress("game/loadturn?gameid="+str(GameID)+"&playerid="+str(Player)+"&compress=false")
-		else
-			SendBuffer = loadAddress("game/loadturn?gameid="+str(GameID)+"&playerid="+str(Player)+"&apikey="+APIKey+"&compress=false")
-		end if
+		TargetFile(0) = "raw/"+str(WorkID)+"/player"+str(Player)+"-turn"+str(GameParser.LastTurn)+".trn"
 		
-		TargetFile(0) = "raw/"+str(GameID)+"/player"+str(Player)+"-turn"+str(GameParser.LastTurn)+".trn"
+		if OverrideTurn then
+			if GameID = 0 then 
+				SendBuffer = loadAddress("game/loadturn?gameid="+str(WorkID)+"&playerid="+str(Player)+"&compress=false")
+			else
+				SendBuffer = loadAddress("game/loadturn?gameid="+str(WorkID)+"&playerid="+str(Player)+"&turn="+str(OverrideTurn)+"&compress=false")
+			end if
+			TargetFile(0) = "raw/"+str(WorkID)+"/player"+str(Player)+"-turn"+str(OverrideTurn)+".trn"
+		elseif APIKey = "" then
+			SendBuffer = loadAddress("game/loadturn?gameid="+str(WorkID)+"&playerid="+str(Player)+"&compress=false")
+		else
+			SendBuffer = loadAddress("game/loadturn?gameid="+str(WorkID)+"&playerid="+str(Player)+"&apikey="+APIKey+"&compress=false")
+		end if
 		
 		NuSocket = SDLNet_TCP_Open( @NuIP )
 		if( NuSocket = 0 ) then
@@ -101,14 +108,18 @@ function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as intege
 			open TargetFile(0) for input as #5
 			do
 				if eof(5) then
-					ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to lack of opening brace."
+					ErrorMsg = "Nu Replayer could not download one of the turn files: No opening brace found"
 				end if
 				line input #5, InStream
 			loop until left(InStream,1) = "{"
 			close #5
 			
-			if instr(Instream,"{"+quote("success")+":false") then
-				ErrorMsg = "Nu Replayer could not successfully download one of the turn files due to API error."
+			if ErrorMsg = "" then
+				ErrorMsg = findAPIerror(Instream)
+			end if
+			
+			if ErrorMsg <> "" then
+				ErrorMsg = "Nu Replayer could not download one of the turn files: " + ErrorMsg 
 			elseif Player <= 1 then
 				with GameParser
 					.DynamicMap = 0
@@ -125,10 +136,10 @@ function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as intege
 					.AccelStart = getJsonVal(InStream,"acceleratedturns")
 					.TorpSet = getJsonVal(InStream,"torpedoset")
 
-					mkdir("games/"+str(GameID))
-					exportSettings(GameID,1)
+					mkdir("games/"+str(WorkID))
+					exportSettings(WorkID,1)
 					
-					if FoundSettings <> 0 AND ActiveArena = 0 then
+					if FoundSettings <> 0 AND OverrideTurn = 0 then
 						print
 						print "Found the following settings..."
 						print "* Players: "& .PlayerCount
@@ -151,14 +162,20 @@ function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as intege
 					end if
 				end with
 				
-				TargetFile(1) = "raw/"+str(GameID)+"/player"+str(Player)+"-turn"+str(GameParser.LastTurn)+".trn"
+				TargetFile(1) = "raw/"+str(WorkID)+"/player"+str(Player)+"-turn"+str(GameParser.LastTurn)+".trn"
 				name(TargetFile(0),TargetFile(1))
 			end if
 		end if
 		
 		SDLNet_TCP_Close( NuSocket )
 		
-		if ActiveArena then
+		if OverrideTurn then
+			if ErrorMsg <> "" then
+				createMeter(1/3, "FAILURE! "+ErrorMsg)
+				screencopy
+				sleep
+				kill(TargetFile(0))
+			end if
 			exit do
 		end if
 	loop
@@ -167,7 +184,7 @@ function downloadLastTurns(GameID as integer, ActiveArena as byte = 0) as intege
 	return ErrorMsg = ""
 end function
 
-function downloadZipPackage(GameID as integer) as integer
+function downloadZipPackage(WorkID as integer) as integer
 	dim SendBuffer as string
 	dim RecvBufferTxt as zstring * RECVBUFFLEN+1
 	dim Bytes as integer
@@ -180,11 +197,11 @@ function downloadZipPackage(GameID as integer) as integer
 	dim as longint BytesDownloaded = 0, TotalBytes = 0
 	ErrorMsg = ""
 	
-	SendBuffer = loadAddress("game/loadall?gameid="+str(GameID))
+	SendBuffer = loadAddress("game/loadall?gameid="+str(WorkID))
 	GoalStr = "Content-Length: "
 	
 	NuSocket = SDLNet_TCP_Open( @NuIP )
-	if FileExists("raw/"+str(GameID)+"/game"+str(GameID)+".zip") then
+	if FileExists("raw/"+str(WorkID)+"/game"+str(WorkID)+".zip") then
 		ErrorMsg = "Nu Replayer skipped downloading the ZIP archive: It already exists"
 		return 0
 	elseif( NuSocket = 0 ) then
@@ -196,9 +213,9 @@ function downloadZipPackage(GameID as integer) as integer
 			return 0
 		else
 			mkdir "raw"
-			mkdir "raw/"+str(GameID)+""
+			mkdir "raw/"+str(WorkID)+""
 			
-			TargetFile = "raw/"+str(GameID)+"/gameZipPrep.txt"
+			TargetFile = "raw/"+str(WorkID)+"/gameZipPrep.txt"
 			open TargetFile for output as #6
 
 			do
@@ -235,7 +252,7 @@ function downloadZipPackage(GameID as integer) as integer
 			wend
 			close #7
 			
-			TargetFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
+			TargetFile = "raw/"+str(WorkID)+"/game"+str(WorkID)+".zip"
 			BytesDownloaded = 0
 			
 			open TargetFile for binary as #8

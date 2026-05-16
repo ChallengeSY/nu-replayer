@@ -22,6 +22,7 @@ sub cleaning destructor
 	print #1, quote("Key");",";quote(APIKey)
 	print #1, quote("Preferred Type");",";quote(PreferType)
 	print #1, quote("Simple View");",";SimpleView
+	print #1, quote("Audio Volume");","& SoundVolume
 	print #1, quote("Exclude Blitz Games");",";ExcludeBlitzes
 	print #1, quote("Exclude MvM Games");",";ExcludeMvM
 	print #1, quote("Exclude Dataless Games");",";ExcludeNodata
@@ -29,8 +30,8 @@ sub cleaning destructor
 	print #1, quote("Slideshow Delay");",";SlideshowDelay
 	print #1, quote("VCR Speed");",";DefaultVCRspeed
 	print #1, quote("Prune Dupes");",";PruneDupes
-	print #1, quote("Width Multiplier");",";MultiWidth
 	print #1, quote("Featured Arena");",";FeaturedArena
+	print #1, quote("Width Multiplier");",";MultiWidth
 	close #1
 	
 	#IFNDEF __FB_DOS__
@@ -69,6 +70,7 @@ LegacyRaceNames = 0
 DefaultVCRspeed = 5
 SlideshowDelay = 1000
 MultiWidth = 1
+SoundVolume = 128
 
 if FileExists("Settings.csv") then
 	open "Settings.csv" for input as #1
@@ -83,6 +85,8 @@ if FileExists("Settings.csv") then
 				input #1, PreferType
 			case "Simple View"
 				input #1, SimpleView
+			case "Audio Volume"
+				input #1, SoundVolume
 			case "Exclude Blitz Games"
 				input #1, ExcludeBlitzes
 			case "Exclude MvM Games"
@@ -104,6 +108,8 @@ if FileExists("Settings.csv") then
 		end select
 	loop until eof(1)
 	close #1
+	
+	setVolume(0)
 	
 	#IFDEF __API_LOGIN__
 	if APIKey = "" then

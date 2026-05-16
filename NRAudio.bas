@@ -47,15 +47,31 @@ Mix_QuerySpec(@audio_rate, @audio_format, @audio_channels)
 
 for PID as short = 0 to clipCount
 	clip(PID) = Mix_LoadWAV("sfx/"+SFXNames(PID)+".wav")
-	if PID < SFX_EXPLODE then
-		Mix_VolumeChunk(clip(PID),24)
-	end if
 next PID
 music = NULL
 
 dim shared as byte SkipSounds = 0
 declare sub loadMusic(MusicFile as string)
 declare sub playSong
+
+sub setVolume(PreviewClip as byte = 0)
+	for PID as short = 0 to clipCount
+		dim as double SFXModifier
+		
+		if PID < SFX_EXPLODE then
+			SFXModifier = 0.2
+		else
+			SFXModifier = 1.0
+		end if
+		
+		Mix_VolumeChunk(clip(PID),ceil(SoundVolume*SFXModifier))
+		
+		if PreviewClip AND PID = SFX_BEAM then
+			SkipSounds = 0
+			playClip(PID)
+		end if
+	next PID
+end sub
 
 sub playClip(ID as byte)
 	if SkipSounds = 0 AND ID >= 0 then

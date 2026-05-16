@@ -47,6 +47,8 @@ else
 	kill("stdout.txt")
 	
 	open "stdout.txt" for output as #1
+	print #1, "Started work on Game #"& GameNum; " / Turns "& MinTurn;"-"& MaxTurn
+	
 	if cmdLine("--forward") then
 		print #1, "--forward supplied"
 		
@@ -89,17 +91,20 @@ else
 		if SilentMode = 0 then
 			cls
 		end if
-		if (((FileExists(GamePath+"Score.csv") = 0 OR FileDateTime(GamePath+"Score.csv") < DataFormat) AND FileExists(GamePath+"Working") = 0) OR _
-			(FileExists(GamePath+"Working") AND cmdLine("--skipPart") = 0) OR _
-			(cmdLine("--skipComp") OR cmdLine("--skipPart")) = 0) AND FileExists(VRawPath+"player1-turn"+str(TurnNum)+".trn") then
-			
-			/'
-			 ' Process the turn if any of the following are satisfied:
-			 '   The score file does not exist, or is outdated
-			 '   The turn is in process (indicated by a WORKING file) and --skipPart is not supplied
-			 '   Neither --skipComp nor --skipPart command options are supplied (default)
-			 '/
-			
+		
+		/'
+		 ' If --skipComp is supplied, skip conversion if the key file(s) already exist
+		 '
+		 ' If --skipPart is supplied, also skip conversion if another process is already working on it
+		 '/
+		if ((cmdLine("--skipComp") OR cmdLine("--skipPart")) AND _
+			FileExists(GamePath+"Score.csv") AND FileExists(GamePath+"Relations.csv") AND FileDateTime(GamePath+"Score.csv") >= DataFormat) OR _
+			(FileExists(GamePath+"Working") AND cmdLine("--skipPart")) then
+			continue for
+		end if
+		
+		' Verify that the raw files are present BEFORE starting conversion
+		if FileExists(VRawPath+"player1-turn"+str(TurnNum)+".trn") then
 			if SilentMode = 0 then
 				if cmdLine("--forward") then
 					TurnsDone = TurnNum - MinTurn
@@ -116,7 +121,7 @@ else
 			
 		 	' Assuming conversion successful, delete duplicated JSON files... if appropriate.
 			if cmdLine("--prune") AND FileExists(VRawPath+"game"+str(GameNum)+".zip") AND TurnNum < MaxTurn then
-				for PlrID as byte = 1 to 35
+				for PlrID as ushort = 0 to MaxPlayers
 					kill(VRawPath+"player"+str(PlrID)+"-turn"+str(TurnNum)+".trn")
 				next PlrID
 			end if

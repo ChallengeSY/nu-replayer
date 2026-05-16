@@ -1,5 +1,5 @@
 ## Overview
-The default interface that is opened up is a menu, housing access to the game list, network functions, and configuration.
+The default interface that is opened up is a menu, housing access to the game list, network functions, arena spectatorship, and configuration.
 
 ## Game Room
 The game room is a common interface. It contains a list of finished games, and a filter can be applied to make it easier to find a desired game.
@@ -24,15 +24,17 @@ By default, the starmap is accessed using the entire screen. To get a smaller wi
 * Planet List: F6
 * Ship List: F7
 * VCR List: F8
+* Take a screenshot: F12
 
 ## VCR Player
 Nu Replayer comes with its own Visual Combat Recording (or simply VCR) player. In addition to being able to watch VCRs that have taken place, Nu Replayer also automatically computes "what ifs" for each VCR, and summarizes them as percentages that a given outcome occurs.
 
 ### Controls
 * Change replay speed: 1-9
-* Enter step mode: Spacebar (any other key exits step mode)
 * Instantly finish the current replay: F
 * Skip to the broadest weapon range: R
+* Enter step mode: Spacebar (any key other than this or below exits step mode)
+* Take a screenshot: F12
 
 When skipping towards the broadest weapon range, the VCR player will stop 800 / 1600 meters before the combatants get in range to use the weapons in question.
 Fighter Bays are usable at maximum range, so they do not qualify. Same goes for Beam Banks versus fighters (but not versus other ships). Torpedo Tubes qualify, as long as the ammo storage is *not* empty.
@@ -41,3 +43,8 @@ Fighter Bays are usable at maximum range, so they do not qualify. Same goes for 
 Nu Replayer features complete network support, allowing downloading of lists and turns *without* relying on any other tools (not even a web browser).
 
 Raw game lists can be downloaded and auto-converted to CSV. Additionally, it is possible to download a complete game just by visiting the download room. The download room functions similarly to the game room, only it serves the exclusive purpose of downloading *new* games.
+
+### Live Arena
+Nu Replayer can easily watch any Campaign Arena games that are currently in progress. These are the first games to support live spectatorship, and Nu Replayer takes advantage of this. A very limited subset of the information is publicly available, but we make use of what *is* known.
+
+When access for the first time, the user will be asked to specify the ID of the game they want to watch. This ID is then remembered *until* the game is over. One can also use the CTRL key to change the ID.

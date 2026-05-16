@@ -131,7 +131,7 @@ sub setupBattle(ByRef BattleSetup as VCRobj)
 	BattleTicks = 0
 	SkipBeams = SkipSounds
 	
-	'Battles start at 54000/58000 km, depending on whether a planet is involved
+	'Battles start at 54000/58000 meters, depending on whether a planet is involved
 	PlanBattle = abs(sgn(ActiveVCR.Battletype))
 	Distance = 580 - PlanBattle * 40 
 	
@@ -786,8 +786,16 @@ sub drawOverlay
 		if .BayCt > 0 then
 			dim as short FtrCount = .Fighters+countFighters(1)
 			
+			if FtrCount <= 0 then
+				CombatColor = rgb(128,128,128)
+			elseif FtrCount < 19 then
+				CombatColor = rgb(255,255,0)
+			else
+				CombatColor = rgb(255,255,255)
+			end if
+			
 			CombatStr = "Ftrs  : "+str(FtrCount)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,WeaponY,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,WeaponY,4,3,3,CombatColor)
 			CombatStr = "Fighter Bays x"+str(.BayCt)
 			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,WeaponY+30,4,3,3,rgb(255,255,255))
 			
@@ -799,8 +807,16 @@ sub drawOverlay
 			BeamsY = max(WeaponY,BeamsY)
 		end if
 		if .TubeCt > 0 then
+			if .TorpAmmo <= 0 then
+				CombatColor = rgb(128,128,128)
+			elseif .TorpAmmo <= 5 * .TubeCt then
+				CombatColor = rgb(255,255,0)
+			else
+				CombatColor = rgb(255,255,255)
+			end if
+
 			CombatStr = "Torps : "+str(.TorpAmmo)
-			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,WeaponY,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,WeaponY,4,3,3,CombatColor)
 
 			CombatStr = Tubes(.TorpID).PartName+" Tubes x"+str(.TubeCt)
 			gfxString(CombatStr,CanvasScreen.Wideth/2-225-MeterWidth,WeaponY+30,4,3,3,rgb(255,255,255))
@@ -895,8 +911,16 @@ sub drawOverlay
 		if .BayCt > 0 then
 			dim as short FtrCount = .Fighters+countFighters(2)
 			
+			if FtrCount <= 0 then
+				CombatColor = rgb(128,128,128)
+			elseif FtrCount < 19 then
+				CombatColor = rgb(255,255,0)
+			else
+				CombatColor = rgb(255,255,255)
+			end if
+			
 			CombatStr = "Ftrs  : "+str(FtrCount)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,WeaponY,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,WeaponY,4,3,3,CombatColor)
 			CombatStr = "Fighter Bays x"+str(.BayCt)
 			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,WeaponY+30,4,3,3,rgb(255,255,255))
 			
@@ -907,8 +931,16 @@ sub drawOverlay
 			WeaponY += 60
 		end if
 		if .TubeCt > 0 then
+			if .TorpAmmo <= 0 then
+				CombatColor = rgb(128,128,128)
+			elseif .TorpAmmo <= 5 * .TubeCt then
+				CombatColor = rgb(255,255,0)
+			else
+				CombatColor = rgb(255,255,255)
+			end if
+			
 			CombatStr = "Torps : "+str(.TorpAmmo)
-			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,WeaponY,4,3,3,rgb(255,255,255))
+			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,WeaponY,4,3,3,CombatColor)
 
 			CombatStr = Tubes(.TorpID).PartName+" Tubes x"+str(.TubeCt)
 			gfxString(CombatStr,CanvasScreen.Wideth/2+60+MeterWidth,WeaponY+30,4,3,3,rgb(255,255,255))
@@ -995,7 +1027,7 @@ function quickBattle(ByRef ActiveBattle as VCRobj, SeedOverride as short = 0) as
 end function
 
 sub watchBattle(ByRef ActiveBattle as VCRobj)
-	dim as byte VCRspeed = DefaultVCRspeed, BaseSeed, QuickFinish
+	dim as byte VCRspeed = DefaultVCRspeed, BaseSeed, QuickFinish, DelayCycles, KeepPress
 	dim as short DestroyedCt(2), CapturedCt(2), QuickCode, FastThresh
 	dim as double OddsChance
 	dim as string OddsDisp
@@ -1005,6 +1037,8 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	
 	FastThresh = 999
 	SkipSounds = 0
+	DelayCycles = 1
+	KeepPress = 0
 	setupBattle(ActiveBattle)
 	BaseSeed = ActiveBattle.Seed
 	if BaseSeed <= 0 then
@@ -1013,7 +1047,11 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 	
 	do
 		cls
-		playVCRcycle
+		if DelayCycles > 0 then
+			DelayCycles -= 1
+		else			
+			playVCRcycle
+		end if
 		
 		drawCombatObjs
 		drawOverlay
@@ -1021,7 +1059,11 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 			SkipSounds = 0
 			screencopy
 			sleep (10-VCRspeed)*25,1
-			InType = inkey
+			if KeepPress > 0 then
+				KeepPress -= 1
+			else
+				InType = inkey
+			end if
 		end if
 		
 		if lcase(InType) = "f" then
@@ -1053,7 +1095,18 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		elseif InType = chr(32) then
 			'Pause playback
 			while inkey <> "":wend
-			sleep
+			do
+				sleep
+				InType = inkey
+				if Intype = FunctionTwelve then
+					saveScreenshot
+				else
+					KeepPress = 1
+					exit do
+				end if
+			loop
+		elseif InType = FunctionTwelve then
+			saveScreenshot
 		elseif InType = EscKey then
 			'Exit VCR early
 			exit do
@@ -1110,7 +1163,7 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		gfxString(OutcomeStr,CanvasScreen.Wideth/2-gfxLength(OutcomeStr,4,3,3)/2,270,4,3,3,rgb(255,255,255))
 		screencopy
 		
-		for WhatifSeed as short = 1 to 118
+		for WhatifSeed as short = 2 to 119
 			if WhatifSeed <> BaseSeed then
 				QuickCode = quickBattle(ActiveBattle, WhatifSeed)
 				
@@ -1165,6 +1218,10 @@ sub watchBattle(ByRef ActiveBattle as VCRobj)
 		screencopy
 		while inkey <> "":wend
 		sleep
+		InType = inkey
+		if InType = FunctionTwelve then
+			saveScreenshot
+		end if		
 		while inkey <> "":wend
 	end if
 	InType = ""

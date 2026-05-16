@@ -2,6 +2,10 @@
 #DEFINE MetaLimit 2.5e5
 #ENDIF
 
+#IFNDEF MaxPlayers
+#DEFINE MaxPlayers 100
+#ENDIF
+
 type ParsePlan
 	'Core elements
 	PlanetOwner as ubyte
@@ -279,6 +283,24 @@ type ParseGame
 	LastTurn as short
 end type
 
+type ParseHullDesign
+	TechLevel as short
+	HullName as string
+	HullMass as integer
+	NeuMax as integer
+	Cargo as integer
+	Crew as integer
+	Engines as short
+	BeamBanks as short
+	TorpTubes as short
+	FighterBays as short
+	MegacreditCost as integer
+	DuraniumCost as integer
+	TritaniumCost as integer
+	MolybdenumCost as integer
+	AdvantageValue as short
+end type
+
 dim shared as ParseScore ProcessSlot(MaxPlayers), ResetSlotPar
 dim shared as ParsePlan PlanetParser(LimitObjs), InterPlan, ResetPlanPar
 dim shared as ParseShip ShipParser(LimitObjs), InterShip, ResetShipPar
@@ -295,9 +317,11 @@ dim shared as ParseRelation RelateParser(LimitObjs), ResetRelationsPar
 dim shared as ParseVCR VCRParser(LimitObjs), ResetVCRPar
 dim shared as ParseBlackHole BlackParser(LimitObjs), InterBlack, ResetBlackPar
 dim shared as ParseGame GameParser, ResetGamePar
+dim shared as ParseHullDesign HullDesignParser(LimitObjs), InterHull, ResetHullDesign
 dim shared as double KBUpdate
 
-dim shared as short TerrMapping(768,768), MinXPos, MaxXPos, MinYPos, MaxYPos
+dim shared as byte StackingFound
+dim shared as short MinXPos, MaxXPos, MinYPos, MaxYPos
 
 ResetSlotPar.RaceType = "Unassigned"
 ResetPlanPar.FriendlyCode = quote("???")
@@ -305,6 +329,7 @@ ResetShipPar.FriendlyCode = quote("???")
 ResetMinefPar.FCode = quote("???")
 ResetGamePar.MapWidth = 2000
 ResetGamePar.MapHeight = 2000
+ResetWormholePar.Stability = -1
 for PID as byte = 1 to 2
 	with ResetVCRPar.Combatants(PID)
 		.BeamKillX = 1
@@ -373,9 +398,11 @@ function getJsonStr(ReadStr as string, ReadParam as string, CharInit as integer 
 	dim as integer EndQuote = 0
 	do
 		EndQuote = instr(max(MatchFound+len(ReadParam)+4, EndQuote+1),ReadStr,chr(34))
-	loop until mid(ReadStr, EndQuote-1 , 2) <> "\"+chr(34)
+	loop until mid(ReadStr, EndQuote-1, 2) <> "\"+chr(34)
 	
-	return mid(ReadStr, MatchFound+len(ReadParam)+4, EndQuote-MatchFound-len(ReadParam)-4)
+	dim as string WorkStr = mid(ReadStr, MatchFound+len(ReadParam)+4, EndQuote-MatchFound-len(ReadParam)-4)
+	
+	return findReplace(WorkStr, "\"+chr(34), "''")
 end function
 
 function getJsonBool(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0) as integer
@@ -387,6 +414,14 @@ function getJsonBool(ReadStr as string, ReadParam as string, CharInit as integer
 	end if
 	
 	return 0
+end function
+
+function findAPIerror(ReadStr as string) as string
+	if instr(ReadStr, quote("success")+":false") then
+		return getJsonStr(ReadStr, "error")
+	end if
+	
+	return ""
 end function
 
 sub exportScores(GameID as integer, CurTurn as short)
@@ -625,7 +660,7 @@ sub exportWormholeList(GameID as integer, CurTurn as short)
 
 	for ObjID = 1 to LimitObjs
 		with WormholeParser(ObjID)
-			if len(.Namee) > 0 then
+			if .Stability >= 0 then
 				print #25, ""& ObjID;","& quote(.Namee);","& .XLoc;","& .YLoc; _
 					","& .TargetX;","& .TargetY;","& .Stability;","& .LastScan
 			end if
@@ -654,21 +689,23 @@ sub exportSettings(GameID as integer, AlwaysWrite as byte = 0)
 	end if
 end sub
 
-sub exportRelationships(GameID as integer, CurTurn as short)
+sub exportRelationships(GameID as integer, CurTurn as short, WriteThieFile as byte = 1)
 	dim as integer ObjID
 
-	open "games/"+str(GameID)+"/"+str(CurTurn)+"/Relations.csv" for output as #19
-	print #19,quote("Player A")+","+quote("Player B")+","+quote("Relation A")+","+_
-		quote("Relation B")+","+quote("Conflict")
-		
-	for ObjID = 1 to LimitObjs
-		with RelateParser(ObjID)
-			if .FromPlr <> .ToPlr then
-				print #19, ""& .FromPlr;","& .ToPlr;","& .RelationA;","& .RelationB;","& .ConflictLev
-			end if
-		end with 
-	next ObjID
-	close #19
+	if WriteThieFile then
+		open "games/"+str(GameID)+"/"+str(CurTurn)+"/Relations.csv" for output as #19
+		print #19,quote("Player A")+","+quote("Player B")+","+quote("Relation A")+","+_
+			quote("Relation B")+","+quote("Conflict")
+			
+		for ObjID = 1 to LimitObjs
+			with RelateParser(ObjID)
+				if .FromPlr <> .ToPlr then
+					print #19, ""& .FromPlr;","& .ToPlr;","& .RelationA;","& .RelationB;","& .ConflictLev
+				end if
+			end with 
+		next ObjID
+		close #19
+	end if
 end sub
 
 sub exportVCRs(GameID as integer, CurTurn as short)
@@ -735,8 +772,34 @@ sub exportBlackHoles(GameID as integer, AlwaysWrite as byte = 0)
 	end if
 end sub
 
-sub createMap(GameID as integer, CurTurn as short)
-	if GameID >= 2972 AND (GameParser.DynamicMap > 0 OR _
+sub exportHullList(GameID as integer)
+	#IF __FB_DEBUG__
+	dim as integer ObjID
+	
+	if FileExists("games/"+str(GameID)+"/Shiplist.csv") = 0 AND GameParser.CampaignGame AND StackingFound then
+		open "games/"+str(GameID)+"/Shiplist.csv" for output as #91
+		print #91, quote("ID")+","+quote("Tech")+","+quote("Hull")+","+quote("Mass")+","+_
+			quote("Ne")+","+quote("Car")+","+quote("Crew")+","+quote("En")+","+_
+			quote("Bm")+","+quote("Tp")+","+quote("Ftr")+","+quote("mc")+","+_
+			quote("Du")+","+quote("Tr")+","+quote("Mo")+","+quote("Adv")
+	
+		for ObjID = 1 to LimitObjs
+			with HullDesignParser(ObjID)
+				if len(.HullName) > 0 then
+					print #91, ""& ObjID;","& .TechLevel;",";quote(.HullName);","& .HullMass; _
+						","& .NeuMax;","& .Cargo;","& .Crew;","& .Engines;","& .BeamBanks; _
+						","& .TorpTubes;","& .FighterBays;","& .MegacreditCost;","& .DuraniumCost; _
+						","& .TritaniumCost;","& .MolybdenumCost;","& .AdvantageValue
+				end if
+			end with
+		next
+		close #91
+	end if
+	#ENDIF
+end sub
+
+sub createMap(GameID as integer, CurTurn as short, ArenaFiles as byte = 0)
+	if GameID >= 2972 AND (GameParser.DynamicMap > 0 OR ArenaFiles <> 0 OR _
 		FileExists("games/"+str(GameID)+"/Map.csv") = 0 OR FileDateTime("games/"+str(GameID)+"/Map.csv") < DataFormat) then
 		print #9, "[";Time;", ";Date;"] Creating map... ";
 		if GameParser.DynamicMap then
@@ -777,7 +840,7 @@ sub createMap(GameID as integer, CurTurn as short)
 	end if
 end sub
 
-sub exportCSVfiles(GameID as integer, CurTurn as short)
+sub exportCSVfiles(GameID as integer, CurTurn as short, ArenaFiles as byte = 0)
 	exportScores(GameID,CurTurn)
 	exportPlanetList(GameID,CurTurn)
 	exportShipList(GameID,CurTurn)
@@ -785,11 +848,12 @@ sub exportCSVfiles(GameID as integer, CurTurn as short)
 	exportMinefields(GameID,CurTurn)
 	exportNebList(GameID, FileDateTime("games/"+str(GameID)+"/Nebulae.csv") < DataFormat)
 	exportIonList(GameID,CurTurn)
-	exportRelationships(GameID,CurTurn)
+	exportRelationships(GameID,CurTurn, ArenaFiles = 0)
 	exportArtifactList(GameID,CurTurn)
 	exportWormholeList(GameID,CurTurn)
 	exportSettings(GameID, FileDateTime("games/"+str(GameID)+"/Settings.csv") < DataFormat)
 	exportStarList(GameID, FileDateTime("games/"+str(GameID)+"/StarClusters.csv") < DataFormat)
 	exportVCRs(GameID,CurTurn)
 	exportBlackHoles(GameID, FileDateTime("games/"+str(GameID)+"/BlackHoles.csv") < DataFormat)
+	exportHullList(GameID)
 end sub

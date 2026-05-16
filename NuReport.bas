@@ -211,7 +211,7 @@ sub getReport
 						if HorwaspPlanet then
 							gfxString("Liquify: "+str(.ColTaxRate)+"%",Sidebar,140,3,2,2,ReportColor)
 							gfxString("Terraform: "+str(.WorkTerraform)+"%",Sidebar,160,3,2,2,ReportColor)
-						else
+						elseif .Colonists > 0 then 
 							if HappyDelta > 0 then
 								HappyDelStr = "+"+str(HappyDelta)
 								PaintColor(1) = ReportColor
@@ -605,12 +605,16 @@ sub getReport
 				else
 					gfxString("No engines",Sidebar,120,3,2,2,rgb(128,128,128))
 				end if
-				if .BeamNum > 0 then 
+				if GameName = ActiveArenaTitle AND ShiplistObj(.ShipType).Beams > 0 then
+					gfxString(str(ShiplistObj(.ShipType).Beams)+"x beam banks",Sidebar,140,3,2,2,ReportColor)
+				elseif .BeamNum > 0 then 
 					gfxString(str(.BeamNum)+"x "+Beams(.BeamPos).PartName,Sidebar,140,3,2,2,ReportColor)
 				else
 					gfxString("No beam banks",Sidebar,140,3,2,2,rgb(128,128,128))
 				end if
-				if .TubeNum > 0 then 
+				if GameName = ActiveArenaTitle AND ShiplistObj(.ShipType).Tubes > 0 then
+					gfxString(str(ShiplistObj(.ShipType).Tubes)+"x torpedo tubes",Sidebar,160,3,2,2,ReportColor)
+				elseif .TubeNum > 0 then 
 					gfxString(str(.TubeNum)+"x "+Tubes(.TubePos).PartName,Sidebar,160,3,2,2,ReportColor)
 				else
 					gfxString("No torpedo tubes",Sidebar,160,3,2,2,rgb(128,128,128))
@@ -656,7 +660,11 @@ sub getReport
 					end with
 				end if
 				
-				if HorwaspShip then
+				if GameName = ActiveArenaTitle then
+					gfxString("Known Mass: "+commaSep(.TotalMass)+" kT",Sidebar,260,3,2,2,ReportColor)
+					
+					.Crew = ShiplistObj(.ShipType).Crew
+				elseif HorwaspShip then
 					gfxString("Mass: "+commaSep(BaseMass)+" kT",Sidebar,260,3,2,2,ReportColor)
 				else
 					if .PrimEnemy > 0 then
@@ -669,7 +677,7 @@ sub getReport
 
 				if .WarpSpeed > ceil((100 - .HullDmg)/10) then
 					PaintColor(1) = rgb(255,64,64)
-				elseif .WarpSpeed > .EnginePos then
+				elseif .WarpSpeed > .EnginePos AND GameName <> ActiveArenaTitle then
 					PaintColor(1) = rgb(255,255,0)
 				else
 					PaintColor(1) = ReportColor
@@ -728,27 +736,35 @@ sub getReport
 					end if
 				end if
 				
-				if .Neu = 0 OR FuelNeeded > .Neu then
-					PaintColor(1) = rgb(255,64,64)
-				elseif .Neu < 25 OR FuelNeeded >= .Neu - 1 then
-					PaintColor(1) = rgb(255,255,0)
+				if GameName = ActiveArenaTitle then
+					dim as integer ExtraMass = .TotalMass - ShiplistObj(.ShipType).Mass
+					
+					gfxString("Max Fuel    : "+commaSep(ShiplistObj(.ShipType).Neu)+" kT",Sidebar,380,3,2,2,ReportColor)
+					gfxString("Max Cargo   : "+commaSep(ShiplistObj(.ShipType).Cargo)+" kT",Sidebar,420,3,2,2,ReportColor)
+					gfxString("Fuel + Cargo: "+commaSep(ExtraMass)+" kT",Sidebar,440,3,2,2,ReportColor)
 				else
-					PaintColor(1) = ReportColor
-				end if
-				gfxString("Fuel  : "+commaSep(.Neu)+"/"+commaSep(ShiplistObj(.ShipType).Neu)+" kT",Sidebar,380,3,2,2,PaintColor(1))
-				if FuelNeeded > 0 then
-					gfxString("Burn  : "+commaSep(FuelNeeded)+" kT",Sidebar,400,3,2,2,PaintColor(1))
-				end if
-				
-				gfxString("Cargo      : "+commaSep(CargoTaken)+"/"+commaSep(ShiplistObj(.ShipType).Cargo)+" kT",Sidebar,420,3,2,2,ReportColor)
-				if HorwaspShip = 0 then
-					gfxString("Duranium   : "+commaSep(.Dur)+" kT",Sidebar,440,3,2,2,ReportColor)
-					gfxString("Tritanium  : "+commaSep(.Trit)+" kT",Sidebar,460,3,2,2,ReportColor)
-					gfxString("Molybdenum : "+commaSep(.Moly)+" kT",Sidebar,480,3,2,2,ReportColor)
-					gfxString("Supplies   : "+commaSep(.Supplies)+" kT",Sidebar,500,3,2,2,rgb(128,224,192))
-					gfxString("Ammo       : "+commaSep(.Ammo)+" kT",Sidebar,520,3,2,2,rgb(128,224,192))
-					gfxString("Colonists  : "+commaSep(.Colonists)+" clans",Sidebar,540,3,2,2,rgb(128,224,192))
-					gfxString("Megacredits: "+commaSep(.Megacredits),Sidebar,560,3,2,2,rgb(128,224,192))
+					if .Neu = 0 OR FuelNeeded > .Neu then
+						PaintColor(1) = rgb(255,64,64)
+					elseif .Neu < 25 OR FuelNeeded >= .Neu - 1 then
+						PaintColor(1) = rgb(255,255,0)
+					else
+						PaintColor(1) = ReportColor
+					end if
+					gfxString("Fuel  : "+commaSep(.Neu)+"/"+commaSep(ShiplistObj(.ShipType).Neu)+" kT",Sidebar,380,3,2,2,PaintColor(1))
+					if FuelNeeded > 0 then
+						gfxString("Burn  : "+commaSep(FuelNeeded)+" kT",Sidebar,400,3,2,2,PaintColor(1))
+					end if
+					
+					gfxString("Cargo      : "+commaSep(CargoTaken)+"/"+commaSep(ShiplistObj(.ShipType).Cargo)+" kT",Sidebar,420,3,2,2,ReportColor)
+					if HorwaspShip = 0 then
+						gfxString("Duranium   : "+commaSep(.Dur)+" kT",Sidebar,440,3,2,2,ReportColor)
+						gfxString("Tritanium  : "+commaSep(.Trit)+" kT",Sidebar,460,3,2,2,ReportColor)
+						gfxString("Molybdenum : "+commaSep(.Moly)+" kT",Sidebar,480,3,2,2,ReportColor)
+						gfxString("Supplies   : "+commaSep(.Supplies)+" kT",Sidebar,500,3,2,2,rgb(128,224,192))
+						gfxString("Ammo       : "+commaSep(.Ammo)+" kT",Sidebar,520,3,2,2,rgb(128,224,192))
+						gfxString("Colonists  : "+commaSep(.Colonists)+" clans",Sidebar,540,3,2,2,rgb(128,224,192))
+						gfxString("Megacredits: "+commaSep(.Megacredits),Sidebar,560,3,2,2,rgb(128,224,192))
+					end if
 				end if
 			end with
 			
@@ -948,6 +964,7 @@ sub getReport
 			dim as byte IonClass
 			dim as string IonGrade, IonStrength
 			dim as uinteger IonColor
+			dim as short NewVolts(1)
 			
 			'Ion Storm report
 			with IonStorms(SelectedID)
@@ -976,13 +993,45 @@ sub getReport
 						IonGrade = "Very Dangerous"
 						IonColor = rgb(255,64,64)
 				end select
-				if .Voltage mod 2 = 0 then
+				if ViewGame.CloudyStorms then
+					IonStrength = "unstable"
+					NewVolts(0) = min(.Voltage - 14, sqr(.Voltage))
+					NewVolts(1) = .Voltage + 11
+					
+					if .Voltage > 320 then
+						NewVolts(1) += 1
+					end if
+					if .Voltage > 500 then
+						NewVolts(1) += 1
+					end if
+				elseif .Voltage mod 2 = 0 then
 					IonStrength = "weakening"
+					NewVolts(1) = .Voltage - 4 
+					NewVolts(0) = min(NewVolts(1) - 10, sqr(.Voltage))
 				else
 					IonStrength = "growing"
+					NewVolts(0) = .Voltage
+					NewVolts(1) = NewVolts(0) + 11
+					
+					if .Voltage > 320 then
+						NewVolts(1) += 1
+					end if
+					if .Voltage > 500 then
+						NewVolts(1) += 1
+					end if
 				end if
 				gfxString(IonGrade+" and "+IonStrength,Sidebar,160,3,2,2,IonColor)
-				gfxString("("+str(.Voltage)+" V)",Sidebar,180,3,2,2,IonColor)
+				gfxString("("+str(.Voltage)+" V >> "+str(NewVolts(0))+"-"+str(NewVolts(1))+" V)",Sidebar,180,3,2,2,IonColor)
+
+				if NewVolts(1) >= 150 then
+					gfxString("To ensure no damage: (with fuel)",Sidebar,220,3,2,2,rgb(255,255,0))
+					for EID as byte = 1 to 9
+						dim as short ComputeMass
+						ComputeMass = NewVolts(1) + 20*(10-EID) 
+						
+						gfxString(" "+Engines(EID).PartName+": "+str(ComputeMass)+" kT",Sidebar,220+EID*20,3,2,2,rgb(255,255,0))
+					next EID
+				end if
 			end with
 			
 		case REPORT_STAR
@@ -1200,7 +1249,9 @@ sub getReport
 		
 		if BaseFound AND SelectedObjType <> REPORT_BASE then
 			gfxstring("Base",Sidebar+20,CanvasScreen.Height-188,3,2,2,rgb(255,255,255))
-			printgfx("B",Sidebar+20,CanvasScreen.Height-188,3,rgb(255,255,0))
+			if GameName <> ActiveArenaTitle then
+				printgfx("B",Sidebar+20,CanvasScreen.Height-188,3,rgb(255,255,0))
+			end if
 		end if
 		if SelectedObjType = REPORT_VCR then
 			gfxstring("View",Sidebar+100,CanvasScreen.Height-188,3,2,2,rgb(255,255,255))

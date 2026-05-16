@@ -44,7 +44,7 @@ sub renderClient
 		dim as ushort JumpCut, OldTurn
 		dim as ubyte CutLegal, ProcessNeeded, ZipDLenabled = 0
 		dim as string ScoreFile, AuxFile, RawFile, ZipFile
-		dim as short TurnsPerRow = int((CanvasScreen.Wideth-20)/48)
+		dim as short TurnsPerRow = int(CanvasScreen.Wideth/8)
 
 		do
 			color rgb(255,255,255)
@@ -59,7 +59,7 @@ sub renderClient
 			CutLegal = 0
 			ProcessNeeded = 0
 			ScoreFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Score.csv"
-			'AuxFile = "games/"+str(GameID)+"/Nebulae.csv"
+			AuxFile = "games/"+str(GameID)+"/"+str(JumpCut)+"/Relations.csv"
 			RawFile = "raw/"+str(GameID)+"/player1-turn"+str(JumpCut)+".trn"
 			ZipFile = "raw/"+str(GameID)+"/game"+str(GameID)+".zip"
 			
@@ -83,7 +83,7 @@ sub renderClient
 				ProcessNeeded = 1
 				color rgb(128,255,128)
 				print "Ready for conversion"
-			elseif FileDateTime(ScoreFile) < DataFormat then
+			elseif FileDateTime(ScoreFile) < DataFormat OR (FileExists(AuxFile) = 0 AND GameName <> ActiveArenaTitle) then
 				color rgb(255,128,128)
 				if FileExists(RawFile) then
 					CutLegal = 1
@@ -105,8 +105,9 @@ sub renderClient
 			print GameName
 			for TID as short = 1 to ViewGame.LastTurn
 				ScoreFile = "games/"+str(GameID)+"/"+str(TID)+"/Score.csv"
-				'AuxFile = "games/"+str(GameID)+"/Nebulae.csv"
+				AuxFile = "games/"+str(GameID)+"/"+str(TID)+"/Relations.csv"
 				RawFile = "raw/"+str(GameID)+"/player1-turn"+str(TID)+".trn"
+				color ,rgb(0,0,0)
 
 				if FileExists("games/"+str(GameID)+"/"+str(TID)+"/Working") then
 					if Now - FileDateTime("games/"+str(GameID)+"/"+str(TID)+"/Working") > 1/24 then
@@ -117,7 +118,7 @@ sub renderClient
 					color rgb(255,255,0)
 				elseif FileExists(ScoreFile) = 0 then
 					color rgb(128,128,128)
-				elseif FileDateTime(ScoreFile) < DataFormat then
+				elseif FileDateTime(ScoreFile) < DataFormat OR (FileExists(AuxFile) = 0 AND GameName <> ActiveArenaTitle) then
 					if FileExists(RawFile) then
 						color rgb(255,128,128)
 					else
@@ -126,16 +127,33 @@ sub renderClient
 				else
 					color rgb(0,255,0)
 				end if
-				print space(5-len(str(TID)));TID;
-				if remainder(TID,TurnsPerRow) = 0 then
-					print
+				
+				if TID = JumpCut then
+					dim as uinteger TransferColor
+					ScreenControl(GET_COLOR, TransferColor)
+					
+					color rgb(255,255,255), TransferColor 
+					print chr(177);
+				else
+					print chr(219);
+				end if
+
+				if TID = ViewGame.LastTurn then
+					color ,rgb(0,0,0)
+					if remainder(TID,TurnsPerRow) >= TurnsPerRow - 4 then
+						print
+					end if
+					
+					print " "& TID;
 				end if
 			next TID
 			color rgb(255,255,255)
 			print
 			print
-			if ZipDLenabled then
-				if FileExists(ZipFile) then
+			if ZipDLenabled AND OfflineMode = 0 then
+				if GameName = ActiveArenaTitle then
+					print "New turns can be downloaded. Press ENTER on an invalid turn to acquire its data."
+				elseif FileExists(ZipFile) then
 					print "A ZIP package has been detected alongside the raw turn files. Hit ENTER on an invalid turn to unpack them."
 				else
 					print "You can use Nu Replayer to download a ZIP package containing the remaining turns. Hit ENTER on an invalid turn to proceed."
@@ -175,22 +193,30 @@ sub renderClient
 				loadTurnExtras
 				exit do
 			#IFNDEF __FORCE_OFFLINE__
-			elseif InType = EnterKey AND ZipDLenabled then
-				if FileExists(ZipFile) then
-					if unpackZipPackage(ZipFile, 0) = 0 then
-						ZipDLenabled = 0
+			elseif InType = EnterKey AND ZipDLenabled AND OfflineMode = 0  then
+				if JumpCut > 0 then
+					if GameName = ActiveArenaTitle then
+						if downloadTurns(GameID, JumpCut) ANDALSO loadTurn(FeaturedArena, JumpCut, 0, 1) = 0 then
+							TurnNum = JumpCut
+							loadTurnExtras
+							exit do
+						end if
+					elseif FileExists(ZipFile) then
+						if unpackZipPackage(ZipFile, 0) = 0 then
+							ZipDLenabled = 0
+						else
+							print word_wrap("Unpack sequence unsuccessful.")
+							screencopy
+							sleep
+						end if
 					else
-						print word_wrap("Unpack sequence unsuccessful.")
-						screencopy
-						sleep
-					end if
-				else
-					if downloadZipPackage(GameId) then
-						ZipDLenabled = 0
-					else
-						print word_wrap(ErrorMsg)
-						screencopy
-						sleep
+						if downloadZipPackage(GameId) then
+							ZipDLenabled = 0
+						else
+							print word_wrap(ErrorMsg)
+							screencopy
+							sleep
+						end if
 					end if
 				end if
 				ErrorMsg = ""
@@ -826,7 +852,7 @@ sub renderClient
 				RedrawIslands = 1
 			end if
 		case "b"
-			if BaseFound > 0 AND SelectedObjType <> REPORT_BASE then
+			if BaseFound > 0 AND SelectedObjType <> REPORT_BASE AND GameName <> ActiveArenaTitle then
 				SelectedObjType = REPORT_BASE
 				SelectedID = BaseFound
 				
@@ -878,8 +904,7 @@ sub renderClient
 			'Reloads the starmap
 			updateStarmap
 		case FunctionTwelve
-			'Takes a snapshot of the client
-			bsave("shot.bmp",0)
+			saveScreenshot
 		case XBox
 			ReplayerMode = MODE_EXIT
 		case EscKey

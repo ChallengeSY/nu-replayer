@@ -24,7 +24,7 @@ function listGames as integer
 	do
 		if eof(1) then
 			close #1
-			InStream = quote("success")+":false"
+			InStream = "{"+quote("success")+":false,"+quote("error")+":"+quote("File not found")+"}"
 			exit do
 		end if
 		line input #1, InStream
@@ -33,7 +33,7 @@ function listGames as integer
 	
 	open ExportFile for output as #2
 	print #2, quote("ID")+","+quote("Name")+","+quote("Desc")+","+quote("Turn")
-	if instr(InStream,quote("success")+":false") then
+	if findAPIerror(InStream) <> "" then
 		'If failed attempt detected, do not proceed any further
 		kill(FailFile)
 		name(ImportFile,FailFile)

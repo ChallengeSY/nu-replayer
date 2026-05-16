@@ -1,22 +1,4 @@
 #IFNDEF __FORCE_OFFLINE__
-type ParseHullDesign
-	TechLevel as short
-	HullName as string
-	HullMass as integer
-	NeuMax as integer
-	Cargo as integer
-	Crew as integer
-	Engines as short
-	BeamBanks as short
-	TorpTubes as short
-	FighterBays as short
-	MegacreditCost as integer
-	DuraniumCost as integer
-	TritaniumCost as integer
-	MolybdenumCost as integer
-	AdvantageValue as short
-end type
-
 type ParsePartDesign
 	TechLevel as short
 	PartName as string
@@ -41,7 +23,6 @@ sub fetchStaticData
 	
 	dim as integer ObjIDa, ObjIDb, ObjCount, BlockChar(2)
 	dim as string InStream, TargetFile(1)
-	dim as ParseHullDesign InterHull
 	dim as ParsePartDesign InterPart
 	SendBuffer = loadAddress("static/all?compress=false")
 	TargetFile(0) = "raw/staticData.txt"
@@ -79,7 +60,7 @@ sub fetchStaticData
 			open TargetFile(0) for input as #5
 			do
 				if eof(5) then
-					ErrorMsg = "Nu Replayer could not successfully download the static data file due to lack of opening brace."
+					ErrorMsg = "Nu Replayer could not download the static data file: No opening brace found"
 					exit do
 				end if
 				line input #5, InStream
@@ -87,9 +68,11 @@ sub fetchStaticData
 			close #5
 		end if
 		
-		if instr(Instream,"{"+quote("success")+":false") then
-			ErrorMsg = "Nu Replayer could not successfully download the static data file due to API error."
-		elseif ErrorMsg = "" then
+		if ErrorMsg = "" then
+			ErrorMsg = findAPIerror(InStream)
+		end if
+		
+		if ErrorMsg = "" then
 			cls
 			print "Converting available hulls and parts...";
 			ObjCount = 0
@@ -112,8 +95,12 @@ sub fetchStaticData
 					with InterHull
 						.HullName = getJsonStr(InStream,"name",BlockChar(1))
 						
+						.HullName = findReplace(.HullName, "Class Research Vessel", "Researcher")
+						.HullName = findReplace(.HullName, "Class Super-d", "D")
+						.HullName = findReplace(.HullName, "Class Blockade ", "")
 						.HullName = findReplace(.HullName, "Class Torpedo ", "")
 						.HullName = findReplace(.HullName, "Class ", "")
+						.HullName = findReplace(.HullName, "Transport Freighter", "Transport")
 						.HullName = findReplace(.HullName, "Deep Space Freighter", "Freighter")
 						if .HullName = "Bloodfang" then
 							.HullName = "Bloodfang Stealth Carrier"
@@ -273,6 +260,8 @@ sub fetchStaticData
 			end if
 			
 			close #7
+		else
+			ErrorMsg = "Nu Replayer could not download the static data file: " + ErrorMsg 
 		end if
 	end if
 	

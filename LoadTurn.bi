@@ -13,7 +13,7 @@ const ObjClose = "},"
 dim shared as string ErrorMsg
 #ENDIF
 
-function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, ActiveArena as byte = 0) as byte
+function loadTurn(WorkID as integer, WorkTurn as short, PrintTxt as byte = 1, ActiveArena as byte = 0) as byte
 	randomize timer
 	
 	dim as string InStream, ObjName, ObjCode, RawPath, LoadFile
@@ -21,9 +21,9 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 	dim as byte RaceType
 	dim as double ParseStart, ParseEnd
 
-	mkdir("games/"+str(GameNum))
-	mkdir("games/"+str(GameNum)+"/"+str(TurnNum))
-	RawPath = "raw/"+str(GameNum)
+	mkdir("games/"+str(WorkID))
+	mkdir("games/"+str(WorkID)+"/"+str(WorkTurn))
+	RawPath = "raw/"+str(WorkID)
 
 	for ObjIDa = 1 to LimitObjs
 		PlanetParser(ObjIDa) = ResetPlanPar
@@ -38,6 +38,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 		WormholeParser(ObjIDa) = ResetWormholePar
 		RelateParser(ObjIDa) = ResetRelationsPar
 		VCRParser(ObjIDa) = ResetVCRPar
+		
+		HullDesignParser(ObjIDa) = ResetHullDesign
 	next
 	
 	for MetaID as integer = 1 to MetaLimit
@@ -58,17 +60,17 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 	
 	ErrorLog = open("logs/LT"+str(irandom(0,999999))+".log" for output as #9)
 	if PrintTxt then
-		print "Data will be exported for game #"& GameNum;" turn "& TurnNum;"."
+		print "Data will be exported for game #"& WorkID;" turn "& WorkTurn;"."
 	end if
 	
-	open "games/"+str(GameNum)+"/"+str(TurnNum)+"/Working" for output as #10
+	open "games/"+str(WorkID)+"/"+str(WorkTurn)+"/Working" for output as #10
 	close #10 
 	
 	GameParser = ResetGamePar
 
-	print #9, "[";Time;", ";Date;"] Data will be exported for game #"& GameNum;" turn "& TurnNum;"."
-	if FileExists("games/"+str(GameNum)+"/Settings.csv") then
-		open "games/"+str(GameNum)+"/Settings.csv" for input as #5
+	print #9, "[";Time;", ";Date;"] Data will be exported for game #"& WorkID;" turn "& WorkTurn;"."
+	if FileExists("games/"+str(WorkID)+"/Settings.csv") then
+		open "games/"+str(WorkID)+"/Settings.csv" for input as #5
 		with GameParser
 			.DynamicMap = 0
 			
@@ -108,13 +110,13 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 	end if
 	
 	for PID as ushort = 0 to MaxPlayers
-		if ActiveArena = 0 then
+		if PID = 0 AND ActiveArena = 0 then
 			continue for
 		end if
 		
-		LoadFile = RawPath+"/player"+str(PID)+"-turn"+str(TurnNum)+".trn"
+		LoadFile = RawPath+"/player"+str(PID)+"-turn"+str(WorkTurn)+".trn"
 		if FileExists(LoadFile) = 0 then
-			LoadFile = RawPath+"/"+str(TurnNum)+"/loadturn"+str(PID)
+			LoadFile = RawPath+"/"+str(WorkTurn)+"/loadturn"+str(PID)
 			if FileExists(LoadFile) = 0 then
 				LoadFile = LoadFile + ".txt"
 			end if
@@ -148,7 +150,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 		loop until left(InStream,11) = "{"+quote("success")+":" OR eof(1)
 		close #1
 
-		if mid(InStream,12,5) = "false" then
+		if findAPIerror(InStream) <> "" then
 			ProcessSlot(PID).Namee = quote("error")
 			ProcessSlot(PID).RaceType = "Unknown"
 		else
@@ -159,7 +161,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 				BlockChar(1) = instr(BlockChar(0),InStream,ObjClose)
 
 				with GameParser
-					if PID = 1 AND FileExists("player1-turn"+str(TurnNum+1)+".trn") = 0 then
+					if PID = 1 AND (FileExists("player1-turn"+str(WorkTurn+1)+".trn") = 0 OR WorkID > 527391) then
 						.PlayerCount = getJsonVal(InStream,"slots",BlockChar(0))
 						.MapWidth = getJsonVal(InStream,"mapwidth",BlockChar(0))
 						.MapHeight = getJsonVal(InStream,"mapheight",BlockChar(0))
@@ -176,7 +178,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 						MaxYPos = MinYPos + .MapHeight
 						
 						if cmdLine("--verbose") then
-							print "Acquired game settings for game "& GameNum 
+							print "Acquired game settings for game "& WorkID 
 						end if
 						
 					end if
@@ -364,13 +366,13 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 					
 					if PID <= 0 OR InterPlan.PlanetOwner = PID then
 						with PlanetParser(ObjIDa)
-							if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND TurnNum < GameParser.AccelStart) then
+							if .LockOwner = 0 OR (InterPlan.Colonists > .Colonists AND WorkTurn < GameParser.AccelStart) then
 								print #9, "[";Time;", ";Date;"]  Registered planet #"& ObjIDa;" (";ObjName;")"
 								PlanetParser(ObjIDa) = InterPlan
 								WaspParser(ObjIDa) = InterWasp
 								
 								.LockOwner = 1
-								.LastScan = TurnNum
+								.LastScan = WorkTurn
 							end if
 						end with
 					else
@@ -573,8 +575,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 			end if
 			
 			'Nebulae data. Only read this if non-existant or outdated
-			if PID <= 1 AND (FileExists("games/"+str(GameNum)+"/Nebulae.csv") = 0 OR _
-				FileDateTime("games/"+str(GameNum)+"/Nebulae.csv") < DataFormat) then
+			if PID <= 1 AND (FileExists("games/"+str(WorkID)+"/Nebulae.csv") = 0 OR _
+				FileDateTime("games/"+str(WorkID)+"/Nebulae.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("nebulas")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("nebulas")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
@@ -606,8 +608,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 			end if
 			
 			'Star Cluster data. Only read this if non-existant or outdated
-			if PID <= 1 AND (FileExists("games/"+str(GameNum)+"/StarClusters.csv") = 0 OR _
-				FileDateTime("games/"+str(GameNum)+"/StarClusters.csv") < DataFormat) then
+			if PID <= 1 AND (FileExists("games/"+str(WorkID)+"/StarClusters.csv") = 0 OR _
+				FileDateTime("games/"+str(WorkID)+"/StarClusters.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("stars")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("stars")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
@@ -643,8 +645,8 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 			end if
 			
 			'Black Hole data. Only read this if non-existant or outdated
-			if PID <= 1 AND (FileExists("games/"+str(GameNum)+"/BlackHoles.csv") = 0 OR _
-				FileDateTime("games/"+str(GameNum)+"/BlackHoles.csv") < DataFormat) then
+			if PID <= 1 AND (FileExists("games/"+str(WorkID)+"/BlackHoles.csv") = 0 OR _
+				FileDateTime("games/"+str(WorkID)+"/BlackHoles.csv") < DataFormat) then
 				BlockChar(0) = instr(InStream,quote("blackholes")+": [")
 				if BlockChar(0) > 0 AND instr(InStream,quote("blackholes")+": []") = 0 then
 					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
@@ -838,7 +840,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 						print "Identified minefield #"& ObjIDa;" as belonging to player "& InterMinef.MineOwner
 					end if
 					
-					if InterMinef.MineOwner = PID then
+					if InterMinef.MineOwner = PID OR PID <= 0 then
 						print #9, "[";Time;", ";Date;"]  Registered minefield #"& ObjIDa
 						MinefParser(ObjIDa) = InterMinef
 					end if
@@ -942,7 +944,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 								.Temperature = getJsonVal(InStream,"temperature",BlockChar(1))
 								.Starbase = getJsonBool(InStream,"hasstarbase",BlockChar(1))
 								
-								if GameNum < 51690 then
+								if WorkID < 51690 then
 									/'
 									 ' Older games do not correctly handle freighters and damaged ships in the API data
 									 ' This override should cover most (if not all) holes
@@ -962,7 +964,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 						next VCRSide
 					end with
 
-					if VCRParser(CombatID).LeftOwner = PID then
+					if PID <= 0 OR VCRParser(CombatID).LeftOwner = PID then
 						if cmdLine("--verbose") OR cmdLine("-vc") then
 							print "Registered a VCR between piece #"& VCRParser(CombatID).Combatants(1).PieceID;
 							print " and piece #"& VCRParser(CombatID).Combatants(2).PieceID;"."
@@ -970,6 +972,57 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 						CombatID += 1
 					end if
 				loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)  
+			end if
+			
+			'Hull List data
+			if PID <= 1 then
+				BlockChar(0) = instr(InStream,quote("hulls")+": [")
+				if BlockChar(0) > 0 then
+					BlockChar(2) = instr(BlockChar(0),InStream,ArrayClose)
+					BlockChar(1) = BlockChar(0)
+					
+					do
+						with InterHull
+							.HullName = getJsonStr(InStream,"name",BlockChar(1))
+							
+							.HullName = findReplace(.HullName, "Class Research Vessel", "Researcher")
+							.HullName = findReplace(.HullName, "Class Super-d", "D")
+							.HullName = findReplace(.HullName, "Class Blockade ", "")
+							.HullName = findReplace(.HullName, "Class Torpedo ", "")
+							.HullName = findReplace(.HullName, "Class ", "")
+							.HullName = findReplace(.HullName, "Transport Freighter", "Transport")
+							.HullName = findReplace(.HullName, "Deep Space Freighter", "Freighter")
+							if .HullName = "Bloodfang" then
+								.HullName = "Bloodfang Stealth Carrier"
+							elseif .HullName = "Tarius" then
+								StackingFound = 1
+							end if
+							
+							.DuraniumCost = getJsonVal(InStream,"duranium",BlockChar(1))
+							.TritaniumCost = getJsonVal(InStream,"tritanium",BlockChar(1))
+							.MolybdenumCost = getJsonVal(InStream,"molybdenum",BlockChar(1))
+							
+							.NeuMax = getJsonVal(InStream,"fueltank",BlockChar(1))
+							.Crew = getJsonVal(InStream,"crew",BlockChar(1))
+							.Engines = getJsonVal(InStream,"engines",BlockChar(1))
+							
+							.HullMass = getJsonVal(InStream,"mass",BlockChar(1))
+							.TechLevel = getJsonVal(InStream,"techlevel",BlockChar(1))
+							.Cargo = getJsonVal(InStream,"cargo",BlockChar(1))
+							
+							.FighterBays = getJsonVal(InStream,"fighterbays",BlockChar(1))
+							.TorpTubes = getJsonVal(InStream,"launchers",BlockChar(1))
+							.BeamBanks = getJsonVal(InStream,"beams",BlockChar(1))
+							
+							.MegacreditCost = getJsonVal(InStream,"cost",BlockChar(1))
+							.AdvantageValue = getJsonVal(InStream,"advantage",BlockChar(1))
+							ObjIDa = getJsonVal(InStream,"id",BlockChar(1))
+						end with
+						
+						HullDesignParser(ObjIDa) = InterHull
+						BlockChar(1) = instr(BlockChar(1) + len(ObjClose),InStream,ObjClose)
+					loop until BlockChar(1) = 0 OR BlockChar(1) > BlockChar(2)
+				end if
 			end if
 		end if
 	
@@ -994,10 +1047,10 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 	end if
 
 	print #9, "[";Time;", ";Date;"] Compiling all lists... ";
-	exportCSVfiles(GameNum,TurnNum)
+	exportCSVfiles(WorkID,WorkTurn,ActiveArena)
 	print #9, " Done"
 	
-	createMap(GameNum,TurnNum)
+	createMap(WorkID,WorkTurn,ActiveArena)
 
 	ParseEnd = timer
 	print #9, "[";Time;", ";Date;"] Export all done! Conversion required ";
@@ -1011,7 +1064,7 @@ function loadTurn(GameNum as integer, TurnNum as short, PrintTxt as byte = 1, Ac
 	end if
 	close #9
 	
-	kill("games/"+str(GameNum)+"/"+str(TurnNum)+"/Working")
+	kill("games/"+str(WorkID)+"/"+str(WorkTurn)+"/Working")
 	return 0
 end function
 #ENDIF

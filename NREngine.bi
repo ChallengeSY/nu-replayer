@@ -1,4 +1,5 @@
-const BROWSER_LONG = "Nu Replayer 1.07"
+const BROWSER_LONG = "Nu Replayer 1.08"
+const ActiveArenaTitle = "<Planets Nu Arena Live>"
 
 #IFNDEF __FORCE_OFFLINE__
 ' Online support parameters
@@ -876,14 +877,19 @@ sub loadTurnKB(KBCount as integer, PlayerID as ubyte)
 		KBUpdate = timer
 		FileSize = int(FileLen("raw/"+str(GameID)+"/player"+str(PlayerID)+"-turn"+str(TurnNum)+".trn")/1e3)
 
-		if FileSize > 0 then
-			if PlayerID > 0 then
-				createMeter((PlayerID-1+KBCount/FileSize)/LoadTurnDetected)
-				FileProgress = str(KBCount)+"/"+str(FileSize)+" KB done for player "+str(PlayerID)
-			else
-				FileProgress = "Converting spectator turn... ("+str(KBCount)+"/"+str(FileSize)+" KB done)"
+		if PlayerID = 0 then
+			FileProgress = "Converting spectator turn... ("+str(KBCount)+"/"
+			
+			if FileSize > 0 then
+				FileProgress = FileProgress + str(FileSize)+" KB done)"
 				createMeter((2+KBCount/FileSize)/3, FileProgress)
+			else
+				FileProgress = FileProgress + "??? KB done)"
+				createMeter(2/3, FileProgress)
 			end if
+		elseif FileSize > 0 then
+			createMeter((PlayerID-1+KBCount/FileSize)/LoadTurnDetected)
+			FileProgress = str(KBCount)+"/"+str(FileSize)+" KB done for player "+str(PlayerID)
 		else
 			for PlotIndeter as short = 0 to 22
 				XPos = (PlotIndeter-1)*50 + remainder(int(KBCount/2),50)
