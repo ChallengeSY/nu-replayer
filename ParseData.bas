@@ -402,7 +402,12 @@ function getJsonStr(ReadStr as string, ReadParam as string, CharInit as integer 
 	
 	dim as string WorkStr = mid(ReadStr, MatchFound+len(ReadParam)+4, EndQuote-MatchFound-len(ReadParam)-4)
 	
-	return findReplace(WorkStr, "\"+chr(34), "''")
+	dim as string FinalStr = findReplace(WorkStr, "\"+chr(34), "''")
+	FinalStr = findReplace(FinalStr, "\'", "'")
+	FinalStr = findReplace(FinalStr, chr(226,128,153), "'") 'Work around non-ASCII apostrophes
+	FinalStr = findReplace(FinalStr, "\\", "\")
+	
+	return FinalStr
 end function
 
 function getJsonBool(ReadStr as string, ReadParam as string, CharInit as integer = 1, CharEnd as integer = 0) as integer

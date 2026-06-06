@@ -500,6 +500,9 @@ sub VCRlist
 							dim as string RightType = "S"
 							if .Battletype <> 0 then
 								RightType = "P"
+								if .Combatants(2).Starbase > 0 then
+									RightType = "B"
+								end if
 							end if
 							
 							color rgb(255,255,255)

@@ -190,7 +190,7 @@ sub setupBattle(ByRef BattleSetup as VCRobj)
 		end with
 	next PID
 	
-	ActiveSeed = BattleSetup.Seed + 1 'Throw in a "penalty" seed
+	ActiveSeed = BattleSetup.Seed + 1 'Convert (0-118 >> 1-119)
 end sub
 
 
@@ -217,7 +217,7 @@ sub damageShip(VictimID as byte, DmgBlast as short, CrewKill as short)
 		
 		if .Shield <= 0 then
 			'Some crew get killed. No effect on a planet
-			dim as short CrewLoss = round(CrewKill * (100 - min(.CrewDefense,100))/100)
+			dim as short CrewLoss = round(CrewKill * (100 - max(min(.CrewDefense,100),0)) / 100)
 			
 			.Crew = max(0,-round(80 * CrewLoss / (.Mass + 1) - .Crew)) 
 		end if
@@ -459,7 +459,14 @@ sub moveFighters
 					
 					if abs(.FtrCraft(FID).Position - PeerPiece.ShipPos) < 20 then
 						'Damage the opposing ship, assuming no resistance
-						if PeerPiece.CrewDefense <= 100 ORELSE rollSeededDice(100) > PeerPiece.CrewDefense - 100 then
+						dim as short Resistance = 0
+						if PeerPiece.CrewDefense > 100 then
+							Resistance = PeerPiece.CrewDefense - 100
+						elseif PeerPiece.CrewDefense < 0 then
+							Resistance = -PeerPiece.CrewDefense
+						end if
+						
+						if Resistance <= 0 ORELSE rollSeededDice(100) > Resistance then
 							drawBeam(.FtrCraft(FID).Position,(6.9+FID)*10,PeerPiece.ShipPos+irandom(0,4),164,OriginColor(1))
 							damageShip(2,2,2)
 							playClip(SFX_FIGHTER)
@@ -489,8 +496,14 @@ sub moveFighters
 					.FtrCraft(FID).Position -= 4
 					
 					if abs(.FtrCraft(FID).Position - PeerPiece.ShipPos) < 20 then
-						'Damage the opposing ship, assuming no resistance
-						if PeerPiece.CrewDefense <= 100 ORELSE rollSeededDice(100) > PeerPiece.CrewDefense - 100 then
+						dim as short Resistance = 0
+						if PeerPiece.CrewDefense > 100 then
+							Resistance = PeerPiece.CrewDefense - 100
+						elseif PeerPiece.CrewDefense < 0 then
+							Resistance = -PeerPiece.CrewDefense
+						end if
+						
+						if Resistance <= 0 ORELSE rollSeededDice(100) > Resistance then
 							drawBeam(.FtrCraft(FID).Position,(6.9+FID)*10,PeerPiece.ShipPos-irandom(0,4),164,OriginColor(2))
 							damageShip(1,2,2)
 							playClip(SFX_FIGHTER)
@@ -872,6 +885,8 @@ sub drawOverlay
 		gfxString(CombatStr,CanvasScreen.Wideth*3/4-gfxLength(CombatStr,4,3,3)/2,25,4,3,3,rgb(255,255,255))
 		if PlanBattle = 0 then
 			CombatStr = "Ship "+str(.PieceID)+": "+ShiplistObj(.HullID).HullName
+		elseif .Starbase > 0 then
+			CombatStr = "Starbase "+str(.PieceID)
 		else
 			CombatStr = "Planet "+str(.PieceID)
 		end if

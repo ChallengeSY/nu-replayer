@@ -540,12 +540,13 @@ sub getReport
 				dim as byte HorwaspShip, CloakCost, AdvancedCloak, Gravitonic
 				
 				dim as string HullClassName
-				dim as string MisnNames(28) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
+				dim as string MisnNames(34) => {"Exploration", "Mine Sweep", "Lay Mines", "Kill!", "Sensor Sweep", _
 					"Land + Disassemble", "Tow Ship {1}", "Intercept Ship {1}", "{Racial}", "Cloak", _
 					"Beam up Fuel", "Beam up Duranium", "Beam up Tritanium", "Beam up Molybdenum", "Beam up Supplies", _
 					"Repair Ship {1}", "Destroy Planet", "Tantrum", "Send Fighters", "Receive Fighters", "Cloak + Intercept {1}", _
 					"Push Minefield", "Pull Minefield", "Enter Wormhole", "Load Artifact {2}", "Transfer Artifact {2} to Ship {1}", _
-					"Build Clans", "Hide Ship", "Lay Hidden Mines"}
+					"Build Clans", "Hide Ship", "Lay Hidden Mines", "Call", "Stack ships", _
+					"Send Megacredits", "Receive Megacredits", "Interdict", "Build Fighters"}
 				dim as string DispMisn, RacialMisn
 				ReportColor = rgb(128,224,192)
 				
@@ -635,6 +636,13 @@ sub getReport
 						elseif Sidebar > CanvasScreen.Wideth - 330 then
 							DispMisn = "Send relic {2} to ship {1}"
 						end if
+					elseif .Mission = 33 then
+						dim as integer BasePower = .EnginePos^2
+						dim as integer MisnPower = min(.EnginePos, .WarpSpeed)
+						dim as integer MisnRadius = MisnPower^2
+						dim as integer MisnStr = round(BasePower^2 / MisnRadius)
+						
+						DispMisn = DispMisn + " (Radius "+str(MisnRadius)+" / Strength "+str(MisnStr)+")"
 					end if
 					
 					DispMisn = findReplace(DispMisn,"{1}",str(.MisnTarget(1)))
@@ -1074,6 +1082,8 @@ sub getReport
 			end with
 			
 		case REPORT_WORM
+			dim as double WormDist
+			
 			'Wormhole report
 			with Wormholes(SelectedID)
 				ReportColor = rgb(128,255,240)
@@ -1089,9 +1099,12 @@ sub getReport
 				end if
 
 				if .DestX > 0 AND .DestY > 0 then
+					WormDist = sqr((.X - .DestX)^2 + (.Y - .DestY)^2)
+					
 					gfxString("Dest: ("+str(.DestX)+","+str(.DestY)+")",Sidebar,100,3,2,2,ReportColor)
+					gfxString("Dist: "+left(str(WormDist),len(str(int(WormDist)))+4)+" LY",Sidebar,120,3,2,2,ReportColor)
 				end if
-				gfxString("Stability: "+str(.Stability)+"%",Sidebar,120,3,2,2,ReportColor)
+				gfxString("Stability: "+str(.Stability)+"%",Sidebar,140,3,2,2,ReportColor)
 			end with
 			
 		case REPORT_BHOLE

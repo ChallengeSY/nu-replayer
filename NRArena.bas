@@ -81,5 +81,7 @@ sub fetchArenaFiles
 			FeaturedArena = PreviousArena
 		end if
 	end if
+	
+	ErrorMsg = ""
 end sub
 #ENDIF
