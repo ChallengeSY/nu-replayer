@@ -1,4 +1,4 @@
-const BROWSER_LONG = "Nu Replayer 1.09"
+const BROWSER_LONG = "Nu Replayer 1.09a"
 const ActiveArenaTitle = "<Planets Nu Arena Live>"
 
 #IFNDEF __FORCE_OFFLINE__

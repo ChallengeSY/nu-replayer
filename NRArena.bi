@@ -62,7 +62,7 @@ function getArenaTurn as integer
 			GameStatus = getJsonVal(InStream,"status")
 			GameType = getJsonStr(InStream,"shortdescription")
 			
-			if GameType <> "Campaign Arena" then
+			if instr(GameType,"Arena") <= 0 then
 				ErrorMsg = "Not a valid arena game"
 				FeaturedArena = 0
 			end if

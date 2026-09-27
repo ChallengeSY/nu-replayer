@@ -717,7 +717,7 @@ sub readListFile(ApplyFilter as string, OnlyFeatured as byte, ByRef Internal as 
 						(.GameState <> 0 OR ReplayerMode = MODE_HUB_DL OR ExcludeNodata = 0) AND _
 						((PreferType = "Zodiac Wars" AND .GameDesc = "Championship Match") OR _
 						(PreferType = "Seasonal Championship" AND (.GameDesc = "Emperor Match" OR .GameDesc = "Grand Marshall Match")) OR _
-						(PreferType = "Colossal Arenas" AND .GameDesc = "Campaign Arena") OR _
+						(PreferType = "MegArenas" AND (.GameDesc = "Campaign Arena" OR .GameDesc = "League Arena")) OR _
 						(PreferType = "Personal" AND isPersonalGame(.ID)) OR _
 						PreferType = "Recent" OR OnlyFeatured = 0) then
 						MatchSucessful = 1
@@ -1007,10 +1007,10 @@ sub menu
 				if PreferType = "Seasonal Championship" then
 					PreferType = "Zodiac Wars"
 				elseif PreferType = "Zodiac Wars" then
-					PreferType = "Colossal Arenas"
-				elseif PreferType = "Colossal Arenas" AND Username <> "guest" then
+					PreferType = "MegArenas"
+				elseif PreferType = "MegArenas" AND Username <> "guest" then
 					PreferType = "Personal"
-				elseif PreferType = "Personal" OR PreferType = "Colossal Arenas" then 
+				elseif PreferType = "Personal" OR PreferType = "MegArenas" then 
 					PreferType = "Recent"
 				else
 					PreferType = "Seasonal Championship"
