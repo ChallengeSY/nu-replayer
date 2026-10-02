@@ -1,5 +1,5 @@
 ## Installing
-Usually, a package comes with binaries pre-compiled for Windows. Thus, all you have to do is extract the package that Nu Replayer and its assets were in, and you are all set. Nu Replayer has been tested on Windows XP through 11. It has been compiled using FreeBASIC 1.09.0.
+Usually, a package comes with binaries pre-compiled for Windows. Thus, all you have to do is extract the package that Nu Replayer and its assets were in, and you are all set. Nu Replayer has been tested on Windows XP through 11. It has been compiled using FreeBASIC 1.10.1.
 
 To build new Windows binaries isn't *that* difficult, but you'll need to install additional libraries to ensure proper linking. Afterwards, just type in `fbc NuReplay.bas NuReplay.rc -s gui` in a command shell, or use an IDE able to pass that command.
 
@@ -11,6 +11,9 @@ Installing under GNU/Linux, on the other hand, is not so simple. Since the archi
 
 ### FreeBSD
 FreeBSD support was added in FreeBASIC 1.09.0. We presume instructions are similiar to GNU/Linux, but this is untested. Feel free to experiment as need be, until you are able to build your own program.
+
+### macOS
+For a well established platform, this may be one of the hardest to get working. There never was an *official* build of the compiler for this OS, and this probably still will not be resolved anytime soon. Good luck getting a successful compile/link with an unofficial build.
 
 ### Wine
 Alternatively, if you can figure out how to use [Wine](http://www.winehq.org/), then you can use it to run the pre-compiled Windows binaries. This is likely the only way to run Nu Replayer outside of the systems above, as FreeBASIC compiler tools are not provided for any other platforms (except DOS).
